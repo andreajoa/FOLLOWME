@@ -14,6 +14,7 @@ import {
 const stripeDepositSchema = z.object({
   amount: z.coerce.number().positive("Valor deve ser maior que zero.").max(50000),
   method: z.enum(["PIX", "CARD", "BOTH"]).optional().default("PIX"),
+  currency: z.enum(["BRL", "USD", "EUR"]).optional(),
 });
 
 function resolveOrigin(req: NextRequest): string {
@@ -60,17 +61,23 @@ export async function POST(req: NextRequest) {
   }
 
   const amount = round2(parsed.data.amount);
-  const method: StripeCheckoutMethod = parsed.data.method;
-  const minRequired = Math.max(settings.minDeposit, 5);
+  const currency = (parsed.data.currency || "BRL").toUpperCase() as "BRL" | "USD" | "EUR";
+  const isBrl = currency === "BRL";
+  const method: StripeCheckoutMethod = isBrl ? parsed.data.method : "CARD";
+  const minRequired = isBrl ? Math.max(settings.minDeposit, 5) : 5;
 
   if (amount < minRequired) {
     return NextResponse.json(
-      { error: `O valor mínimo de recarga é R$ ${minRequired.toFixed(2)}.` },
+      {
+        error: isBrl
+          ? `O valor mínimo de recarga é R$ ${minRequired.toFixed(2)}.`
+          : `Minimum top-up amount is $${minRequired.toFixed(2)} ${currency}.`,
+      },
       { status: 400 }
     );
   }
 
-  if (method === "PIX" && !settings.stripePixEnabled) {
+  if (isBrl && method === "PIX" && !settings.stripePixEnabled) {
     return NextResponse.json(
       { error: "Recarga via Pix está temporariamente desativada." },
       { status: 400 }
@@ -85,14 +92,15 @@ export async function POST(req: NextRequest) {
     data: {
       userId: user.id,
       amount,
-      currency: "BRL",
+      currency,
       method: depositMethod,
       gateway: "STRIPE",
       txid,
       status: "PENDING",
       expiresAt: new Date(Date.now() + 30 * 60 * 1000),
-      note:
-        method === "PIX"
+      note: !isBrl
+        ? `Stripe Checkout (${currency} Card) awaiting payment`
+        : method === "PIX"
           ? "Checkout Stripe Pix aguardando pagamento"
           : method === "CARD"
             ? "Checkout Stripe Cartão aguardando pagamento"
@@ -103,7 +111,8 @@ export async function POST(req: NextRequest) {
   try {
     const origin = resolveOrigin(req);
     const session = await createStripeDepositCheckout({
-      amountBrl: amount,
+      amount,
+      currency,
       method,
       depositId: deposit.id,
       txid,

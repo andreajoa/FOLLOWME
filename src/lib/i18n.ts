@@ -1,33 +1,224 @@
 export type AppLocale = "pt" | "en" | "es";
 export type AppCurrency = "BRL" | "USD" | "EUR";
+export type ServiceMetricType = "followers" | "likes" | "views" | "comments" | "other";
 
 export const LOCALE_COOKIE = "fm_locale";
 export const CURRENCY_COOKIE = "fm_currency";
 
 export const SUPPORTED_LOCALES: Array<{ code: AppLocale; label: string; short: string }> = [
+  { code: "en", label: "English (US)", short: "EN" },
   { code: "pt", label: "Português (BR)", short: "PT" },
-  { code: "en", label: "English", short: "EN" },
   { code: "es", label: "Español", short: "ES" },
 ];
 
 export const SUPPORTED_CURRENCIES: Array<{ code: AppCurrency; symbol: string }> = [
-  { code: "BRL", symbol: "R$" },
   { code: "USD", symbol: "$" },
+  { code: "BRL", symbol: "R$" },
   { code: "EUR", symbol: "€" },
 ];
 
 export function normalizeLocale(input?: string | null): AppLocale {
   const lower = (input || "").toLowerCase();
-  if (lower.startsWith("en")) return "en";
+  if (lower.startsWith("pt")) return "pt";
   if (lower.startsWith("es")) return "es";
-  return "pt";
+  return "en";
 }
 
 export function normalizeCurrency(input?: string | null): AppCurrency {
   const upper = (input || "").toUpperCase();
-  if (upper === "USD") return "USD";
+  if (upper === "BRL") return "BRL";
   if (upper === "EUR") return "EUR";
-  return "BRL";
+  return "USD";
+}
+
+export function defaultCurrencyForLocale(locale: AppLocale): AppCurrency {
+  if (locale === "pt") return "BRL";
+  return "USD";
+}
+
+/**
+ * Detects user language and native market currency from browser Accept-Language header.
+ * English computers -> EN + USD (US market pricing).
+ * Portuguese computers -> PT + BRL (Brazil market pricing).
+ * Spanish computers -> ES + USD.
+ */
+export function detectPreferencesFromAcceptLanguage(
+  acceptLanguage?: string | null
+): { locale: AppLocale; currency: AppCurrency } {
+  if (!acceptLanguage || !acceptLanguage.trim()) {
+    return { locale: "en", currency: "USD" };
+  }
+
+  const parsed = acceptLanguage
+    .split(",")
+    .map((part) => {
+      const [tagRaw, qRaw] = part.trim().split(";");
+      const tag = (tagRaw || "").trim().toLowerCase();
+      const qMatch = qRaw?.match(/q=([0-9.]+)/);
+      const q = qMatch ? Number.parseFloat(qMatch[1]) : 1;
+      return { tag, q: Number.isFinite(q) ? q : 0 };
+    })
+    .filter((entry) => entry.tag.length > 0)
+    .sort((a, b) => b.q - a.q);
+
+  for (const item of parsed) {
+    if (item.tag.startsWith("pt")) {
+      return { locale: "pt", currency: "BRL" };
+    }
+    if (item.tag.startsWith("en")) {
+      return { locale: "en", currency: "USD" };
+    }
+    if (item.tag.startsWith("es")) {
+      return {
+        locale: "es",
+        currency: item.tag === "es-es" ? "EUR" : "USD",
+      };
+    }
+  }
+
+  return { locale: "en", currency: "USD" };
+}
+
+export function inferMetricType(name: string, type = "DEFAULT"): ServiceMetricType {
+  const hay = `${name} ${type}`.toLowerCase();
+  if (
+    hay.includes("coment") ||
+    hay.includes("comment") ||
+    type === "CUSTOM_COMMENTS"
+  ) {
+    return "comments";
+  }
+  if (
+    hay.includes("seguidor") ||
+    hay.includes("follower") ||
+    hay.includes("inscrit") ||
+    hay.includes("subscrib") ||
+    hay.includes("membro") ||
+    hay.includes("member")
+  ) {
+    return "followers";
+  }
+  if (
+    hay.includes("curtida") ||
+    hay.includes("like") ||
+    type === "COMMENT_LIKES" ||
+    type === "SUBSCRIPTIONS"
+  ) {
+    return "likes";
+  }
+  if (
+    hay.includes("visualiza") ||
+    hay.includes("view") ||
+    hay.includes("play") ||
+    hay.includes("watch") ||
+    hay.includes("espectador") ||
+    hay.includes("storie")
+  ) {
+    return "views";
+  }
+  return "other";
+}
+
+/**
+ * Native US retail price floor when a service does not yet have an explicit rateUsd.
+ * Reflects US consumer market pricing (Buzzoid/Twicsy/SocialWick benchmarks),
+ * never a raw BRL exchange-rate division.
+ */
+export function suggestUsMarketRate(
+  rateBrl: number,
+  network = "instagram",
+  metricType: ServiceMetricType = "followers"
+): number {
+  const net = network.toLowerCase();
+  const baseFromBrl = rateBrl > 0 ? rateBrl * 0.65 : 9.99;
+
+  if (metricType === "followers") {
+    if (net === "youtube") return Math.max(29.99, Math.round(baseFromBrl * 100) / 100);
+    if (net === "tiktok") return Math.max(14.99, Math.round(baseFromBrl * 100) / 100);
+    return Math.max(12.99, Math.round(baseFromBrl * 100) / 100);
+  }
+  if (metricType === "likes") {
+    return Math.max(4.99, Math.round(baseFromBrl * 100) / 100);
+  }
+  if (metricType === "views") {
+    if (net === "youtube") return Math.max(5.99, Math.round(baseFromBrl * 100) / 100);
+    return Math.max(1.49, Math.round(baseFromBrl * 100) / 100);
+  }
+  if (metricType === "comments") {
+    return Math.max(39.9, Math.round(baseFromBrl * 100) / 100);
+  }
+  return Math.max(9.99, Math.round(baseFromBrl * 100) / 100);
+}
+
+/**
+ * Returns the native retail rate per 1,000 units for the active market currency.
+ * BRL -> native Brazil price (`service.rate`)
+ * USD -> native US retail price (`service.rateUsd` or US market benchmark)
+ * EUR -> native European retail price derived from US retail tier
+ */
+export function getServiceMarketRate(
+  service: {
+    rate: number;
+    rateUsd?: number | null;
+    network?: string;
+    metricType?: string | null;
+    name?: string;
+    type?: string;
+  },
+  currency: AppCurrency
+): number {
+  if (currency === "BRL") {
+    return Number.isFinite(service.rate) ? service.rate : 0;
+  }
+  const metric = (service.metricType as ServiceMetricType | undefined) ||
+    inferMetricType(service.name || "", service.type);
+  const usdPrice =
+    typeof service.rateUsd === "number" && service.rateUsd > 0
+      ? service.rateUsd
+      : suggestUsMarketRate(service.rate, service.network, metric);
+
+  if (currency === "EUR") {
+    return Math.round(usdPrice * 0.92 * 100) / 100;
+  }
+  return usdPrice;
+}
+
+export function formatCurrencyAmount(
+  amount: number,
+  currency: AppCurrency = "USD",
+  showMicro = false
+): string {
+  const safe = Number.isFinite(amount) ? amount : 0;
+  const digits = showMicro && Math.abs(safe) > 0 && Math.abs(safe) < 0.1 ? 4 : 2;
+  const intlLocale =
+    currency === "BRL" ? "pt-BR" : currency === "EUR" ? "es-ES" : "en-US";
+  return new Intl.NumberFormat(intlLocale, {
+    style: "currency",
+    currency,
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(safe);
+}
+
+export function formatNumberForLocale(value: number, locale: AppLocale): string {
+  const intlLocale = locale === "pt" ? "pt-BR" : locale === "es" ? "es-ES" : "en-US";
+  return new Intl.NumberFormat(intlLocale).format(Math.round(value));
+}
+
+export function getLocalizedServiceName(
+  service: { name: string; nameEn?: string | null },
+  locale: AppLocale
+): string {
+  if (locale === "pt") return service.name;
+  return service.nameEn?.trim() || service.name;
+}
+
+export function getLocalizedServiceDescription(
+  service: { description: string; descriptionEn?: string | null },
+  locale: AppLocale
+): string {
+  if (locale === "pt") return service.description;
+  return service.descriptionEn?.trim() || service.description;
 }
 
 export function convertFromBrl(
@@ -48,18 +239,14 @@ export function formatMoney(
   showMicro = false
 ): string {
   const converted = convertFromBrl(amountBrl, currency, rates);
-  const digits = showMicro && Math.abs(converted) > 0 && Math.abs(converted) < 0.1 ? 4 : 2;
-  const intlLocale = currency === "BRL" ? "pt-BR" : currency === "EUR" ? "es-ES" : "en-US";
-  return new Intl.NumberFormat(intlLocale, {
-    style: "currency",
-    currency,
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  }).format(converted);
+  return formatCurrencyAmount(converted, currency, showMicro);
 }
 
 export interface UiDictionary {
   nav: {
+    instagram: string;
+    tiktok: string;
+    youtube: string;
     services: string;
     api: string;
     cooperation: string;
@@ -114,13 +301,16 @@ export interface UiDictionary {
 const DICTIONARIES: Record<AppLocale, UiDictionary> = {
   pt: {
     nav: {
-      services: "Serviços",
+      instagram: "Instagram",
+      tiktok: "TikTok",
+      youtube: "YouTube",
+      services: "Todos Serviços",
       api: "API v2",
       cooperation: "Parcerias",
       faq: "FAQ",
       terms: "Termos",
       login: "Entrar",
-      register: "Criar Conta",
+      register: "Começar Agora",
       panel: "Painel",
       admin: "Admin",
     },
@@ -146,16 +336,16 @@ const DICTIONARIES: Record<AppLocale, UiDictionary> = {
       apiDocs: "Docs API",
     },
     hero: {
-      badge: "Painel SMM Direto da Fonte",
-      titleLine1: "ESCALA SOCIAL EM",
-      titleAccent: "TEMPO REAL",
-      titleLine2: "PARA AGÊNCIAS E REVENDEDORES.",
+      badge: "Entrega em Minutos • Sem Senha",
+      titleLine1: "CONTEÚDO BOM NÃO PODE",
+      titleAccent: "PARECER ABANDONADO.",
+      titleLine2: "",
       subtitleSuffix:
-        "Recarregue via Pix ou Cartão pela Stripe com crédito automático 24h, controle assinaturas, painel filho e revenda via API v2.",
-      minDepositLabel: "Recarga Mín.",
-      ordersProcessedLabel: "Pedidos Processados",
-      activeUsersLabel: "Contas Ativas",
-      ctaCatalog: "Ver Catálogo Completo",
+        "Escolha Instagram, TikTok ou YouTube e receba seguidores, curtidas, visualizações e comentários com preço transparente e Pix instantâneo.",
+      minDepositLabel: "A partir de",
+      ordersProcessedLabel: "Pedidos Entregues",
+      activeUsersLabel: "Criadores e Marcas",
+      ctaCatalog: "Escolher Meu Pacote",
       ctaApi: "Documentação API v2",
     },
     auth: {
@@ -167,13 +357,16 @@ const DICTIONARIES: Record<AppLocale, UiDictionary> = {
   },
   en: {
     nav: {
-      services: "Services",
+      instagram: "Instagram",
+      tiktok: "TikTok",
+      youtube: "YouTube",
+      services: "All Services",
       api: "API v2",
-      cooperation: "Cooperation",
+      cooperation: "Partners",
       faq: "FAQ",
       terms: "Terms",
       login: "Sign in",
-      register: "Sign up",
+      register: "Get Started",
       panel: "Dashboard",
       admin: "Admin",
     },
@@ -188,7 +381,7 @@ const DICTIONARIES: Record<AppLocale, UiDictionary> = {
       addFunds: "Add Funds",
       affiliates: "Affiliates",
       childPanel: "Child Panel",
-      cooperation: "Cooperation",
+      cooperation: "Partners",
       tickets: "Tickets",
       updates: "Updates",
       account: "Account & API",
@@ -199,16 +392,16 @@ const DICTIONARIES: Record<AppLocale, UiDictionary> = {
       apiDocs: "API Docs",
     },
     hero: {
-      badge: "Direct Source SMM Panel",
-      titleLine1: "REAL-TIME SOCIAL",
-      titleAccent: "GROWTH ENGINE",
-      titleLine2: "FOR AGENCIES & RESELLERS.",
+      badge: "Starts in Minutes • No Password Needed",
+      titleLine1: "GREAT CONTENT SHOULDN'T",
+      titleAccent: "LOOK EMPTY.",
+      titleLine2: "",
       subtitleSuffix:
-        "Top up instantly via Stripe Card or Pix 24/7, automate drip-feed & subscriptions, launch your own Child Panel, and resell via API v2.",
-      minDepositLabel: "Min. Deposit",
-      ordersProcessedLabel: "Orders Processed",
-      activeUsersLabel: "Active Accounts",
-      ctaCatalog: "Explore Full Catalog",
+        "Turn a quiet profile into instant social proof. Pick Instagram, TikTok, or YouTube followers, likes, views, and comments in 60 seconds.",
+      minDepositLabel: "Starting at",
+      ordersProcessedLabel: "Orders Delivered",
+      activeUsersLabel: "Creators & Brands",
+      ctaCatalog: "Choose Your Package",
       ctaApi: "API v2 Documentation",
     },
     auth: {
@@ -220,13 +413,16 @@ const DICTIONARIES: Record<AppLocale, UiDictionary> = {
   },
   es: {
     nav: {
+      instagram: "Instagram",
+      tiktok: "TikTok",
+      youtube: "YouTube",
       services: "Servicios",
       api: "API v2",
       cooperation: "Alianzas",
       faq: "FAQ",
       terms: "Términos",
       login: "Entrar",
-      register: "Registrarse",
+      register: "Empezar Ahora",
       panel: "Panel",
       admin: "Admin",
     },
@@ -252,16 +448,16 @@ const DICTIONARIES: Record<AppLocale, UiDictionary> = {
       apiDocs: "Docs API",
     },
     hero: {
-      badge: "Panel SMM Directo de la Fuente",
-      titleLine1: "ESCALA SOCIAL EN",
-      titleAccent: "TIEMPO REAL",
-      titleLine2: "PARA AGENCIAS Y REVENDEDORES.",
+      badge: "Entrega en Minutos • Sin Contraseña",
+      titleLine1: "TU CONTENIDO NO PUEDE",
+      titleAccent: "PARECER VACÍO.",
+      titleLine2: "",
       subtitleSuffix:
-        "Recarga al instante con Tarjeta o Pix vía Stripe 24/7, automatiza suscripciones, crea tu Panel Hijo y revende con API v2.",
-      minDepositLabel: "Recarga Mín.",
-      ordersProcessedLabel: "Pedidos Procesados",
-      activeUsersLabel: "Cuentas Activas",
-      ctaCatalog: "Ver Catálogo Completo",
+        "Convierte un perfil silencioso en prueba social inmediata. Elige seguidores, likes, vistas y comentarios para Instagram, TikTok y YouTube.",
+      minDepositLabel: "Desde",
+      ordersProcessedLabel: "Pedidos Entregados",
+      activeUsersLabel: "Creadores y Marcas",
+      ctaCatalog: "Elegir Mi Paquete",
       ctaApi: "Documentación API v2",
     },
     auth: {
@@ -274,5 +470,5 @@ const DICTIONARIES: Record<AppLocale, UiDictionary> = {
 };
 
 export function getDictionary(locale: AppLocale): UiDictionary {
-  return DICTIONARIES[locale] || DICTIONARIES.pt;
+  return DICTIONARIES[locale] || DICTIONARIES.en;
 }

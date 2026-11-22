@@ -67,6 +67,7 @@ model Provider {
 model Category {
   id        String    @id @default(cuid())
   name      String
+  nameEn    String?
   slug      String    @unique
   network   String
   sortOrder Int       @default(0)
@@ -86,9 +87,13 @@ model Service {
   provider          Provider?         @relation(fields: [providerId], references: [id], onDelete: SetNull)
   providerServiceId String?
   name              String
+  nameEn            String?
+  metricType        String            @default("followers")
   type              String            @default("DEFAULT")
   description       String
+  descriptionEn     String?
   rate              Float
+  rateUsd           Float?
   providerRate      Float             @default(0)
   min               Int               @default(10)
   max               Int               @default(100000)

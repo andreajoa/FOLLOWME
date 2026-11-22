@@ -10,7 +10,8 @@
     "test": "vitest run",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "db:setup": "prisma generate && prisma db push && tsx prisma/seed.ts"
+    "db:backfill-markets": "tsx prisma/backfill-markets.ts",
+    "db:setup": "prisma generate && prisma db push && tsx prisma/seed.ts && tsx prisma/backfill-markets.ts"
   },
   "dependencies": {
     "@prisma/client": "6.8.2",

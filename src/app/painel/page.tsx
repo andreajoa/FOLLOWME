@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
+import { getSiteSettings } from "@/lib/settings";
 import { NewOrderClient } from "@/components/new-order-client";
 
 export const dynamic = "force-dynamic";
@@ -7,11 +8,17 @@ export const dynamic = "force-dynamic";
 export default async function PanelHomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ service?: string }>;
+  searchParams: Promise<{ service?: string; qty?: string }>;
 }) {
-  const user = (await getCurrentUser())!;
-  const sp = await searchParams;
+  const [user, prefs, settings, sp] = await Promise.all([
+    getCurrentUser(),
+    getRequestPreferences(),
+    getSiteSettings(),
+    searchParams,
+  ]);
   const initialServiceId = sp.service ? Number.parseInt(sp.service, 10) : undefined;
+  const initialQuantity = sp.qty ? Number.parseInt(sp.qty, 10) : undefined;
+  const isPt = prefs.locale === "pt";
 
   const [categories, services, favorites, totalOrders, activeOrders] =
     await Promise.all([
@@ -21,17 +28,17 @@ export default async function PanelHomePage({
       }),
       prisma.service.findMany({
         where: { isActive: true, category: { isActive: true } },
-        include: { category: { select: { name: true, network: true } } },
+        include: { category: { select: { name: true, nameEn: true, network: true } } },
         orderBy: [{ category: { sortOrder: "asc" } }, { id: "asc" }],
       }),
       prisma.favoriteService.findMany({
-        where: { userId: user.id },
+        where: { userId: user!.id },
         select: { serviceId: true },
       }),
-      prisma.order.count({ where: { userId: user.id } }),
+      prisma.order.count({ where: { userId: user!.id } }),
       prisma.order.count({
         where: {
-          userId: user.id,
+          userId: user!.id,
           status: { in: ["PENDING", "PROCESSING", "IN_PROGRESS"] },
         },
       }),
@@ -41,18 +48,22 @@ export default async function PanelHomePage({
     <NewOrderClient
       categories={categories.map((c) => ({
         id: c.id,
-        name: c.name,
+        name: isPt ? c.name : c.nameEn || c.name,
         network: c.network,
       }))}
       services={services.map((s) => ({
         id: s.id,
         categoryId: s.categoryId,
-        categoryName: s.category.name,
+        categoryName: isPt ? s.category.name : s.category.nameEn || s.category.name,
         network: s.category.network,
         name: s.name,
+        nameEn: s.nameEn,
+        metricType: s.metricType,
         type: s.type,
         description: s.description,
+        descriptionEn: s.descriptionEn,
         rate: s.rate,
+        rateUsd: s.rateUsd,
         providerRate: s.providerRate,
         min: s.min,
         max: s.max,
@@ -68,12 +79,20 @@ export default async function PanelHomePage({
           ? initialServiceId
           : undefined
       }
-      userBalance={user.balance}
-      isAdmin={user.role === "ADMIN"}
+      initialQuantity={
+        initialQuantity && Number.isInteger(initialQuantity) && initialQuantity > 0
+          ? initialQuantity
+          : undefined
+      }
+      userBalance={user!.balance}
+      isAdmin={user!.role === "ADMIN"}
+      locale={prefs.locale}
+      currency={prefs.currency}
+      rates={{ usdRate: settings.usdRate, eurRate: settings.eurRate }}
       stats={{
         totalOrders,
         activeOrders,
-        totalSpent: user.totalSpent,
+        totalSpent: user!.totalSpent,
       }}
     />
   );

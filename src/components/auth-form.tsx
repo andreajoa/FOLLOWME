@@ -9,13 +9,18 @@ interface AuthFormProps {
   initialTab: "login" | "register";
   initialRef?: string;
   redirectService?: string;
+  redirectQty?: string;
+  locale?: "pt" | "en" | "es";
 }
 
 export function AuthForm({
   initialTab,
   initialRef = "",
   redirectService = "",
+  redirectQty = "",
+  locale = "en",
 }: AuthFormProps) {
+  const isPt = locale === "pt";
   const router = useRouter();
   const [tab, setTab] = useState<"login" | "register">(initialTab);
   const [loading, setLoading] = useState(false);
@@ -33,9 +38,13 @@ export function AuthForm({
   const [password, setPassword] = useState("");
   const [referralCode, setReferralCode] = useState(initialRef);
 
-  const destination = redirectService
-    ? `/painel?service=${encodeURIComponent(redirectService)}`
-    : "/painel";
+  const destination = (() => {
+    const qs = new URLSearchParams();
+    if (redirectService) qs.set("service", redirectService);
+    if (redirectQty) qs.set("qty", redirectQty);
+    const str = qs.toString();
+    return str ? `/painel?${str}` : "/painel";
+  })();
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -108,7 +117,7 @@ export function AuthForm({
           }`}
         >
           <KeyRound className="h-3.5 w-3.5" />
-          Entrar
+          {isPt ? "Entrar" : "Sign in"}
         </button>
         <button
           type="button"
@@ -123,7 +132,7 @@ export function AuthForm({
           }`}
         >
           <UserPlus className="h-3.5 w-3.5" />
-          Criar Conta
+          {isPt ? "Criar Conta" : "Sign up"}
         </button>
       </div>
 
@@ -132,14 +141,14 @@ export function AuthForm({
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1.5">
-                E-mail ou Usuário
+                {isPt ? "E-mail ou Usuário" : "Email or Username"}
               </label>
               <input
                 type="text"
                 required
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="seu@email.com ou @usuario"
+                placeholder={isPt ? "seu@email.com ou @usuario" : "you@email.com or username"}
                 className="input-terminal w-full h-11 px-3 text-sm"
               />
             </div>
@@ -147,13 +156,13 @@ export function AuthForm({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD]">
-                  Senha
+                  {isPt ? "Senha" : "Password"}
                 </label>
                 <Link
                   href="/esqueci-senha"
                   className="font-mono text-[11px] text-[#C8FF2E] hover:underline"
                 >
-                  Esqueceu sua senha?
+                  {isPt ? "Esqueceu sua senha?" : "Forgot password?"}
                 </Link>
               </div>
               <input
@@ -177,7 +186,13 @@ export function AuthForm({
               disabled={loading}
               className="btn-lime h-12 w-full inline-flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-wider cursor-pointer"
             >
-              {loading ? "Entrando..." : "Acessar Painel"}
+              {loading
+                ? isPt
+                  ? "Entrando..."
+                  : "Signing in..."
+                : isPt
+                  ? "Acessar Painel"
+                  : "Open Dashboard"}
               <ArrowRight className="h-4 w-4" />
             </button>
           </form>
@@ -185,14 +200,14 @@ export function AuthForm({
           <form onSubmit={handleRegister} className="space-y-3.5">
             <div>
               <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1">
-                Nome Completo
+                {isPt ? "Nome Completo" : "Full Name"}
               </label>
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Seu nome ou agência"
+                placeholder={isPt ? "Seu nome ou agência" : "Your name or brand"}
                 className="input-terminal w-full h-10 px-3 text-sm"
               />
             </div>
@@ -200,26 +215,26 @@ export function AuthForm({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1">
-                  Usuário
+                  {isPt ? "Usuário" : "Username"}
                 </label>
                 <input
                   type="text"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="minhaagencia"
+                  placeholder={isPt ? "minhaagencia" : "yourhandle"}
                   className="input-terminal w-full h-10 px-3 text-sm"
                 />
               </div>
               <div>
                 <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1">
-                  WhatsApp (opcional)
+                  {isPt ? "WhatsApp (opcional)" : "Phone / WhatsApp (optional)"}
                 </label>
                 <input
                   type="text"
                   value={whatsapp}
                   onChange={(e) => setWhatsapp(e.target.value)}
-                  placeholder="11999999999"
+                  placeholder={isPt ? "11999999999" : "+1 555 010 2020"}
                   className="input-terminal w-full h-10 px-3 text-sm"
                 />
               </div>
@@ -227,14 +242,14 @@ export function AuthForm({
 
             <div>
               <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1">
-                E-mail
+                {isPt ? "E-mail" : "Email"}
               </label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="contato@suaagencia.com"
+                placeholder={isPt ? "contato@suaagencia.com" : "you@brand.com"}
                 className="input-terminal w-full h-10 px-3 text-sm"
               />
             </div>
@@ -242,7 +257,7 @@ export function AuthForm({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1">
-                  Senha (mín. 6)
+                  {isPt ? "Senha (mín. 6)" : "Password (min 6)"}
                 </label>
                 <input
                   type="password"
@@ -256,13 +271,13 @@ export function AuthForm({
               </div>
               <div>
                 <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1">
-                  Código Indicação
+                  {isPt ? "Código Indicação" : "Referral Code"}
                 </label>
                 <input
                   type="text"
                   value={referralCode}
                   onChange={(e) => setReferralCode(e.target.value)}
-                  placeholder="Opcional"
+                  placeholder={isPt ? "Opcional" : "Optional"}
                   className="input-terminal w-full h-10 px-3 font-mono text-sm uppercase"
                 />
               </div>
@@ -279,7 +294,13 @@ export function AuthForm({
               disabled={loading}
               className="btn-lime h-12 w-full inline-flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-wider cursor-pointer"
             >
-              {loading ? "Criando Conta..." : "Criar Conta Grátis"}
+              {loading
+                ? isPt
+                  ? "Criando Conta..."
+                  : "Creating Account..."
+                : isPt
+                  ? "Criar Conta Grátis"
+                  : "Create Free Account"}
               <ArrowRight className="h-4 w-4" />
             </button>
           </form>

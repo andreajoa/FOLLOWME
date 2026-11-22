@@ -12,8 +12,17 @@ import {
   Star,
   Zap,
 } from "lucide-react";
-import { formatBRL, formatInt } from "@/lib/format";
+import { formatInt } from "@/lib/format";
 import { calculateOrderTotals } from "@/lib/pricing";
+import {
+  AppCurrency,
+  AppLocale,
+  formatCurrencyAmount,
+  formatMoney,
+  getLocalizedServiceDescription,
+  getLocalizedServiceName,
+  getServiceMarketRate,
+} from "@/lib/i18n";
 
 export interface PanelCategory {
   id: string;
@@ -27,9 +36,13 @@ export interface PanelService {
   categoryName: string;
   network: string;
   name: string;
+  nameEn?: string | null;
+  metricType?: string | null;
   type: string;
   description: string;
+  descriptionEn?: string | null;
   rate: number;
+  rateUsd?: number | null;
   providerRate: number;
   min: number;
   max: number;
@@ -45,8 +58,12 @@ interface NewOrderClientProps {
   services: PanelService[];
   favoriteIds: number[];
   initialServiceId?: number;
+  initialQuantity?: number;
   userBalance: number;
   isAdmin?: boolean;
+  locale?: AppLocale;
+  currency?: AppCurrency;
+  rates?: { usdRate: number; eurRate: number };
   stats: {
     totalOrders: number;
     activeOrders: number;
@@ -54,25 +71,29 @@ interface NewOrderClientProps {
   };
 }
 
-const NETWORKS = [
-  { id: "all", label: "Todas" },
-  { id: "favorites", label: "★ Favoritos" },
-  { id: "instagram", label: "Instagram" },
-  { id: "tiktok", label: "TikTok" },
-  { id: "youtube", label: "YouTube" },
-  { id: "facebook", label: "Facebook" },
-  { id: "other", label: "Outras" },
-];
-
 export function NewOrderClient({
   categories,
   services,
   favoriteIds,
   initialServiceId,
+  initialQuantity,
   userBalance,
   isAdmin = false,
+  locale = "en",
+  currency = "USD",
+  rates = { usdRate: 5.5, eurRate: 6.0 },
   stats,
 }: NewOrderClientProps) {
+  const isPt = locale === "pt";
+  const NETWORKS = [
+    { id: "all", label: isPt ? "Todas" : "All" },
+    { id: "favorites", label: isPt ? "★ Favoritos" : "★ Favorites" },
+    { id: "instagram", label: "Instagram" },
+    { id: "tiktok", label: "TikTok" },
+    { id: "youtube", label: "YouTube" },
+    { id: "facebook", label: "Facebook" },
+    { id: "other", label: isPt ? "Outras" : "Other" },
+  ];
   const router = useRouter();
   const initialService =
     services.find((s) => s.id === initialServiceId) ?? services[0];
@@ -84,7 +105,12 @@ export function NewOrderClient({
   const [serviceId, setServiceId] = useState<number>(initialService?.id ?? 0);
   const [link, setLink] = useState("");
   const [quantity, setQuantity] = useState<number>(
-    initialService ? Math.max(initialService.min, Math.min(1000, initialService.max)) : 100
+    initialService
+      ? Math.max(
+          initialService.min,
+          Math.min(initialQuantity || 1000, initialService.max)
+        )
+      : 100
   );
   const [comments, setComments] = useState("");
   const [commentUsername, setCommentUsername] = useState("");
@@ -138,24 +164,44 @@ export function NewOrderClient({
 
   const totals = useMemo(() => {
     if (!activeService) {
-      return { totalQuantity: 0, charge: 0, cost: 0, profit: 0 };
+      return { totalQuantity: 0, charge: 0, cost: 0, profit: 0, displayCharge: 0 };
     }
+    const marketRate = getServiceMarketRate(activeService, currency);
+    const ledgerRate =
+      currency === "USD"
+        ? marketRate * Math.max(0.1, rates.usdRate || 5.5)
+        : currency === "EUR"
+          ? marketRate * Math.max(0.1, rates.eurRate || 6.0)
+          : activeService.rate;
+
     if (activeService.type === "PACKAGE") {
       return {
         totalQuantity: 1,
-        charge: activeService.rate,
+        charge: ledgerRate,
+        displayCharge: marketRate,
         cost: activeService.providerRate,
-        profit: activeService.rate - activeService.providerRate,
+        profit: ledgerRate - activeService.providerRate,
       };
     }
-    return calculateOrderTotals({
-      rate: activeService.rate,
+    const ledgerTotals = calculateOrderTotals({
+      rate: ledgerRate,
       providerRate: activeService.providerRate,
       quantity: Math.max(0, effectiveQty),
       dripfeed: dripfeed && activeService.dripfeed,
       runs,
     });
-  }, [activeService, effectiveQty, dripfeed, runs]);
+    const displayTotals = calculateOrderTotals({
+      rate: marketRate,
+      providerRate: 0,
+      quantity: Math.max(0, effectiveQty),
+      dripfeed: dripfeed && activeService.dripfeed,
+      runs,
+    });
+    return {
+      ...ledgerTotals,
+      displayCharge: displayTotals.charge,
+    };
+  }, [activeService, effectiveQty, dripfeed, runs, currency, rates]);
 
   function selectNetwork(net: string) {
     setNetwork(net);
@@ -227,7 +273,9 @@ export function NewOrderClient({
       }
 
       setSuccessMsg(
-        `Pedido #${data.order.id} enviado com sucesso! Valor debitado: ${formatBRL(data.order.charge, true)}.`
+        isPt
+          ? `Pedido #${data.order.id} enviado com sucesso! Valor debitado: ${formatMoney(data.order.charge, currency, rates, true)}.`
+          : `Order #${data.order.id} placed successfully! Charged: ${formatMoney(data.order.charge, currency, rates, true)}.`
       );
       setLink("");
       setComments("");
@@ -248,22 +296,22 @@ export function NewOrderClient({
       <div className="grid grid-cols-2 lg:grid-cols-4 border border-[#232730] bg-[#111317]">
         {[
           {
-            label: "Saldo Atual",
-            value: formatBRL(userBalance),
+            label: isPt ? "Saldo Atual" : "Current Balance",
+            value: formatMoney(userBalance, currency, rates),
             accent: "text-[#C8FF2E]",
           },
           {
-            label: "Total Investido",
-            value: formatBRL(stats.totalSpent),
+            label: isPt ? "Total Investido" : "Total Spent",
+            value: formatMoney(stats.totalSpent, currency, rates),
             accent: "text-[#F4F5F6]",
           },
           {
-            label: "Pedidos Ativos",
+            label: isPt ? "Pedidos Ativos" : "Active Orders",
             value: formatInt(stats.activeOrders),
             accent: "text-[#FF8A58]",
           },
           {
-            label: "Total de Pedidos",
+            label: isPt ? "Total de Pedidos" : "Total Orders",
             value: formatInt(stats.totalOrders),
             accent: "text-[#34D399]",
           },
@@ -373,7 +421,8 @@ export function NewOrderClient({
             >
               {visibleServices.map((s) => (
                 <option key={s.id} value={s.id}>
-                  #{s.id} — {s.name} — {formatBRL(s.rate)}/1k
+                  #{s.id} - {getLocalizedServiceName(s, locale)} (
+                  {formatCurrencyAmount(getServiceMarketRate(s, currency), currency)}/1k)
                 </option>
               ))}
             </select>
@@ -414,7 +463,11 @@ export function NewOrderClient({
             </div>
           ) : activeService?.type === "PACKAGE" ? (
             <div className="border border-[#232730] bg-[#0C0E12] p-3.5 font-mono text-xs text-[#98A0AD]">
-              Pacote fechado (preço fixo de <strong className="text-[#C8FF2E]">{formatBRL(activeService.rate)}</strong>). Basta informar o link acima.
+              {isPt ? "Pacote fechado (preço fixo de " : "Flat package ("}
+              <strong className="text-[#C8FF2E]">
+                {formatCurrencyAmount(getServiceMarketRate(activeService, currency), currency)}
+              </strong>
+              {isPt ? "). Basta informar o link acima." : "). Paste your public link above."}
             </div>
           ) : activeService?.type === "CUSTOM_COMMENTS" ? (
             <div>
@@ -557,10 +610,12 @@ export function NewOrderClient({
                 {isAdmin ? "Modo Admin • Custo na Plataforma" : "Valor Total a Debitar"}
               </div>
               <div className="font-mono text-2xl font-bold text-[#C8FF2E] flex items-baseline gap-2.5">
-                {isAdmin ? "R$ 0,00" : formatBRL(totals.charge, true)}
+                {isAdmin
+                  ? formatCurrencyAmount(0, currency)
+                  : formatCurrencyAmount(totals.displayCharge, currency, true)}
                 {isAdmin && (
                   <span className="text-xs font-normal text-[#98A0AD] line-through">
-                    {formatBRL(totals.charge, true)}
+                    {formatCurrencyAmount(totals.displayCharge, currency, true)}
                   </span>
                 )}
               </div>
@@ -626,19 +681,21 @@ export function NewOrderClient({
                 )}
               </div>
               <h2 className="mt-1.5 font-[family-name:var(--font-display)] text-lg font-bold text-[#F4F5F6]">
-                {activeService.name}
+                {getLocalizedServiceName(activeService, locale)}
               </h2>
             </div>
 
             <div className="grid grid-cols-2 gap-3 font-mono text-xs">
               <div className="bg-[#0C0E12] border border-[#232730] p-3">
-                <div className="text-[#68707E]">PREÇO POR 1.000</div>
+                <div className="text-[#68707E]">
+                  {isPt ? "PREÇO POR 1.000" : "RATE PER 1,000"}
+                </div>
                 <div className="mt-1 text-base font-bold text-[#C8FF2E]">
-                  {formatBRL(activeService.rate)}
+                  {formatCurrencyAmount(getServiceMarketRate(activeService, currency), currency)}
                 </div>
               </div>
               <div className="bg-[#0C0E12] border border-[#232730] p-3">
-                <div className="text-[#68707E]">TEMPO MÉDIO</div>
+                <div className="text-[#68707E]">{isPt ? "TEMPO MÉDIO" : "AVG. START"}</div>
                 <div className="mt-1 text-base font-bold text-[#F4F5F6] flex items-center gap-1.5">
                   <Clock className="h-4 w-4 text-[#FF6B2C]" />
                   {activeService.averageTime}
@@ -675,7 +732,7 @@ export function NewOrderClient({
                 Descrição & Instruções
               </div>
               <p className="whitespace-pre-line text-sm text-[#D2D7E0] leading-relaxed">
-                {activeService.description}
+                {getLocalizedServiceDescription(activeService, locale)}
               </p>
             </div>
 

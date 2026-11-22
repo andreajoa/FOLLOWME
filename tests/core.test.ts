@@ -17,8 +17,10 @@ import {
 } from "../src/lib/stripe";
 import {
   convertFromBrl,
+  detectPreferencesFromAcceptLanguage,
   formatMoney,
   getDictionary,
+  getServiceMarketRate,
   normalizeCurrency,
   normalizeLocale,
 } from "../src/lib/i18n";
@@ -112,6 +114,17 @@ describe("FollowMe Core Engine", () => {
     const cardParams = buildStripeCheckoutParams({ ...base, method: "CARD" });
     expect(cardParams["payment_method_types[0]"]).toBe("card");
     expect(cardParams["payment_method_types[1]"]).toBeUndefined();
+
+    const usdParams = buildStripeCheckoutParams({
+      ...base,
+      amount: 14.99,
+      currency: "USD",
+      method: "CARD",
+    });
+    expect(usdParams.currency).toBe("usd");
+    expect(usdParams.locale).toBe("en");
+    expect(usdParams["line_items[0][price_data][unit_amount]"]).toBe(1499);
+    expect(usdParams["payment_method_types[0]"]).toBe("card");
   });
 
   it("verifies valid Stripe webhook signatures and rejects tampered/expired ones", () => {
@@ -161,7 +174,7 @@ describe("FollowMe Core Engine", () => {
     expect(toExternalSmmStatus("PARTIAL")).toBe("Partial");
   });
 
-  it("handles i18n locales and multi-currency conversion", () => {
+  it("handles i18n locales, browser auto-detection, and native US vs BR market pricing", () => {
     expect(normalizeLocale("en-US")).toBe("en");
     expect(normalizeLocale("es-ES")).toBe("es");
     expect(normalizeLocale("pt-BR")).toBe("pt");
@@ -169,5 +182,24 @@ describe("FollowMe Core Engine", () => {
     expect(getDictionary("en").sidebar.childPanel).toBe("Child Panel");
     expect(convertFromBrl(55, "USD", { usdRate: 5.5 })).toBeCloseTo(10, 4);
     expect(formatMoney(55, "USD", { usdRate: 5.5 })).toContain("10.00");
+
+    // Browser Accept-Language auto-detection
+    expect(detectPreferencesFromAcceptLanguage("en-US,en;q=0.9")).toEqual({
+      locale: "en",
+      currency: "USD",
+    });
+    expect(detectPreferencesFromAcceptLanguage("pt-BR,pt;q=0.9,en-US;q=0.8")).toEqual({
+      locale: "pt",
+      currency: "BRL",
+    });
+    expect(detectPreferencesFromAcceptLanguage("es-MX,es;q=0.9")).toEqual({
+      locale: "es",
+      currency: "USD",
+    });
+
+    // Native US pricing uses rateUsd directly (NOT BRL FX division)
+    const sampleService = { rate: 19.9, rateUsd: 14.99, network: "instagram", metricType: "followers" };
+    expect(getServiceMarketRate(sampleService, "BRL")).toBe(19.9);
+    expect(getServiceMarketRate(sampleService, "USD")).toBe(14.99);
   });
 });

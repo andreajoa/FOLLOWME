@@ -1,12 +1,14 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { prisma } from "./prisma";
 import {
   AppCurrency,
   AppLocale,
   CURRENCY_COOKIE,
   LOCALE_COOKIE,
+  defaultCurrencyForLocale,
+  detectPreferencesFromAcceptLanguage,
   normalizeCurrency,
   normalizeLocale,
 } from "./i18n";
@@ -141,9 +143,32 @@ export async function getRequestPreferences(): Promise<{
   currency: AppCurrency;
 }> {
   const store = await cookies();
-  const locale = normalizeLocale(store.get(LOCALE_COOKIE)?.value);
-  const currency = normalizeCurrency(store.get(CURRENCY_COOKIE)?.value);
-  return { locale, currency };
+  const cookieLocale = store.get(LOCALE_COOKIE)?.value;
+  const cookieCurrency = store.get(CURRENCY_COOKIE)?.value;
+
+  if (cookieLocale) {
+    const locale = normalizeLocale(cookieLocale);
+    const currency = cookieCurrency
+      ? normalizeCurrency(cookieCurrency)
+      : defaultCurrencyForLocale(locale);
+    return { locale, currency };
+  }
+
+  let acceptLanguage: string | null = null;
+  try {
+    const hdrs = await headers();
+    acceptLanguage = hdrs.get("accept-language");
+  } catch {
+    acceptLanguage = null;
+  }
+
+  const detected = detectPreferencesFromAcceptLanguage(acceptLanguage);
+  return {
+    locale: detected.locale,
+    currency: cookieCurrency
+      ? normalizeCurrency(cookieCurrency)
+      : detected.currency,
+  };
 }
 
 export async function getCurrentUser() {

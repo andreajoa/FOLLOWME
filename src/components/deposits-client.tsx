@@ -16,15 +16,16 @@ import {
 } from "lucide-react";
 import {
   DEPOSIT_STATUS_META,
-  formatBRL,
   formatDateBR,
   PAYMENT_METHOD_LABELS,
 } from "@/lib/format";
+import { AppCurrency, AppLocale, formatCurrencyAmount } from "@/lib/i18n";
 import { StatusBadge } from "./status-badge";
 
 export interface DepositItem {
   id: string;
   amount: number;
+  currency?: string;
   method: string;
   gateway: string;
   txid: string;
@@ -41,9 +42,12 @@ interface DepositsClientProps {
   stripeConfigured: boolean;
   stripeEnabled: boolean;
   stripePixEnabled: boolean;
+  locale?: AppLocale;
+  currency?: AppCurrency;
 }
 
-const PRESETS = [10, 25, 50, 100, 250, 500];
+const PRESETS_BRL = [10, 25, 50, 100, 250, 500];
+const PRESETS_USD = [5, 10, 25, 50, 100, 250];
 
 export function DepositsClient({
   initialDeposits,
@@ -51,14 +55,21 @@ export function DepositsClient({
   stripeConfigured,
   stripeEnabled,
   stripePixEnabled,
+  locale = "en",
+  currency = "USD",
 }: DepositsClientProps) {
+  const isBrl = currency === "BRL";
+  const isPt = locale === "pt";
+  const presets = isBrl ? PRESETS_BRL : PRESETS_USD;
   const router = useRouter();
   const searchParams = useSearchParams();
   const [deposits, setDeposits] = useState(initialDeposits);
   const [method, setMethod] = useState<"PIX" | "CARD" | "BOTH">(
-    stripePixEnabled ? "PIX" : "CARD"
+    isBrl && stripePixEnabled ? "PIX" : "CARD"
   );
-  const [amount, setAmount] = useState<number>(Math.max(50, minDeposit));
+  const [amount, setAmount] = useState<number>(
+    isBrl ? Math.max(50, minDeposit) : 25
+  );
   const [creating, setCreating] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState("");
@@ -82,7 +93,9 @@ export function DepositsClient({
           if (!active) return;
           if (data.paid) {
             setSuccess(
-              `Pagamento confirmado via Stripe! Seu saldo atualizado é ${formatBRL(data.balance ?? 0)}.`
+              isPt
+                ? `Pagamento confirmado via Stripe! Saldo atualizado com sucesso.`
+                : `Stripe payment confirmed! Your account balance has been credited.`
             );
             if (data.deposit?.id) {
               setDeposits((prev) =>
@@ -111,7 +124,7 @@ export function DepositsClient({
         active = false;
       };
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, isPt]);
 
   async function handleCheckout(e: React.FormEvent) {
     e.preventDefault();
@@ -122,7 +135,7 @@ export function DepositsClient({
       const res = await fetch("/api/deposits/stripe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount, method }),
+        body: JSON.stringify({ amount, method: isBrl ? method : "CARD", currency }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -164,7 +177,9 @@ export function DepositsClient({
           )
         );
         setSuccess(
-          `Pagamento confirmado! Novo saldo: ${formatBRL(data.balance ?? 0)}.`
+          isPt
+            ? "Pagamento confirmado! Saldo creditado na sua conta."
+            : "Payment confirmed! Funds credited to your account."
         );
         router.refresh();
       } else if (data.error) {
@@ -177,7 +192,7 @@ export function DepositsClient({
     }
   }
 
-  const minAllowed = Math.max(minDeposit, 5);
+  const minAllowed = isBrl ? Math.max(minDeposit, 5) : 5;
   const canPay = stripeConfigured && stripeEnabled;
 
   return (
@@ -185,19 +200,26 @@ export function DepositsClient({
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <span className="font-mono text-xs uppercase tracking-widest text-[#C8FF2E]">
-            Checkout Oficial Stripe • Crédito Automático 24/7
+            {isPt
+              ? "Checkout Oficial Stripe · Crédito Automático 24/7"
+              : "Official Stripe Checkout · Instant Credit 24/7"}
           </span>
           <h1 className="mt-1 font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold">
-            Adicionar Saldo (Pix &amp; Cartão)
+            {isBrl
+              ? isPt
+                ? "Adicionar Saldo (Pix & Cartão)"
+                : "Add Funds (Pix & Card)"
+              : "Add Funds (USD via Stripe)"}
           </h1>
           <p className="mt-1 text-sm text-[#98A0AD]">
-            Pague com Pix instantâneo ou Cartão de Crédito/Débito via Stripe. Recarga mínima de{" "}
-            {formatBRL(minAllowed)}.
+            {isBrl
+              ? `Pague com Pix instantâneo ou Cartão de Crédito/Débito via Stripe. Recarga mínima de ${formatCurrencyAmount(minAllowed, currency)}.`
+              : `Pay securely with Credit Card, Debit Card, Apple Pay, or Google Pay via Stripe in ${currency}. Minimum top-up ${formatCurrencyAmount(minAllowed, currency)}.`}
           </p>
         </div>
         <div className="inline-flex items-center gap-2 border border-[#10B981]/40 bg-[#10B981]/10 px-3 py-1.5 font-mono text-[11px] uppercase text-[#34D399]">
           <ShieldCheck className="h-3.5 w-3.5" />
-          Ambiente Criptografado Stripe
+          {isPt ? "Ambiente Criptografado Stripe" : "Encrypted Stripe Checkout"}
         </div>
       </div>
 
@@ -234,6 +256,7 @@ export function DepositsClient({
           className="lg:col-span-7 surface-card p-5 sm:p-6 space-y-5"
         >
           {/* Seletor de Forma de Pagamento */}
+          {isBrl && (
           <div>
             <div className="font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-2">
               1. Escolha a Forma de Pagamento
@@ -313,14 +336,15 @@ export function DepositsClient({
               )}
             </div>
           </div>
+          )}
 
           {/* Presets de valor */}
           <div>
             <div className="font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-2">
-              2. Valores Rápidos (BRL)
+              {isBrl ? `2. Valores Rápidos (${currency})` : `1. Quick Amounts (${currency})`}
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-              {PRESETS.map((val) => (
+              {presets.map((val) => (
                 <button
                   key={val}
                   type="button"
@@ -331,7 +355,7 @@ export function DepositsClient({
                       : "bg-[#0C0E12] text-[#F4F5F6] border-[#232730] hover:border-[#C8FF2E]"
                   }`}
                 >
-                  R$ {val}
+                  {isBrl ? `R$ ${val}` : `$${val}`}
                 </button>
               ))}
             </div>
@@ -343,7 +367,7 @@ export function DepositsClient({
               htmlFor="deposit-amount"
               className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1.5"
             >
-              3. Valor da Recarga (R$)
+              {isBrl ? "3. Valor da Recarga (R$)" : `2. Custom Top-Up Amount (${currency})`}
             </label>
             <input
               id="deposit-amount"
@@ -366,21 +390,23 @@ export function DepositsClient({
             {creating ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Abrindo Checkout Stripe...
+                {isPt ? "Abrindo Checkout Stripe..." : "Opening Stripe Checkout..."}
               </>
             ) : (
               <>
-                {method === "PIX" ? (
+                {isBrl && method === "PIX" ? (
                   <QrCode className="h-4 w-4" />
                 ) : (
                   <CreditCard className="h-4 w-4" />
                 )}
-                Pagar {formatBRL(amount)} via{" "}
-                {method === "PIX"
-                  ? "Pix (Stripe)"
-                  : method === "CARD"
-                    ? "Cartão (Stripe)"
-                    : "Stripe (Pix / Cartão)"}
+                {isPt ? "Pagar" : "Pay"} {formatCurrencyAmount(amount, currency)}{" "}
+                {isBrl
+                  ? method === "PIX"
+                    ? "via Pix (Stripe)"
+                    : method === "CARD"
+                      ? "via Cartão (Stripe)"
+                      : "via Stripe"
+                  : "via Stripe Card"}
                 <ArrowUpRight className="h-4 w-4" />
               </>
             )}
@@ -474,7 +500,10 @@ export function DepositsClient({
                         {PAYMENT_METHOD_LABELS[d.method] || d.method}
                       </td>
                       <td className="px-4 py-3 font-mono text-sm font-bold text-[#C8FF2E]">
-                        {formatBRL(d.amount)}
+                        {formatCurrencyAmount(
+                          d.amount,
+                          (d.currency as AppCurrency) || "BRL"
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge label={meta.label} tone={meta.tone} />

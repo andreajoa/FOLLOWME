@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { CURRENCY_COOKIE, LOCALE_COOKIE } from "@/lib/i18n";
+import { CURRENCY_COOKIE, LOCALE_COOKIE, defaultCurrencyForLocale } from "@/lib/i18n";
 
 const prefSchema = z.object({
   locale: z.enum(["pt", "en", "es"]).optional(),
@@ -23,21 +23,25 @@ export async function POST(req: NextRequest) {
     maxAge: 60 * 60 * 24 * 365,
   };
 
-  if (parsed.data.locale) {
-    store.set(LOCALE_COOKIE, parsed.data.locale, cookieOpts);
+  const nextLocale = parsed.data.locale;
+  const nextCurrency =
+    parsed.data.currency ?? (nextLocale ? defaultCurrencyForLocale(nextLocale) : undefined);
+
+  if (nextLocale) {
+    store.set(LOCALE_COOKIE, nextLocale, cookieOpts);
   }
-  if (parsed.data.currency) {
-    store.set(CURRENCY_COOKIE, parsed.data.currency, cookieOpts);
+  if (nextCurrency) {
+    store.set(CURRENCY_COOKIE, nextCurrency, cookieOpts);
   }
 
   const user = await getCurrentUser().catch(() => null);
-  if (user && (parsed.data.locale || parsed.data.currency)) {
+  if (user && (nextLocale || nextCurrency)) {
     await prisma.user
       .update({
         where: { id: user.id },
         data: {
-          ...(parsed.data.locale ? { locale: parsed.data.locale } : {}),
-          ...(parsed.data.currency ? { currency: parsed.data.currency } : {}),
+          ...(nextLocale ? { locale: nextLocale } : {}),
+          ...(nextCurrency ? { currency: nextCurrency } : {}),
         },
       })
       .catch(() => null);
@@ -45,7 +49,7 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    locale: parsed.data.locale,
-    currency: parsed.data.currency,
+    locale: nextLocale,
+    currency: nextCurrency,
   });
 }

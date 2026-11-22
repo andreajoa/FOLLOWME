@@ -253,8 +253,27 @@ export function AdminDashboard() {
     apiKey: "",
     mode: "LIVE",
     markupPercent: 40,
-    currencyRate: 1,
+    currencyRate: 5.5,
   });
+  const [previewProviderId, setPreviewProviderId] = useState<string | null>(null);
+  const [previewQuery, setPreviewQuery] = useState("");
+  const [previewNetwork, setPreviewNetwork] = useState("all");
+  const [previewServices, setPreviewServices] = useState<
+    Array<{
+      service: string;
+      name: string;
+      category: string;
+      network: string;
+      metricType: string;
+      rate: number;
+      min: number;
+      max: number;
+      refill: boolean;
+      suggestedRateBrl: number;
+      suggestedRateUsd: number;
+    }>
+  >([]);
+  const [selectedRemoteIds, setSelectedRemoteIds] = useState<string[]>([]);
   const [newSrv, setNewSrv] = useState({
     categoryId: "",
     name: "",
@@ -382,6 +401,58 @@ export function AdminDashboard() {
       "ok",
       `Sincronizado: ${data.imported} novo(s), ${data.updated} atualizado(s). Saldo no fornecedor: ${data.currency} ${data.balance}.`
     );
+    loadTab("providers");
+  }
+
+  async function handlePreviewProvider(
+    providerId: string,
+    query = previewQuery,
+    network = previewNetwork
+  ) {
+    setBusyKey(`prev-${providerId}`);
+    setPreviewProviderId(providerId);
+    const res = await fetch("/api/admin/providers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "preview", providerId, query, network }),
+    });
+    const data = await res.json();
+    setBusyKey("");
+    if (!res.ok) {
+      flash("err", data.error || "Erro ao consultar catálogo do fornecedor.");
+      return;
+    }
+    setPreviewServices(data.services || []);
+    setSelectedRemoteIds([]);
+    flash(
+      "ok",
+      `Catálogo remoto carregado (${data.totalRemote} serviços no fornecedor · Saldo: ${data.currency} ${data.balance}).`
+    );
+  }
+
+  async function handleImportSelected() {
+    if (!previewProviderId || selectedRemoteIds.length === 0) return;
+    setBusyKey(`imp-${previewProviderId}`);
+    const res = await fetch("/api/admin/providers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "import_selected",
+        providerId: previewProviderId,
+        serviceIds: selectedRemoteIds,
+      }),
+    });
+    const data = await res.json();
+    setBusyKey("");
+    if (!res.ok) {
+      flash("err", data.error || "Erro ao importar serviços selecionados.");
+      return;
+    }
+    flash(
+      "ok",
+      `Importação concluída: ${data.imported} novo(s) e ${data.updated} atualizado(s) com preços BR + EUA.`
+    );
+    setSelectedRemoteIds([]);
     loadTab("providers");
   }
 
@@ -838,10 +909,12 @@ export function AdminDashboard() {
               </div>
               <div className="grid grid-cols-2 gap-1.5">
                 {[
-                  { name: "FonteSMM (BR)", url: "https://fontesmm.com/api/v2", rate: 1 },
-                  { name: "JustAnotherPanel (USD)", url: "https://justanotherpanel.com/api/v2", rate: 5.5 },
+                  { name: "MoreThanPanel (USD)", url: "https://morethanpanel.com/api/v2", rate: 5.5 },
                   { name: "Peakerr (USD)", url: "https://peakerr.com/api/v2", rate: 5.5 },
+                  { name: "SMMHeaven (USD)", url: "https://smmheaven.net/api/v2", rate: 5.5 },
                   { name: "SMMFollows (USD)", url: "https://smmfollows.com/api/v2", rate: 5.5 },
+                  { name: "JustAnotherPanel (USD)", url: "https://justanotherpanel.com/api/v2", rate: 5.5 },
+                  { name: "FonteSMM (BR)", url: "https://fontesmm.com/api/v2", rate: 1 },
                 ].map((preset) => (
                   <button
                     key={preset.name}
@@ -954,17 +1027,138 @@ export function AdminDashboard() {
                     {p._count.services} serviços
                   </div>
                 </div>
-                <button
-                  type="button"
-                  disabled={busyKey === `sync-${p.id}`}
-                  onClick={() => handleSyncProvider(p.id)}
-                  className="btn-lime h-10 px-4 inline-flex items-center gap-2 font-mono text-xs uppercase cursor-pointer shrink-0"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  {busyKey === `sync-${p.id}` ? "Sincronizando..." : "Sincronizar"}
-                </button>
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    disabled={busyKey === `prev-${p.id}`}
+                    onClick={() => handlePreviewProvider(p.id)}
+                    className="btn-outline h-10 px-3.5 inline-flex items-center gap-2 font-mono text-xs uppercase cursor-pointer"
+                  >
+                    <List className="h-3.5 w-3.5" />
+                    {busyKey === `prev-${p.id}` ? "Buscando..." : "Explorar & Escolher"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busyKey === `sync-${p.id}`}
+                    onClick={() => handleSyncProvider(p.id)}
+                    className="btn-lime h-10 px-4 inline-flex items-center gap-2 font-mono text-xs uppercase cursor-pointer"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    {busyKey === `sync-${p.id}` ? "Sincronizando..." : "Sincronizar"}
+                  </button>
+                </div>
               </div>
             ))}
+
+            {previewProviderId && (
+              <div className="surface-card p-5 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#232730] pb-3">
+                  <div>
+                    <div className="font-mono text-xs uppercase text-[#C8FF2E]">
+                      Importação Seletiva de Serviços (BR + EUA)
+                    </div>
+                    <p className="text-xs text-[#98A0AD]">
+                      Filtre o catálogo real do fornecedor e importe apenas os IDs que deseja vender.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={selectedRemoteIds.length === 0 || busyKey === `imp-${previewProviderId}`}
+                    onClick={handleImportSelected}
+                    className="btn-lime h-9 px-4 font-mono text-xs uppercase cursor-pointer disabled:opacity-40"
+                  >
+                    {busyKey === `imp-${previewProviderId}`
+                      ? "Importando..."
+                      : `Importar Selecionados (${selectedRemoteIds.length})`}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                  <input
+                    type="text"
+                    value={previewQuery}
+                    onChange={(e) => setPreviewQuery(e.target.value)}
+                    placeholder="Buscar (ex: Instagram Followers Refill)"
+                    className="input-terminal sm:col-span-2 h-9 px-3 text-xs"
+                  />
+                  <select
+                    value={previewNetwork}
+                    onChange={(e) => setPreviewNetwork(e.target.value)}
+                    className="input-terminal h-9 px-2 text-xs font-mono"
+                  >
+                    <option value="all">Todas Redes</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="tiktok">TikTok</option>
+                    <option value="youtube">YouTube</option>
+                    <option value="facebook">Facebook</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handlePreviewProvider(previewProviderId, previewQuery, previewNetwork)
+                    }
+                    className="btn-outline h-9 px-3 font-mono text-xs uppercase cursor-pointer"
+                  >
+                    Filtrar
+                  </button>
+                </div>
+
+                <div className="max-h-80 overflow-y-auto border border-[#232730]">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-[#0C0E12] border-b border-[#232730] font-mono text-[10px] uppercase text-[#98A0AD]">
+                        <th className="p-2.5 w-8">Sel</th>
+                        <th className="p-2.5">ID / Serviço</th>
+                        <th className="p-2.5 text-right">Custo Forn.</th>
+                        <th className="p-2.5 text-right">Venda BR</th>
+                        <th className="p-2.5 text-right">Venda EUA</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#232730]">
+                      {previewServices.map((item) => {
+                        const checked = selectedRemoteIds.includes(item.service);
+                        return (
+                          <tr key={item.service} className="hover:bg-[#161920]">
+                            <td className="p-2.5">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() =>
+                                  setSelectedRemoteIds((prev) =>
+                                    checked
+                                      ? prev.filter((id) => id !== item.service)
+                                      : [...prev, item.service]
+                                  )
+                                }
+                                className="accent-[#C8FF2E] cursor-pointer"
+                              />
+                            </td>
+                            <td className="p-2.5">
+                              <div className="font-medium text-[#F4F5F6]">
+                                #{item.service} {item.name}
+                              </div>
+                              <div className="font-mono text-[10px] text-[#68707E]">
+                                {item.category} · {item.metricType}
+                                {item.refill ? " · REFILL" : ""}
+                              </div>
+                            </td>
+                            <td className="p-2.5 text-right font-mono text-[#98A0AD]">
+                              {item.rate.toFixed(2)}
+                            </td>
+                            <td className="p-2.5 text-right font-mono text-[#F4F5F6]">
+                              R$ {item.suggestedRateBrl.toFixed(2)}
+                            </td>
+                            <td className="p-2.5 text-right font-mono text-[#C8FF2E]">
+                              ${item.suggestedRateUsd.toFixed(2)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

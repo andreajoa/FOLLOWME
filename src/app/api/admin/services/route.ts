@@ -29,9 +29,16 @@ const createServiceSchema = z.object({
   providerId: z.string().optional().nullable(),
   providerServiceId: z.string().optional().nullable(),
   name: z.string().trim().min(3).max(200),
+  nameEn: z.string().trim().max(200).optional().nullable(),
+  metricType: z
+    .enum(["followers", "likes", "views", "comments", "other"])
+    .optional()
+    .default("followers"),
   type: z.enum(["DEFAULT", "CUSTOM_COMMENTS", "PACKAGE"]).default("DEFAULT"),
   description: z.string().trim().min(2).max(2000),
+  descriptionEn: z.string().trim().max(2000).optional().nullable(),
   rate: z.coerce.number().positive(),
+  rateUsd: z.coerce.number().positive().optional().nullable(),
   providerRate: z.coerce.number().min(0).default(0),
   min: z.coerce.number().int().positive().default(10),
   max: z.coerce.number().int().positive().default(100000),
@@ -80,11 +87,14 @@ export async function POST(req: NextRequest) {
 const patchServiceSchema = z.object({
   id: z.coerce.number().int().positive(),
   rate: z.coerce.number().positive().optional(),
+  rateUsd: z.coerce.number().positive().optional().nullable(),
   providerRate: z.coerce.number().min(0).optional(),
   isActive: z.boolean().optional(),
   isFeatured: z.boolean().optional(),
   refill: z.boolean().optional(),
   name: z.string().trim().min(3).optional(),
+  nameEn: z.string().trim().max(200).optional().nullable(),
+  metricType: z.enum(["followers", "likes", "views", "comments", "other"]).optional(),
 });
 
 export async function PATCH(req: NextRequest) {

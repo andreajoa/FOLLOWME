@@ -6,6 +6,7 @@ import {
   submitProviderOrder,
 } from "./smm-provider";
 import { getSiteSettings } from "./settings";
+import { AppCurrency, getServiceMarketRate } from "./i18n";
 
 export interface PlaceOrderParams {
   userId: string;
@@ -18,6 +19,7 @@ export interface PlaceOrderParams {
   comments?: string;
   username?: string;
   answerNumber?: string;
+  billingCurrency?: AppCurrency;
   source?: "WEB" | "MASS" | "API";
 }
 
@@ -72,16 +74,29 @@ export async function placeSingleOrder(params: PlaceOrderParams) {
     ? Math.max(5, Math.floor(params.interval ?? 60))
     : undefined;
 
+  const settings = await getSiteSettings();
+  const billingCurrency: AppCurrency = params.billingCurrency || "BRL";
+  const effectiveMarketRateBrl =
+    billingCurrency === "USD"
+      ? round4(
+          getServiceMarketRate(service, "USD") * Math.max(0.1, settings.usdRate || 5.5)
+        )
+      : billingCurrency === "EUR"
+        ? round4(
+            getServiceMarketRate(service, "EUR") * Math.max(0.1, settings.eurRate || 6.0)
+          )
+        : service.rate;
+
   const totals =
     service.type === "PACKAGE"
       ? {
           totalQuantity: 1,
-          charge: round4(service.rate),
+          charge: round4(effectiveMarketRateBrl),
           cost: round4(service.providerRate),
-          profit: round4(service.rate - service.providerRate),
+          profit: round4(effectiveMarketRateBrl - service.providerRate),
         }
       : calculateOrderTotals({
-          rate: service.rate,
+          rate: effectiveMarketRateBrl,
           providerRate: service.providerRate,
           quantity: effectiveQuantity,
           dripfeed: useDripfeed,
@@ -389,15 +404,22 @@ export async function confirmDepositAndCredit(
       throw new Error("Este depósito não pode mais ser confirmado.");
     }
 
+    const creditLedgerAmount =
+      deposit.currency === "USD"
+        ? round4(deposit.amount * Math.max(0.1, settings.usdRate || 5.5))
+        : deposit.currency === "EUR"
+          ? round4(deposit.amount * Math.max(0.1, settings.eurRate || 6.0))
+          : deposit.amount;
+
     await tx.user.update({
       where: { id: deposit.userId },
       data: {
-        balance: { increment: deposit.amount },
+        balance: { increment: creditLedgerAmount },
       },
     });
 
     if (deposit.user.referredById && settings.affiliateRate > 0) {
-      const commission = round4((deposit.amount * settings.affiliateRate) / 100);
+      const commission = round4((creditLedgerAmount * settings.affiliateRate) / 100);
       if (commission > 0) {
         await tx.user.update({
           where: { id: deposit.user.referredById },
@@ -411,7 +433,7 @@ export async function confirmDepositAndCredit(
             referrerId: deposit.user.referredById,
             referredUserId: deposit.userId,
             depositId: deposit.id,
-            depositAmount: deposit.amount,
+            depositAmount: creditLedgerAmount,
             commissionRate: settings.affiliateRate,
             amount: commission,
             status: "AVAILABLE",

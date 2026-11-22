@@ -90,7 +90,9 @@ export async function stripeApiRequest<T>(
 }
 
 export interface CreateStripeDepositInput {
-  amountBrl: number;
+  amountBrl?: number;
+  amount?: number;
+  currency?: "BRL" | "USD" | "EUR";
   method: StripeCheckoutMethod;
   depositId: string;
   txid: string;
@@ -103,37 +105,48 @@ export interface CreateStripeDepositInput {
 export function buildStripeCheckoutParams(
   input: CreateStripeDepositInput
 ): Record<string, string | number | boolean | undefined> {
-  const unitAmount = Math.round(input.amountBrl * 100);
+  const currency = (input.currency || "BRL").toUpperCase() as "BRL" | "USD" | "EUR";
+  const rawAmount = input.amount ?? input.amountBrl ?? 0;
+  const unitAmount = Math.round(rawAmount * 100);
   const pmcPix = process.env.STRIPE_PMC_PIX?.trim();
+  const isBrl = currency === "BRL";
 
-  const label =
-    input.method === "PIX"
+  const label = isBrl
+    ? input.method === "PIX"
       ? `Recarga de Saldo via Pix — ${input.brandName}`
       : input.method === "CARD"
         ? `Recarga de Saldo via Cartão — ${input.brandName}`
-        : `Recarga de Saldo — ${input.brandName}`;
+        : `Recarga de Saldo — ${input.brandName}`
+    : `Account Balance Top-Up — ${input.brandName}`;
+
+  const description = isBrl
+    ? `Crédito instantâneo na conta ${input.brandName} (${input.txid})`
+    : `Instant balance credit for ${input.brandName} (${input.txid})`;
 
   const params: Record<string, string | number | boolean | undefined> = {
     mode: "payment",
-    currency: "brl",
-    locale: "pt-BR",
+    currency: currency.toLowerCase(),
+    locale: isBrl ? "pt-BR" : "en",
     client_reference_id: input.depositId,
     customer_email: input.userEmail,
     success_url: `${input.origin}/painel/saldo?stripe=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${input.origin}/painel/saldo?stripe=canceled&deposit=${encodeURIComponent(input.depositId)}`,
     "line_items[0][quantity]": 1,
-    "line_items[0][price_data][currency]": "brl",
+    "line_items[0][price_data][currency]": currency.toLowerCase(),
     "line_items[0][price_data][unit_amount]": unitAmount,
     "line_items[0][price_data][product_data][name]": label,
-    "line_items[0][price_data][product_data][description]": `Crédito instantâneo na conta ${input.brandName} (${input.txid})`,
+    "line_items[0][price_data][product_data][description]": description,
     "metadata[app]": "followme",
     "metadata[depositId]": input.depositId,
     "metadata[userId]": input.userId,
     "metadata[txid]": input.txid,
-    "metadata[method]": input.method,
+    "metadata[method]": isBrl ? input.method : "CARD",
+    "metadata[currency]": currency,
   };
 
-  if (input.method === "PIX") {
+  if (!isBrl) {
+    params["payment_method_types[0]"] = "card";
+  } else if (input.method === "PIX") {
     params["payment_method_types[0]"] = "pix";
     params["payment_method_options[pix][expires_after_seconds]"] = 1800;
   } else if (input.method === "CARD") {

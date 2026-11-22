@@ -14,7 +14,7 @@ export default async function PublicServicesPage() {
     getRequestPreferences(),
     prisma.service.findMany({
       where: { isActive: true, category: { isActive: true } },
-      include: { category: { select: { name: true, network: true } } },
+      include: { category: { select: { name: true, nameEn: true, network: true } } },
       orderBy: [{ category: { sortOrder: "asc" } }, { id: "asc" }],
     }),
   ]);
@@ -28,6 +28,8 @@ export default async function PublicServicesPage() {
     favoriteIds = favs.map((f) => f.serviceId);
   }
 
+  const isPt = prefs.locale === "pt";
+
   return (
     <div className="min-h-screen flex flex-col bg-[#090A0C]">
       <PublicHeader
@@ -40,15 +42,25 @@ export default async function PublicServicesPage() {
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-12 sm:px-6 lg:px-8">
         <div className="mb-8">
           <span className="font-mono text-xs uppercase tracking-widest text-[#C8FF2E]">
-            Catálogo Oficial Atualizado
+            {isPt ? "Catálogo Oficial Atualizado" : "Live Market Pricing"}
           </span>
           <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold tracking-tight">
-            Lista Completa de Serviços SMM
+            {isPt ? "Todos os Serviços por Rede Social" : "All Social Growth Services"}
           </h1>
           <p className="mt-2 text-sm text-[#98A0AD]">
-            Todos os valores abaixo correspondem ao preço por{" "}
-            <strong className="text-[#F4F5F6]">1.000 unidades</strong> em Reais
-            (BRL). Você pode contratar a partir do mínimo de cada serviço.
+            {isPt ? (
+              <>
+                Todos os valores abaixo correspondem ao preço por{" "}
+                <strong className="text-[#F4F5F6]">1.000 unidades</strong> em{" "}
+                <strong className="text-[#F4F5F6]">{prefs.currency}</strong>.
+              </>
+            ) : (
+              <>
+                All rates below are transparent retail prices per{" "}
+                <strong className="text-[#F4F5F6]">1,000 units</strong> in{" "}
+                <strong className="text-[#F4F5F6]">{prefs.currency}</strong>. Order any quantity within min and max limits.
+              </>
+            )}
           </p>
         </div>
 
@@ -56,12 +68,16 @@ export default async function PublicServicesPage() {
           services={services.map((s) => ({
             id: s.id,
             categoryId: s.categoryId,
-            categoryName: s.category.name,
+            categoryName: isPt ? s.category.name : s.category.nameEn || s.category.name,
             network: s.category.network,
             name: s.name,
+            nameEn: s.nameEn,
+            metricType: s.metricType,
             type: s.type,
             description: s.description,
+            descriptionEn: s.descriptionEn,
             rate: s.rate,
+            rateUsd: s.rateUsd,
             min: s.min,
             max: s.max,
             averageTime: s.averageTime,
@@ -72,6 +88,8 @@ export default async function PublicServicesPage() {
           }))}
           initialFavorites={favoriteIds}
           isLoggedIn={Boolean(user)}
+          locale={prefs.locale}
+          currency={prefs.currency}
         />
       </main>
 
@@ -79,6 +97,7 @@ export default async function PublicServicesPage() {
         brandName={settings.brandName}
         supportEmail={settings.supportEmail}
         supportWhatsapp={settings.supportWhatsapp}
+        locale={prefs.locale}
       />
     </div>
   );

@@ -1,35 +1,41 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { ServiceCatalogTable } from "@/components/service-catalog-table";
 
 export const dynamic = "force-dynamic";
 
 export default async function PanelServicesPage() {
-  const user = (await getCurrentUser())!;
+  const [user, prefs] = await Promise.all([
+    getCurrentUser(),
+    getRequestPreferences(),
+  ]);
   const [services, favs] = await Promise.all([
     prisma.service.findMany({
       where: { isActive: true, category: { isActive: true } },
-      include: { category: { select: { name: true, network: true } } },
+      include: { category: { select: { name: true, nameEn: true, network: true } } },
       orderBy: [{ category: { sortOrder: "asc" } }, { id: "asc" }],
     }),
     prisma.favoriteService.findMany({
-      where: { userId: user.id },
+      where: { userId: user!.id },
       select: { serviceId: true },
     }),
   ]);
+
+  const isPt = prefs.locale === "pt";
 
   return (
     <div className="space-y-6">
       <div>
         <span className="font-mono text-xs uppercase tracking-widest text-[#C8FF2E]">
-          Tabela Completa de Serviços
+          {isPt ? "Tabela Completa de Serviços" : "Complete Service Catalog"}
         </span>
         <h1 className="mt-1 font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold">
-          Serviços Disponíveis
+          {isPt ? "Serviços Disponíveis" : "Available Services"}
         </h1>
         <p className="mt-1 text-sm text-[#98A0AD]">
-          Favorite os serviços que você mais usa para encontrá-los rapidamente na
-          tela de Novo Pedido.
+          {isPt
+            ? "Favorite os serviços que você mais usa para encontrá-los rapidamente na tela de Novo Pedido."
+            : "Star your go-to services to access them faster on the New Order screen."}
         </p>
       </div>
 
@@ -37,12 +43,16 @@ export default async function PanelServicesPage() {
         services={services.map((s) => ({
           id: s.id,
           categoryId: s.categoryId,
-          categoryName: s.category.name,
+          categoryName: isPt ? s.category.name : s.category.nameEn || s.category.name,
           network: s.category.network,
           name: s.name,
+          nameEn: s.nameEn,
+          metricType: s.metricType,
           type: s.type,
           description: s.description,
+          descriptionEn: s.descriptionEn,
           rate: s.rate,
+          rateUsd: s.rateUsd,
           min: s.min,
           max: s.max,
           averageTime: s.averageTime,
@@ -54,6 +64,8 @@ export default async function PanelServicesPage() {
         initialFavorites={favs.map((f) => f.serviceId)}
         isLoggedIn={true}
         inPanel={true}
+        locale={prefs.locale}
+        currency={prefs.currency}
       />
     </div>
   );

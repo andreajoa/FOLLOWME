@@ -11,7 +11,15 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { formatBRL, formatInt, NETWORK_LABELS } from "@/lib/format";
+import { formatInt, NETWORK_LABELS } from "@/lib/format";
+import {
+  AppCurrency,
+  AppLocale,
+  formatCurrencyAmount,
+  getLocalizedServiceDescription,
+  getLocalizedServiceName,
+  getServiceMarketRate,
+} from "@/lib/i18n";
 
 export interface CatalogService {
   id: number;
@@ -19,9 +27,13 @@ export interface CatalogService {
   categoryName: string;
   network: string;
   name: string;
+  nameEn?: string | null;
+  metricType?: string | null;
   type: string;
   description: string;
+  descriptionEn?: string | null;
   rate: number;
+  rateUsd?: number | null;
   min: number;
   max: number;
   averageTime: string;
@@ -36,23 +48,27 @@ interface ServiceCatalogTableProps {
   initialFavorites?: number[];
   isLoggedIn: boolean;
   inPanel?: boolean;
+  locale?: AppLocale;
+  currency?: AppCurrency;
 }
-
-const NETWORK_TABS = [
-  { key: "all", label: "Todas Redes" },
-  { key: "instagram", label: "Instagram" },
-  { key: "tiktok", label: "TikTok" },
-  { key: "youtube", label: "YouTube" },
-  { key: "facebook", label: "Facebook" },
-  { key: "other", label: "Kwai / X / Telegram / Spotify" },
-];
 
 export function ServiceCatalogTable({
   services,
   initialFavorites = [],
   isLoggedIn,
   inPanel = false,
+  locale = "en",
+  currency = "USD",
 }: ServiceCatalogTableProps) {
+  const isPt = locale === "pt";
+  const NETWORK_TABS = [
+    { key: "all", label: isPt ? "Todas Redes" : "All Networks" },
+    { key: "instagram", label: "Instagram" },
+    { key: "tiktok", label: "TikTok" },
+    { key: "youtube", label: "YouTube" },
+    { key: "facebook", label: "Facebook" },
+    { key: "other", label: isPt ? "Outras Redes" : "Other Networks" },
+  ];
   const [network, setNetwork] = useState("all");
   const [query, setQuery] = useState("");
   const [onlyFavorites, setOnlyFavorites] = useState(false);
@@ -81,12 +97,13 @@ export function ServiceCatalogTable({
       if (onlyFavorites && !favorites.includes(s.id)) return false;
       if (onlyRefill && !s.refill) return false;
       if (q) {
-        const hay = `${s.id} ${s.name} ${s.categoryName} ${s.description}`.toLowerCase();
+        const displayName = getLocalizedServiceName(s, locale);
+        const hay = `${s.id} ${s.name} ${displayName} ${s.categoryName} ${s.description}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
-  }, [services, network, query, onlyFavorites, onlyRefill, favorites]);
+  }, [services, network, query, onlyFavorites, onlyRefill, favorites, locale]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, CatalogService[]>();
@@ -126,7 +143,11 @@ export function ServiceCatalogTable({
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar por ID, rede social ou nome do serviço..."
+              placeholder={
+                isPt
+                  ? "Buscar por ID, rede social ou nome do serviço..."
+                  : "Search by ID, platform, or service name..."
+              }
               className="input-terminal w-full h-10 pl-9 pr-3 text-sm"
             />
           </div>
@@ -142,7 +163,7 @@ export function ServiceCatalogTable({
               }`}
             >
               <RefreshCw className="h-3.5 w-3.5" />
-              Com Reposição
+              {isPt ? "Com Reposição" : "Refill Only"}
             </button>
 
             {isLoggedIn && (
@@ -156,7 +177,7 @@ export function ServiceCatalogTable({
                 }`}
               >
                 <Star className="h-3.5 w-3.5" />
-                Favoritos ({favorites.length})
+                {isPt ? `Favoritos (${favorites.length})` : `Favorites (${favorites.length})`}
               </button>
             )}
           </div>
@@ -187,23 +208,24 @@ export function ServiceCatalogTable({
                     <tr className="border-b border-[#232730] bg-[#0C0E12] font-mono text-[11px] uppercase tracking-wider text-[#98A0AD]">
                       {isLoggedIn && <th className="px-3 py-2.5 w-10">★</th>}
                       <th className="px-3 py-2.5 w-16">ID</th>
-                      <th className="px-3 py-2.5">Serviço</th>
-                      <th className="px-3 py-2.5 text-right">Valor / 1k</th>
+                      <th className="px-3 py-2.5">{isPt ? "Serviço" : "Service"}</th>
+                      <th className="px-3 py-2.5 text-right">{isPt ? "Valor / 1k" : "Rate / 1k"}</th>
                       <th className="px-3 py-2.5 text-right">Min / Max</th>
-                      <th className="px-3 py-2.5">Tempo Médio</th>
-                      <th className="px-3 py-2.5 text-right">Detalhes</th>
+                      <th className="px-3 py-2.5">{isPt ? "Tempo Médio" : "Avg. Time"}</th>
+                      <th className="px-3 py-2.5 text-right">{isPt ? "Ação" : "Action"}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#232730] text-sm">
                     {items.map((s) => {
                       const isFav = favorites.includes(s.id);
+                      const marketRate = getServiceMarketRate(s, currency);
                       return (
                         <tr key={s.id} className="hover:bg-[#171A20] transition-colors">
                           {isLoggedIn && (
                             <td className="px-3 py-3">
                               <button
                                 type="button"
-                                aria-label="Favoritar serviço"
+                                aria-label="Favorite service"
                                 onClick={() => toggleFavorite(s.id)}
                                 className="cursor-pointer text-[#68707E] hover:text-[#FF6B2C]"
                               >
@@ -219,14 +241,16 @@ export function ServiceCatalogTable({
                             #{s.id}
                           </td>
                           <td className="px-3 py-3">
-                            <div className="font-medium text-[#F4F5F6]">{s.name}</div>
+                            <div className="font-medium text-[#F4F5F6]">
+                              {getLocalizedServiceName(s, locale)}
+                            </div>
                             <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase">
                               <span className="border border-[#232730] bg-[#0C0E12] px-1.5 py-0.5 text-[#98A0AD]">
                                 {NETWORK_LABELS[s.network] || s.network}
                               </span>
                               {s.refill && (
                                 <span className="border border-[#10B981]/40 bg-[#10B981]/10 px-1.5 py-0.5 text-[#34D399]">
-                                  Reposição {s.refillDays}D
+                                  {isPt ? `Reposição ${s.refillDays}D` : `Refill ${s.refillDays}D`}
                                 </span>
                               )}
                               {s.dripfeed && (
@@ -236,13 +260,13 @@ export function ServiceCatalogTable({
                               )}
                               {s.cancel && (
                                 <span className="border border-[#323845] px-1.5 py-0.5 text-[#98A0AD]">
-                                  Cancelável
+                                  {isPt ? "Cancelável" : "Cancelable"}
                                 </span>
                               )}
                             </div>
                           </td>
                           <td className="px-3 py-3 text-right font-mono font-bold text-[#F4F5F6] whitespace-nowrap">
-                            {formatBRL(s.rate)}
+                            {formatCurrencyAmount(marketRate, currency)}
                           </td>
                           <td className="px-3 py-3 text-right font-mono text-xs text-[#98A0AD] whitespace-nowrap">
                             {formatInt(s.min)} / {formatInt(s.max)}
@@ -261,7 +285,7 @@ export function ServiceCatalogTable({
                                 className="inline-flex h-8 items-center gap-1 border border-[#323845] px-2.5 font-mono text-[11px] uppercase text-[#98A0AD] hover:border-[#F4F5F6] hover:text-[#F4F5F6] cursor-pointer"
                               >
                                 <Info className="h-3.5 w-3.5" />
-                                Ver
+                                {isPt ? "Ver" : "Info"}
                               </button>
                               <Link
                                 href={
@@ -271,7 +295,7 @@ export function ServiceCatalogTable({
                                 }
                                 className="btn-lime inline-flex h-8 items-center px-2.5 font-mono text-[11px] uppercase"
                               >
-                                Pedir
+                                {isPt ? "Pedir" : "Order"}
                               </Link>
                             </div>
                           </td>
@@ -300,14 +324,14 @@ export function ServiceCatalogTable({
                   SERVIÇO #{inspectService.id}
                 </span>
                 <h3 className="mt-1 font-[family-name:var(--font-display)] text-lg font-bold text-[#F4F5F6]">
-                  {inspectService.name}
+                  {getLocalizedServiceName(inspectService, locale)}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setInspectService(null)}
                 className="p-1 text-[#98A0AD] hover:text-[#F4F5F6] cursor-pointer"
-                aria-label="Fechar"
+                aria-label="Close"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -315,19 +339,22 @@ export function ServiceCatalogTable({
 
             <div className="grid grid-cols-3 gap-2 font-mono text-xs">
               <div className="bg-[#0C0E12] border border-[#232730] p-3">
-                <div className="text-[#68707E]">PREÇO / 1.000</div>
+                <div className="text-[#68707E]">{isPt ? "PREÇO / 1.000" : "RATE / 1,000"}</div>
                 <div className="mt-1 text-base font-bold text-[#C8FF2E]">
-                  {formatBRL(inspectService.rate)}
+                  {formatCurrencyAmount(
+                    getServiceMarketRate(inspectService, currency),
+                    currency
+                  )}
                 </div>
               </div>
               <div className="bg-[#0C0E12] border border-[#232730] p-3">
-                <div className="text-[#68707E]">MÍNIMO</div>
+                <div className="text-[#68707E]">MIN</div>
                 <div className="mt-1 text-base font-bold text-[#F4F5F6]">
                   {formatInt(inspectService.min)}
                 </div>
               </div>
               <div className="bg-[#0C0E12] border border-[#232730] p-3">
-                <div className="text-[#68707E]">MÁXIMO</div>
+                <div className="text-[#68707E]">MAX</div>
                 <div className="mt-1 text-base font-bold text-[#F4F5F6]">
                   {formatInt(inspectService.max)}
                 </div>
@@ -336,17 +363,17 @@ export function ServiceCatalogTable({
 
             <div className="bg-[#0C0E12] border border-[#232730] p-4">
               <div className="font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-2">
-                Descrição e Regras de Entrega
+                {isPt ? "Descrição e Regras de Entrega" : "Delivery Details"}
               </div>
               <p className="whitespace-pre-line text-sm text-[#D2D7E0] leading-relaxed">
-                {inspectService.description}
+                {getLocalizedServiceDescription(inspectService, locale)}
               </p>
             </div>
 
             <div className="flex items-center justify-between pt-2">
               <span className="inline-flex items-center gap-1.5 font-mono text-xs text-[#98A0AD]">
                 <Zap className="h-3.5 w-3.5 text-[#FF6B2C]" />
-                Tempo médio: {inspectService.averageTime}
+                {isPt ? "Tempo médio:" : "Avg. start:"} {inspectService.averageTime}
               </span>
               <Link
                 href={
@@ -356,7 +383,7 @@ export function ServiceCatalogTable({
                 }
                 className="btn-lime inline-flex h-10 items-center px-5 font-mono text-xs uppercase"
               >
-                Fazer Pedido Agora
+                {isPt ? "Fazer Pedido Agora" : "Order Now"}
               </Link>
             </div>
           </div>

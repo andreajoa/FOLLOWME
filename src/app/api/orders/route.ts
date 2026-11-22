@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { placeSingleOrder } from "@/lib/order-service";
 
 const createOrderSchema = z.object({
@@ -71,9 +71,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const prefs = await getRequestPreferences();
     const order = await placeSingleOrder({
       userId: user.id,
       ...parsed.data,
+      billingCurrency: prefs.currency,
       source: "WEB",
     });
 

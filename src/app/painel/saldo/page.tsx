@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
 import { isStripeConfigured } from "@/lib/stripe";
 import { DepositsClient } from "@/components/deposits-client";
@@ -8,9 +8,10 @@ import { DepositsClient } from "@/components/deposits-client";
 export const dynamic = "force-dynamic";
 
 export default async function PanelDepositsPage() {
-  const [user, settings] = await Promise.all([
+  const [user, settings, prefs] = await Promise.all([
     getCurrentUser(),
     getSiteSettings(),
+    getRequestPreferences(),
   ]);
 
   const deposits = await prisma.deposit.findMany({
@@ -20,11 +21,12 @@ export default async function PanelDepositsPage() {
   });
 
   return (
-    <Suspense fallback={<div className="font-mono text-xs text-[#98A0AD]">Carregando...</div>}>
+    <Suspense fallback={<div className="font-mono text-xs text-[#98A0AD]">Loading...</div>}>
       <DepositsClient
         initialDeposits={deposits.map((d) => ({
           id: d.id,
           amount: d.amount,
+          currency: d.currency,
           method: d.method,
           gateway: d.gateway,
           txid: d.txid,
@@ -38,6 +40,8 @@ export default async function PanelDepositsPage() {
         stripeConfigured={isStripeConfigured()}
         stripeEnabled={settings.stripeEnabled}
         stripePixEnabled={settings.stripePixEnabled}
+        locale={prefs.locale}
+        currency={prefs.currency}
       />
     </Suspense>
   );
