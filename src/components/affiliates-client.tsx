@@ -81,18 +81,22 @@ export function AffiliatesClient({
           Programa de Afiliados
         </h1>
         <p className="mt-1 text-sm text-[#98A0AD]">
-          Ganhe {commissionRate}% de comissão automática sobre cada depósito Pix
-          feito pelos usuários que se cadastrarem pelo seu link.
+          Ganhe {commissionRate}% de comissão automática sobre cada recarga via
+          Stripe (Pix ou Cartão) feita pelos usuários que se cadastrarem pelo seu link.
         </p>
       </div>
 
       {/* Link de indicação */}
       <div className="surface-card p-5 space-y-3">
-        <div className="font-mono text-[11px] uppercase tracking-wider text-[#98A0AD]">
+        <label
+          htmlFor="affiliate-invite-url"
+          className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD]"
+        >
           Seu Link Exclusivo de Indicação
-        </div>
+        </label>
         <div className="flex flex-col sm:flex-row gap-2">
           <input
+            id="affiliate-invite-url"
             type="text"
             readOnly
             value={inviteUrl}

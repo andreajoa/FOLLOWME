@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
 import { PublicHeader } from "@/components/public-header";
 import { PublicFooter } from "@/components/public-footer";
@@ -8,8 +8,8 @@ export const dynamic = "force-dynamic";
 
 const FAQS = [
   {
-    q: "Como funciona a recarga de saldo via Pix?",
-    a: "Dentro do painel, clique em 'Adicionar Saldo', informe o valor desejado e gere o QR Code ou Código Pix Copia e Cola. Assim que o pagamento é confirmado pelo gateway, o saldo entra automaticamente em sua conta 24 horas por dia.",
+    q: "Como funciona a recarga de saldo via Stripe (Pix e Cartão)?",
+    a: "Dentro do painel, clique em 'Adicionar Saldo', escolha Pix ou Cartão de Crédito/Débito e informe o valor desejado. Você finaliza no checkout oficial da Stripe e assim que o pagamento é confirmado, o saldo entra automaticamente em sua conta 24 horas por dia.",
   },
   {
     q: "O perfil precisa estar público para receber o serviço?",
@@ -20,8 +20,12 @@ const FAQS = [
     a: "Caso ocorra alguma queda na contagem dentro do prazo de garantia do serviço contratado, basta clicar no botão 'Solicitar Reposição' na tela de Pedidos para repor gratuitamente a diferença.",
   },
   {
-    q: "O que é o status Parcial (Partial)?",
-    a: "Quando o servidor entrega apenas uma parte da quantidade solicitada e encerra o envio, o pedido é marcado como Parcial e o valor proporcional das unidades não entregues é devolvido ao seu saldo.",
+    q: "Como funcionam as Assinaturas Automáticas (Subscriptions)?",
+    a: "Na aba 'Assinaturas', informe seu @usuário, quantidade mínima/máxima por postagem e delay. Sempre que o perfil publicar conteúdo novo, o sistema dispara o engajamento automaticamente.",
+  },
+  {
+    q: "O que é o Painel Filho (Child Panel)?",
+    a: "É o seu próprio painel SMM com domínio próprio conectado automaticamente ao nosso estoque e API v2. Você define suas margens, recebe na sua conta e opera sua própria marca de revenda.",
   },
   {
     q: "O que é Drip-Feed (Entrega Gradual)?",
@@ -33,14 +37,15 @@ const FAQS = [
   },
   {
     q: "Como funciona o Programa de Afiliados?",
-    a: "Compartilhe seu link exclusivo de indicação disponível na aba 'Afiliados'. Sempre que um convidado cadastrado pelo seu link recarregar saldo via Pix, você recebe automaticamente comissão que pode ser convertida em saldo no painel.",
+    a: "Compartilhe seu link exclusivo de indicação disponível na aba 'Afiliados'. Sempre que um convidado cadastrado pelo seu link recarregar saldo via Stripe (Pix ou Cartão), você recebe comissão automaticamente.",
   },
 ];
 
 export default async function FaqPage() {
-  const [user, settings] = await Promise.all([
+  const [user, settings, prefs] = await Promise.all([
     getCurrentUser(),
     getSiteSettings(),
+    getRequestPreferences(),
   ]);
 
   return (
@@ -48,6 +53,8 @@ export default async function FaqPage() {
       <PublicHeader
         brandName={settings.brandName}
         user={user ? { username: user.username, role: user.role } : null}
+        locale={prefs.locale}
+        currency={prefs.currency}
       />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12 sm:px-6 lg:px-8 space-y-8">

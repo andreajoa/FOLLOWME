@@ -85,6 +85,8 @@ export function NewOrderClient({
     initialService ? Math.max(initialService.min, Math.min(1000, initialService.max)) : 100
   );
   const [comments, setComments] = useState("");
+  const [commentUsername, setCommentUsername] = useState("");
+  const [answerNumber, setAnswerNumber] = useState("1");
   const [dripfeed, setDripfeed] = useState(false);
   const [runs, setRuns] = useState(2);
   const [interval, setInterval] = useState(60);
@@ -122,6 +124,7 @@ export function NewOrderClient({
 
   const effectiveQty = useMemo(() => {
     if (!activeService) return 0;
+    if (activeService.type === "PACKAGE") return 1;
     if (activeService.type === "CUSTOM_COMMENTS") {
       return comments
         .split(/\r?\n/)
@@ -134,6 +137,14 @@ export function NewOrderClient({
   const totals = useMemo(() => {
     if (!activeService) {
       return { totalQuantity: 0, charge: 0, cost: 0, profit: 0 };
+    }
+    if (activeService.type === "PACKAGE") {
+      return {
+        totalQuantity: 1,
+        charge: activeService.rate,
+        cost: activeService.providerRate,
+        profit: activeService.rate - activeService.providerRate,
+      };
     }
     return calculateOrderTotals({
       rate: activeService.rate,
@@ -201,6 +212,10 @@ export function NewOrderClient({
           interval: dripfeed ? interval : undefined,
           comments:
             activeService.type === "CUSTOM_COMMENTS" ? comments : undefined,
+          username:
+            activeService.type === "COMMENT_LIKES" ? commentUsername : undefined,
+          answerNumber:
+            activeService.type === "POLL" ? answerNumber : undefined,
         }),
       });
       const data = await res.json();
@@ -214,6 +229,7 @@ export function NewOrderClient({
       );
       setLink("");
       setComments("");
+      setCommentUsername("");
       router.refresh();
     } catch {
       setError("Erro de conexão ao enviar pedido.");
@@ -379,7 +395,26 @@ export function NewOrderClient({
             />
           </div>
 
-          {activeService?.type === "CUSTOM_COMMENTS" ? (
+          {activeService?.type === "SUBSCRIPTIONS" ? (
+            <div className="border border-[#C8FF2E]/40 bg-[#C8FF2E]/10 p-4 space-y-2">
+              <div className="font-mono text-xs uppercase text-[#C8FF2E]">
+                Serviço de Assinatura Automática
+              </div>
+              <p className="text-xs text-[#D2D7E0]">
+                Este serviço monitora novos posts automaticamente. Configure usuário, quantidade min/max, limite de posts e delay na aba de Assinaturas.
+              </p>
+              <Link
+                href="/painel/assinaturas"
+                className="btn-lime inline-flex h-9 items-center px-4 font-mono text-xs uppercase"
+              >
+                Abrir Configurador de Assinaturas →
+              </Link>
+            </div>
+          ) : activeService?.type === "PACKAGE" ? (
+            <div className="border border-[#232730] bg-[#0C0E12] p-3.5 font-mono text-xs text-[#98A0AD]">
+              Pacote fechado (preço fixo de <strong className="text-[#C8FF2E]">{formatBRL(activeService.rate)}</strong>). Basta informar o link acima.
+            </div>
+          ) : activeService?.type === "CUSTOM_COMMENTS" ? (
             <div>
               <label
                 htmlFor="order-comments"
@@ -398,25 +433,65 @@ export function NewOrderClient({
               />
             </div>
           ) : (
-            <div>
-              <label
-                htmlFor="order-quantity"
-                className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1.5"
-              >
-                4. Quantidade{" "}
-                {activeService &&
-                  `(Min: ${formatInt(activeService.min)} — Max: ${formatInt(activeService.max)})`}
-              </label>
-              <input
-                id="order-quantity"
-                type="number"
-                required
-                min={activeService?.min ?? 10}
-                max={activeService?.max ?? 100000}
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
-                className="input-terminal w-full h-11 px-3 font-mono text-sm"
-              />
+            <div className="space-y-4">
+              {activeService?.type === "COMMENT_LIKES" && (
+                <div>
+                  <label
+                    htmlFor="order-comment-user"
+                    className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1.5"
+                  >
+                    Usuário autor do comentário (@username)
+                  </label>
+                  <input
+                    id="order-comment-user"
+                    type="text"
+                    required
+                    value={commentUsername}
+                    onChange={(e) => setCommentUsername(e.target.value)}
+                    placeholder="@autor_do_comentario"
+                    className="input-terminal w-full h-11 px-3 text-sm"
+                  />
+                </div>
+              )}
+              {activeService?.type === "POLL" && (
+                <div>
+                  <label
+                    htmlFor="order-answer-num"
+                    className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1.5"
+                  >
+                    Número da Opção da Enquete (1, 2, 3...)
+                  </label>
+                  <input
+                    id="order-answer-num"
+                    type="text"
+                    required
+                    value={answerNumber}
+                    onChange={(e) => setAnswerNumber(e.target.value)}
+                    placeholder="1"
+                    className="input-terminal w-full h-11 px-3 font-mono text-sm"
+                  />
+                </div>
+              )}
+              <div>
+                <label
+                  htmlFor="order-quantity"
+                  className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1.5"
+                >
+                  4. Quantidade{" "}
+                  {activeService &&
+                    `(Min: ${formatInt(activeService.min)} — Max: ${formatInt(activeService.max)})`}
+                </label>
+                <input
+                  id="order-quantity"
+                  type="number"
+                  required
+                  min={activeService?.min ?? 10}
+                  max={activeService?.max ?? 100000}
+                  value={quantity}
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                  className="input-terminal w-full h-11 px-3 font-mono text-sm"
+                />
+              </div>
             </div>
           )}
 
@@ -488,7 +563,7 @@ export function NewOrderClient({
                 href="/painel/saldo"
                 className="border border-[#FF6B2C] bg-[#FF6B2C]/15 px-3 py-2 font-mono text-xs uppercase text-[#FF8A58] hover:bg-[#FF6B2C]/25"
               >
-                Saldo insuficiente • Recarregar Pix
+                Saldo insuficiente • Adicionar Saldo
               </Link>
             )}
           </div>

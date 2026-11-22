@@ -5,6 +5,7 @@ import {
   Activity,
   CheckCircle2,
   CreditCard,
+  Globe,
   List,
   MessageSquare,
   Plus,
@@ -17,11 +18,14 @@ import {
   Users,
 } from "lucide-react";
 import {
+  CHILD_PANEL_STATUS_META,
+  COOPERATION_STATUS_META,
   DEPOSIT_STATUS_META,
   formatBRL,
   formatDateBR,
   formatInt,
   ORDER_STATUS_META,
+  SUBSCRIPTION_STATUS_META,
   TICKET_STATUS_META,
 } from "@/lib/format";
 import { StatusBadge } from "./status-badge";
@@ -34,6 +38,7 @@ type AdminTab =
   | "users"
   | "deposits"
   | "tickets"
+  | "extras"
   | "settings";
 
 interface OverviewData {
@@ -167,6 +172,49 @@ interface AdminSettings {
   affiliateRate: number;
   affiliateMinPayout: number;
   defaultMarkup: number;
+  childPanelPrice: number;
+  usdRate: number;
+  eurRate: number;
+  stripeEnabled: boolean;
+  stripePixEnabled: boolean;
+}
+
+interface AdminExtrasData {
+  subscriptions: Array<{
+    id: number;
+    username: string;
+    min: number;
+    max: number;
+    posts: number | null;
+    postsDelivered: number;
+    status: string;
+    createdAt: string;
+    user: { username: string; email: string };
+    service: { id: number; name: string };
+  }>;
+  childPanels: Array<{
+    id: number;
+    domain: string;
+    currency: string;
+    adminUsername: string;
+    monthlyPrice: number;
+    status: string;
+    nextBillingAt: string;
+    createdAt: string;
+    user: { username: string; email: string };
+  }>;
+  cooperationRequests: Array<{
+    id: number;
+    name: string;
+    email: string;
+    whatsapp: string | null;
+    type: string;
+    monthlyVolume: string | null;
+    website: string | null;
+    message: string;
+    status: string;
+    createdAt: string;
+  }>;
 }
 
 const TABS: Array<{ id: AdminTab; label: string; icon: typeof Activity }> = [
@@ -175,9 +223,10 @@ const TABS: Array<{ id: AdminTab; label: string; icon: typeof Activity }> = [
   { id: "providers", label: "Provedores API", icon: Server },
   { id: "services", label: "Serviços", icon: List },
   { id: "users", label: "Usuários", icon: Users },
-  { id: "deposits", label: "Pix / Saldo", icon: CreditCard },
+  { id: "deposits", label: "Stripe / Pix", icon: CreditCard },
   { id: "tickets", label: "Tickets", icon: MessageSquare },
-  { id: "settings", label: "Marca & Pix", icon: Settings },
+  { id: "extras", label: "Assinaturas & Filhos", icon: Globe },
+  { id: "settings", label: "Marca & Stripe", icon: Settings },
 ];
 
 export function AdminDashboard() {
@@ -194,6 +243,7 @@ export function AdminDashboard() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [deposits, setDeposits] = useState<AdminDeposit[]>([]);
   const [tickets, setTickets] = useState<AdminTicket[]>([]);
+  const [extras, setExtras] = useState<AdminExtrasData | null>(null);
   const [settings, setSettings] = useState<AdminSettings | null>(null);
 
   // Forms
@@ -255,6 +305,9 @@ export function AdminDashboard() {
     } else if (target === "tickets") {
       const res = await fetch("/api/admin/tickets");
       if (res.ok) setTickets((await res.json()).tickets);
+    } else if (target === "extras") {
+      const res = await fetch("/api/admin/extras");
+      if (res.ok) setExtras(await res.json());
     } else if (target === "settings") {
       const res = await fetch("/api/admin/settings");
       if (res.ok) setSettings((await res.json()).settings);
@@ -447,18 +500,65 @@ export function AdminDashboard() {
       return;
     }
     setSettings(data.settings);
-    flash("ok", "Configurações da marca e gateway Pix atualizadas em tempo real!");
+    flash("ok", "Configurações da marca e pagamentos Stripe/Pix atualizadas em tempo real!");
+  }
+
+  async function handleSyncAllOrders() {
+    setBusyKey("sync-all-orders");
+    const res = await fetch("/api/cron/sync-orders", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    setBusyKey("");
+    if (!res.ok) {
+      flash("err", data.error || "Falha ao sincronizar pedidos.");
+      return;
+    }
+    flash(
+      "ok",
+      `Sincronização concluída: ${data.scanned ?? 0} analisados, ${data.updated ?? 0} atualizados, ${data.refunded ?? 0} estornados.`
+    );
+    loadTab("orders");
+  }
+
+  async function handleUpdateExtra(
+    kind: "subscription" | "childPanel" | "cooperation",
+    id: number,
+    status: string
+  ) {
+    setBusyKey(`${kind}-${id}`);
+    const res = await fetch("/api/admin/extras", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind, id, status }),
+    });
+    setBusyKey("");
+    if (res.ok) {
+      flash("ok", `Registro #${id} atualizado para ${status}.`);
+      loadTab("extras");
+    } else {
+      flash("err", "Não foi possível atualizar.");
+    }
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <span className="font-mono text-xs uppercase tracking-widest text-[#FF6B2C]">
-          Console Administrativo
-        </span>
-        <h1 className="mt-1 font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold">
-          Gestão Central da Plataforma
-        </h1>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+        <div>
+          <span className="font-mono text-xs uppercase tracking-widest text-[#FF6B2C]">
+            Console Administrativo
+          </span>
+          <h1 className="mt-1 font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold">
+            Gestão Central da Plataforma
+          </h1>
+        </div>
+        <button
+          type="button"
+          disabled={busyKey === "sync-all-orders"}
+          onClick={handleSyncAllOrders}
+          className="btn-outline h-10 px-4 inline-flex items-center gap-2 font-mono text-xs uppercase cursor-pointer"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          {busyKey === "sync-all-orders" ? "Sincronizando..." : "Sincronizar Pedidos"}
+        </button>
       </div>
 
       {/* Navegação por abas */}
@@ -1163,14 +1263,164 @@ export function AdminDashboard() {
         </div>
       )}
 
-      {/* TAB 8: CONFIGURAÇÕES WHITELABEL & PIX */}
+      {/* TAB 7.5: ASSINATURAS, PAINÉIS FILHOS & PARCERIAS */}
+      {tab === "extras" && extras && (
+        <div className="space-y-6">
+          <section className="surface-card overflow-hidden">
+            <div className="border-b border-[#232730] bg-[#171A20] px-5 py-3.5 flex items-center justify-between">
+              <h2 className="font-[family-name:var(--font-display)] text-base font-bold">
+                Painéis Filhos (Child Panels)
+              </h2>
+              <span className="font-mono text-xs text-[#98A0AD]">
+                {extras.childPanels.length} solicitações
+              </span>
+            </div>
+            <div className="divide-y divide-[#232730]">
+              {extras.childPanels.length === 0 ? (
+                <div className="p-5 text-xs text-[#68707E]">Nenhum Painel Filho contratado ainda.</div>
+              ) : (
+                extras.childPanels.map((p) => {
+                  const meta = CHILD_PANEL_STATUS_META[p.status] ?? { label: p.status, tone: "zinc" as const };
+                  return (
+                    <div key={p.id} className="p-4 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div className="font-mono text-xs font-bold text-[#F4F5F6]">
+                          #{p.id} • {p.domain} ({p.currency}) — @{p.user.username}
+                        </div>
+                        <div className="text-xs text-[#68707E]">
+                          Admin: {p.adminUsername} • {formatBRL(p.monthlyPrice)}/mês • {formatDateBR(p.createdAt)}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge label={meta.label} tone={meta.tone} />
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateExtra("childPanel", p.id, "ACTIVE")}
+                          className="btn-lime h-8 px-2.5 font-mono text-[10px] uppercase cursor-pointer"
+                        >
+                          Ativar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateExtra("childPanel", p.id, "SUSPENDED")}
+                          className="btn-outline h-8 px-2.5 font-mono text-[10px] uppercase cursor-pointer"
+                        >
+                          Suspender
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </section>
+
+          <section className="surface-card overflow-hidden">
+            <div className="border-b border-[#232730] bg-[#171A20] px-5 py-3.5 flex items-center justify-between">
+              <h2 className="font-[family-name:var(--font-display)] text-base font-bold">
+                Assinaturas Automáticas
+              </h2>
+              <span className="font-mono text-xs text-[#98A0AD]">
+                {extras.subscriptions.length} registros
+              </span>
+            </div>
+            <div className="divide-y divide-[#232730]">
+              {extras.subscriptions.length === 0 ? (
+                <div className="p-5 text-xs text-[#68707E]">Nenhuma assinatura registrada ainda.</div>
+              ) : (
+                extras.subscriptions.map((s) => {
+                  const meta = SUBSCRIPTION_STATUS_META[s.status] ?? { label: s.status, tone: "zinc" as const };
+                  return (
+                    <div key={s.id} className="p-4 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div className="font-mono text-xs font-bold text-[#F4F5F6]">
+                          #{s.id} • @{s.username} ({s.min}–{s.max}) — Cliente @{s.user.username}
+                        </div>
+                        <div className="text-xs text-[#68707E]">
+                          {s.service.name} • Posts: {s.postsDelivered}/{s.posts ?? "∞"}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge label={meta.label} tone={meta.tone} />
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateExtra("subscription", s.id, s.status === "ACTIVE" ? "PAUSED" : "ACTIVE")}
+                          className="btn-outline h-8 px-2.5 font-mono text-[10px] uppercase cursor-pointer"
+                        >
+                          {s.status === "ACTIVE" ? "Pausar" : "Ativar"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateExtra("subscription", s.id, "COMPLETED")}
+                          className="btn-lime h-8 px-2.5 font-mono text-[10px] uppercase cursor-pointer"
+                        >
+                          Concluir
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </section>
+
+          <section className="surface-card overflow-hidden">
+            <div className="border-b border-[#232730] bg-[#171A20] px-5 py-3.5 flex items-center justify-between">
+              <h2 className="font-[family-name:var(--font-display)] text-base font-bold">
+                Propostas de Parceria (Cooperation)
+              </h2>
+              <span className="font-mono text-xs text-[#98A0AD]">
+                {extras.cooperationRequests.length} propostas
+              </span>
+            </div>
+            <div className="divide-y divide-[#232730]">
+              {extras.cooperationRequests.length === 0 ? (
+                <div className="p-5 text-xs text-[#68707E]">Nenhuma proposta recebida ainda.</div>
+              ) : (
+                extras.cooperationRequests.map((c) => {
+                  const meta = COOPERATION_STATUS_META[c.status] ?? { label: c.status, tone: "amber" as const };
+                  return (
+                    <div key={c.id} className="p-4 space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="font-mono text-xs font-bold text-[#F4F5F6]">
+                          #{c.id} • {c.name} ({c.email}) — {c.type} {c.monthlyVolume ? `• ${c.monthlyVolume}` : ""}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <StatusBadge label={meta.label} tone={meta.tone} />
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateExtra("cooperation", c.id, "APPROVED")}
+                            className="btn-lime h-8 px-2.5 font-mono text-[10px] uppercase cursor-pointer"
+                          >
+                            Aprovar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateExtra("cooperation", c.id, "REJECTED")}
+                            className="btn-outline h-8 px-2.5 font-mono text-[10px] uppercase cursor-pointer"
+                          >
+                            Recusar
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-xs text-[#98A0AD]">{c.message}</p>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* TAB 8: CONFIGURAÇÕES WHITELABEL & STRIPE/PIX */}
       {tab === "settings" && settings && (
         <form
           onSubmit={handleSaveSettings}
           className="surface-card p-6 space-y-5 max-w-3xl"
         >
           <h2 className="font-[family-name:var(--font-display)] text-lg font-bold border-b border-[#232730] pb-3">
-            Identidade da Marca, Gateway Pix & Regras Comerciais
+            Identidade da Marca, Stripe (Cartão &amp; Pix) &amp; Regras Comerciais
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1189,7 +1439,7 @@ export function AdminDashboard() {
             </div>
             <div>
               <label className="block font-mono text-[10px] uppercase text-[#98A0AD] mb-1">
-                Gateway Pix Ativo
+                Gateway de Pagamento Principal
               </label>
               <select
                 value={settings.pixGateway}
@@ -1198,11 +1448,82 @@ export function AdminDashboard() {
                 }
                 className="input-terminal w-full h-10 px-3 font-mono text-xs"
               >
-                <option value="SANDBOX">SANDBOX (Teste Local Instantâneo)</option>
-                <option value="MERCADOPAGO">MERCADOPAGO (API Oficial)</option>
-                <option value="ASAAS">ASAAS (API v3)</option>
+                <option value="STRIPE">STRIPE (Cartão + Pix Oficial)</option>
+                <option value="MERCADOPAGO">MERCADOPAGO (Pix API)</option>
+                <option value="ASAAS">ASAAS (Pix v3)</option>
                 <option value="EFI">EFI / Gerencianet</option>
+                <option value="SANDBOX">SANDBOX (Teste Local)</option>
               </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border border-[#232730] bg-[#0C0E12] p-4">
+            <label className="flex items-center gap-2.5 text-xs font-mono cursor-pointer">
+              <input
+                type="checkbox"
+                checked={settings.stripeEnabled}
+                onChange={(e) =>
+                  setSettings({ ...settings, stripeEnabled: e.target.checked })
+                }
+                className="h-4 w-4 accent-[#C8FF2E]"
+              />
+              <span>Stripe Checkout (Cartão) Ativo</span>
+            </label>
+            <label className="flex items-center gap-2.5 text-xs font-mono cursor-pointer">
+              <input
+                type="checkbox"
+                checked={settings.stripePixEnabled}
+                onChange={(e) =>
+                  setSettings({ ...settings, stripePixEnabled: e.target.checked })
+                }
+                className="h-4 w-4 accent-[#C8FF2E]"
+              />
+              <span>Pix via Stripe Checkout Ativo</span>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block font-mono text-[10px] uppercase text-[#98A0AD] mb-1">
+                Mensalidade Painel Filho (R$)
+              </label>
+              <input
+                type="number"
+                step="1"
+                value={settings.childPanelPrice}
+                onChange={(e) =>
+                  setSettings({ ...settings, childPanelPrice: Number(e.target.value) })
+                }
+                className="input-terminal w-full h-10 px-3 font-mono text-xs"
+              />
+            </div>
+            <div>
+              <label className="block font-mono text-[10px] uppercase text-[#98A0AD] mb-1">
+                Cotação USD (1 USD = R$)
+              </label>
+              <input
+                type="number"
+                step="0.05"
+                value={settings.usdRate}
+                onChange={(e) =>
+                  setSettings({ ...settings, usdRate: Number(e.target.value) })
+                }
+                className="input-terminal w-full h-10 px-3 font-mono text-xs"
+              />
+            </div>
+            <div>
+              <label className="block font-mono text-[10px] uppercase text-[#98A0AD] mb-1">
+                Cotação EUR (1 EUR = R$)
+              </label>
+              <input
+                type="number"
+                step="0.05"
+                value={settings.eurRate}
+                onChange={(e) =>
+                  setSettings({ ...settings, eurRate: Number(e.target.value) })
+                }
+                className="input-terminal w-full h-10 px-3 font-mono text-xs"
+              />
             </div>
           </div>
 

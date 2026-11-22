@@ -23,13 +23,13 @@ const jetbrainsMono = JetBrains_Mono({
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings().catch(() => null);
-  const brand = settings?.brandName || "VeloSMM";
+  const brand = settings?.brandName || "FollowMe";
   const tagline =
     settings?.brandTagline ||
-    "Painel SMM de alta velocidade para agências, criadores e revendedores.";
+    "Painel SMM de alta velocidade para agências, criadores e revendedores com Pix e Cartão via Stripe.";
 
   return {
-    title: `${brand} — Painel SMM Brasileiro | Pix Automático & API v2`,
+    title: `${brand} — Painel SMM | Pix & Cartão via Stripe • API v2`,
     description: tagline,
   };
 }

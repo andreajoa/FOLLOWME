@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { isStripeConfigured } from "@/lib/stripe";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -14,6 +15,9 @@ export async function GET() {
     providersCount,
     openTicketsCount,
     pendingDepositsCount,
+    activeSubscriptionsCount,
+    childPanelsCount,
+    pendingCooperationCount,
     ordersAgg,
     depositsAgg,
     recentOrders,
@@ -23,13 +27,16 @@ export async function GET() {
     prisma.provider.count({ where: { isActive: true } }),
     prisma.ticket.count({ where: { status: "OPEN" } }),
     prisma.deposit.count({ where: { status: "PENDING" } }),
+    prisma.subscription.count({ where: { status: "ACTIVE" } }),
+    prisma.childPanel.count({ where: { status: { in: ["PENDING", "ACTIVE"] } } }),
+    prisma.cooperationRequest.count({ where: { status: "PENDING" } }),
     prisma.order.aggregate({
       where: { status: { not: "CANCELED" } },
       _count: { id: true },
       _sum: { charge: true, cost: true, profit: true },
     }),
     prisma.deposit.aggregate({
-      where: { status: "PAID", method: "PIX" },
+      where: { status: "PAID" },
       _sum: { amount: true },
     }),
     prisma.order.findMany({
@@ -49,11 +56,15 @@ export async function GET() {
       providersCount,
       openTicketsCount,
       pendingDepositsCount,
+      activeSubscriptionsCount,
+      childPanelsCount,
+      pendingCooperationCount,
       ordersCount: ordersAgg._count.id,
       grossRevenue: ordersAgg._sum.charge ?? 0,
       providerCost: ordersAgg._sum.cost ?? 0,
       netProfit: ordersAgg._sum.profit ?? 0,
       totalPixDeposited: depositsAgg._sum.amount ?? 0,
+      stripeConfigured: isStripeConfigured(),
     },
     recentOrders,
   });

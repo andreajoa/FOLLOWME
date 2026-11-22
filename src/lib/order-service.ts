@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import { calculateOrderTotals, round4 } from "./pricing";
 import {
   cancelProviderOrder,
+  fetchProviderOrderStatus,
   submitProviderOrder,
 } from "./smm-provider";
 import { getSiteSettings } from "./settings";
@@ -15,6 +16,8 @@ export interface PlaceOrderParams {
   runs?: number;
   interval?: number;
   comments?: string;
+  username?: string;
+  answerNumber?: string;
   source?: "WEB" | "MASS" | "API";
 }
 
@@ -30,8 +33,12 @@ export async function placeSingleOrder(params: PlaceOrderParams) {
 
   let effectiveQuantity = Math.floor(params.quantity);
   const cleanComments = params.comments?.trim();
+  const cleanUsername = params.username?.trim();
+  const cleanAnswer = params.answerNumber?.trim();
 
-  if (service.type === "CUSTOM_COMMENTS") {
+  if (service.type === "PACKAGE") {
+    effectiveQuantity = Math.max(service.min, 1);
+  } else if (service.type === "CUSTOM_COMMENTS") {
     if (!cleanComments) {
       throw new Error("Este serviço exige ao menos 1 comentário por linha.");
     }
@@ -40,9 +47,20 @@ export async function placeSingleOrder(params: PlaceOrderParams) {
       .map((l) => l.trim())
       .filter(Boolean);
     effectiveQuantity = commentLines.length;
+  } else if (service.type === "COMMENT_LIKES") {
+    if (!cleanUsername) {
+      throw new Error("Informe o @usuário dono do comentário.");
+    }
+  } else if (service.type === "POLL") {
+    if (!cleanAnswer) {
+      throw new Error("Informe o número da opção da enquete (answer_number).");
+    }
   }
 
-  if (effectiveQuantity < service.min || effectiveQuantity > service.max) {
+  if (
+    service.type !== "PACKAGE" &&
+    (effectiveQuantity < service.min || effectiveQuantity > service.max)
+  ) {
     throw new Error(
       `Quantidade fora do limite permitido (${service.min} a ${service.max}).`
     );
@@ -54,13 +72,23 @@ export async function placeSingleOrder(params: PlaceOrderParams) {
     ? Math.max(5, Math.floor(params.interval ?? 60))
     : undefined;
 
-  const { totalQuantity, charge, cost, profit } = calculateOrderTotals({
-    rate: service.rate,
-    providerRate: service.providerRate,
-    quantity: effectiveQuantity,
-    dripfeed: useDripfeed,
-    runs,
-  });
+  const totals =
+    service.type === "PACKAGE"
+      ? {
+          totalQuantity: 1,
+          charge: round4(service.rate),
+          cost: round4(service.providerRate),
+          profit: round4(service.rate - service.providerRate),
+        }
+      : calculateOrderTotals({
+          rate: service.rate,
+          providerRate: service.providerRate,
+          quantity: effectiveQuantity,
+          dripfeed: useDripfeed,
+          runs,
+        });
+
+  const { totalQuantity, charge, cost, profit } = totals;
 
   if (charge <= 0) {
     throw new Error("Valor do pedido inválido.");
@@ -80,7 +108,7 @@ export async function placeSingleOrder(params: PlaceOrderParams) {
     });
 
     if (updated.count === 0) {
-      throw new Error("Saldo insuficiente. Adicione saldo via Pix para continuar.");
+      throw new Error("Saldo insuficiente. Adicione saldo via Pix ou Cartão (Stripe) para continuar.");
     }
 
     return tx.order.create({
@@ -99,6 +127,8 @@ export async function placeSingleOrder(params: PlaceOrderParams) {
         runs,
         interval,
         comments: cleanComments || null,
+        username: cleanUsername || null,
+        answerNumber: cleanAnswer || null,
         source: params.source ?? "WEB",
       },
       include: {
@@ -112,10 +142,12 @@ export async function placeSingleOrder(params: PlaceOrderParams) {
       const dispatch = await submitProviderOrder(service.provider, {
         providerServiceId: service.providerServiceId,
         link: createdOrder.link,
-        quantity: effectiveQuantity,
+        quantity: service.type === "PACKAGE" ? undefined : effectiveQuantity,
         runs,
         interval,
         comments: cleanComments,
+        username: cleanUsername,
+        answerNumber: cleanAnswer,
       });
 
       return prisma.order.update({
@@ -152,6 +184,141 @@ export async function placeSingleOrder(params: PlaceOrderParams) {
   }
 
   return createdOrder;
+}
+
+export interface CreateSubscriptionParams {
+  userId: string;
+  serviceId: number;
+  username: string;
+  min: number;
+  max: number;
+  posts?: number;
+  oldPosts?: number;
+  delay?: number;
+  expiry?: Date | null;
+}
+
+export async function createSubscriptionOrder(params: CreateSubscriptionParams) {
+  const service = await prisma.service.findUnique({
+    where: { id: params.serviceId },
+    include: { provider: true },
+  });
+
+  if (!service || !service.isActive) {
+    throw new Error("Serviço de assinatura não encontrado ou indisponível.");
+  }
+
+  const min = Math.floor(params.min);
+  const max = Math.floor(params.max);
+  if (min < service.min || max > service.max || min > max) {
+    throw new Error(
+      `Intervalo min/max inválido (permitido: ${service.min} a ${service.max}).`
+    );
+  }
+
+  const cleanUsername = params.username.trim().replace(/^@+/, "");
+  if (cleanUsername.length < 2) {
+    throw new Error("Informe um nome de usuário válido.");
+  }
+
+  const postsCount = params.posts && params.posts > 0 ? Math.floor(params.posts) : null;
+  const oldPostsCount = Math.max(0, Math.floor(params.oldPosts ?? 0));
+  const delayMinutes = Math.max(0, Math.floor(params.delay ?? 0));
+
+  // Cobra a reserva proporcional do primeiro lote (ou pacote de posts definido)
+  const estimatedUnits = max * Math.min(postsCount ?? 1, 5);
+  const estimatedCharge = round4((estimatedUnits / 1000) * service.rate);
+
+  const sub = await prisma.$transaction(async (tx) => {
+    if (estimatedCharge > 0) {
+      const updated = await tx.user.updateMany({
+        where: {
+          id: params.userId,
+          status: "ACTIVE",
+          balance: { gte: estimatedCharge },
+        },
+        data: {
+          balance: { decrement: estimatedCharge },
+          totalSpent: { increment: estimatedCharge },
+        },
+      });
+      if (updated.count === 0) {
+        throw new Error(
+          `Saldo insuficiente para ativar assinatura (mínimo estimado: R$ ${estimatedCharge.toFixed(2)}).`
+        );
+      }
+    }
+
+    return tx.subscription.create({
+      data: {
+        userId: params.userId,
+        serviceId: service.id,
+        providerId: service.providerId,
+        username: cleanUsername,
+        min,
+        max,
+        posts: postsCount,
+        oldPosts: oldPostsCount,
+        delay: delayMinutes,
+        expiry: params.expiry ?? null,
+        status: "ACTIVE",
+      },
+      include: {
+        service: { select: { id: true, name: true, rate: true } },
+      },
+    });
+  });
+
+  if (service.provider && service.provider.isActive && service.providerServiceId) {
+    try {
+      const expiryStr = params.expiry
+        ? `${String(params.expiry.getDate()).padStart(2, "0")}/${String(params.expiry.getMonth() + 1).padStart(2, "0")}/${params.expiry.getFullYear()}`
+        : undefined;
+      const dispatch = await submitProviderOrder(service.provider, {
+        providerServiceId: service.providerServiceId,
+        username: cleanUsername,
+        min,
+        max,
+        posts: postsCount ?? undefined,
+        oldPosts: oldPostsCount || undefined,
+        delay: delayMinutes,
+        expiry: expiryStr,
+      });
+
+      return prisma.subscription.update({
+        where: { id: sub.id },
+        data: { providerOrderId: dispatch.providerOrderId },
+        include: {
+          service: { select: { id: true, name: true, rate: true } },
+        },
+      });
+    } catch (providerErr) {
+      await prisma.$transaction([
+        prisma.subscription.update({
+          where: { id: sub.id },
+          data: { status: "CANCELED" },
+        }),
+        ...(estimatedCharge > 0
+          ? [
+              prisma.user.update({
+                where: { id: params.userId },
+                data: {
+                  balance: { increment: estimatedCharge },
+                  totalSpent: { decrement: estimatedCharge },
+                },
+              }),
+            ]
+          : []),
+      ]);
+      throw new Error(
+        providerErr instanceof Error
+          ? `${providerErr.message} Valor estornado automaticamente.`
+          : "Falha ao enviar assinatura ao provedor."
+      );
+    }
+  }
+
+  return sub;
 }
 
 export async function confirmDepositAndCredit(
@@ -196,11 +363,7 @@ export async function confirmDepositAndCredit(
       },
     });
 
-    if (
-      deposit.user.referredById &&
-      deposit.method === "PIX" &&
-      settings.affiliateRate > 0
-    ) {
+    if (deposit.user.referredById && settings.affiliateRate > 0) {
       const commission = round4((deposit.amount * settings.affiliateRate) / 100);
       if (commission > 0) {
         await tx.user.update({
@@ -287,10 +450,113 @@ export async function cancelAndRefundOrder(
       where: { id: order.userId },
       data: {
         balance: { increment: order.charge },
-        totalSpent: { decrement: Math.min(order.charge, order.charge) },
+        totalSpent: { decrement: order.charge },
       },
     });
 
     return tx.order.findUnique({ where: { id: orderId } });
   });
+}
+
+export async function syncActiveOrdersWithProviders(limit = 50) {
+  const activeOrders = await prisma.order.findMany({
+    where: {
+      status: { in: ["PENDING", "PROCESSING", "IN_PROGRESS"] },
+      providerOrderId: { not: null },
+      provider: { isActive: true, mode: "LIVE" },
+    },
+    include: { provider: true },
+    orderBy: { updatedAt: "asc" },
+    take: limit,
+  });
+
+  let updatedCount = 0;
+  let refundedCount = 0;
+  let errorsCount = 0;
+
+  for (const order of activeOrders) {
+    if (!order.provider || !order.providerOrderId) continue;
+    try {
+      const remote = await fetchProviderOrderStatus(
+        order.provider,
+        order.providerOrderId
+      );
+
+      if (remote.status === "CANCELED") {
+        await prisma.$transaction(async (tx) => {
+          const claimed = await tx.order.updateMany({
+            where: {
+              id: order.id,
+              status: { in: ["PENDING", "PROCESSING", "IN_PROGRESS"] },
+            },
+            data: {
+              status: "CANCELED",
+              startCount: remote.startCount,
+              remains: order.quantity,
+            },
+          });
+          if (claimed.count > 0) {
+            await tx.user.update({
+              where: { id: order.userId },
+              data: {
+                balance: { increment: order.charge },
+                totalSpent: { decrement: order.charge },
+              },
+            });
+            refundedCount += 1;
+          }
+        });
+        updatedCount += 1;
+      } else if (remote.status === "PARTIAL") {
+        const safeRemains = Math.max(0, Math.min(order.quantity, remote.remains));
+        const refundAmount =
+          order.quantity > 0
+            ? round4((safeRemains / order.quantity) * order.charge)
+            : 0;
+        await prisma.$transaction(async (tx) => {
+          const claimed = await tx.order.updateMany({
+            where: {
+              id: order.id,
+              status: { in: ["PENDING", "PROCESSING", "IN_PROGRESS"] },
+            },
+            data: {
+              status: "PARTIAL",
+              startCount: remote.startCount,
+              remains: safeRemains,
+            },
+          });
+          if (claimed.count > 0 && refundAmount > 0) {
+            await tx.user.update({
+              where: { id: order.userId },
+              data: {
+                balance: { increment: refundAmount },
+                totalSpent: { decrement: refundAmount },
+              },
+            });
+            refundedCount += 1;
+          }
+        });
+        updatedCount += 1;
+      } else {
+        await prisma.order.update({
+          where: { id: order.id },
+          data: {
+            status: remote.status,
+            startCount: remote.startCount,
+            remains: remote.remains,
+          },
+        });
+        updatedCount += 1;
+      }
+    } catch {
+      errorsCount += 1;
+    }
+  }
+
+  return {
+    scanned: activeOrders.length,
+    updated: updatedCount,
+    refunded: refundedCount,
+    errors: errorsCount,
+  };
 }

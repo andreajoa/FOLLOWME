@@ -1,4 +1,4 @@
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
 import { PublicHeader } from "@/components/public-header";
 import { PublicFooter } from "@/components/public-footer";
@@ -6,9 +6,10 @@ import { PublicFooter } from "@/components/public-footer";
 export const dynamic = "force-dynamic";
 
 export default async function TermsPage() {
-  const [user, settings] = await Promise.all([
+  const [user, settings, prefs] = await Promise.all([
     getCurrentUser(),
     getSiteSettings(),
+    getRequestPreferences(),
   ]);
 
   return (
@@ -16,6 +17,8 @@ export default async function TermsPage() {
       <PublicHeader
         brandName={settings.brandName}
         user={user ? { username: user.username, role: user.role } : null}
+        locale={prefs.locale}
+        currency={prefs.currency}
       />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12 sm:px-6 lg:px-8 space-y-6">

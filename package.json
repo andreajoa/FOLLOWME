@@ -1,6 +1,6 @@
 {
-  "name": "velosmm",
-  "version": "1.0.0",
+  "name": "followme",
+  "version": "1.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --port 3000",

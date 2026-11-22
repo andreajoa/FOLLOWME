@@ -12,6 +12,8 @@ const createOrderSchema = z.object({
   runs: z.coerce.number().int().min(2).max(100).optional(),
   interval: z.coerce.number().int().min(5).max(1440).optional(),
   comments: z.string().max(5000).optional(),
+  username: z.string().trim().max(120).optional(),
+  answerNumber: z.string().trim().max(30).optional(),
 });
 
 export async function GET(req: NextRequest) {

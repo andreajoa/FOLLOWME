@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, KeyRound, UserPlus } from "lucide-react";
 
@@ -138,15 +139,23 @@ export function AuthForm({
                 required
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="demo@velosmm.com.br"
+                placeholder="seu@email.com ou @usuario"
                 className="input-terminal w-full h-11 px-3 text-sm"
               />
             </div>
 
             <div>
-              <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1.5">
-                Senha
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD]">
+                  Senha
+                </label>
+                <Link
+                  href="/esqueci-senha"
+                  className="font-mono text-[11px] text-[#C8FF2E] hover:underline"
+                >
+                  Esqueceu sua senha?
+                </Link>
+              </div>
               <input
                 type="password"
                 required
@@ -171,36 +180,6 @@ export function AuthForm({
               {loading ? "Entrando..." : "Acessar Painel"}
               <ArrowRight className="h-4 w-4" />
             </button>
-
-            <div className="border border-[#232730] bg-[#0C0E12] p-3.5 space-y-1.5 font-mono text-[11px] text-[#98A0AD]">
-              <div className="text-[#C8FF2E] uppercase">Contas Demo Locais:</div>
-              <div>
-                Cliente:{" "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIdentifier("demo@velosmm.com.br");
-                    setLoginPassword("Demo@123");
-                  }}
-                  className="text-[#F4F5F6] underline cursor-pointer"
-                >
-                  demo@velosmm.com.br / Demo@123
-                </button>
-              </div>
-              <div>
-                Admin:{" "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIdentifier("admin@velosmm.com.br");
-                    setLoginPassword("Admin@123");
-                  }}
-                  className="text-[#FF8A58] underline cursor-pointer"
-                >
-                  admin@velosmm.com.br / Admin@123
-                </button>
-              </div>
-            </div>
           </form>
         ) : (
           <form onSubmit={handleRegister} className="space-y-3.5">

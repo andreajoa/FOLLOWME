@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
 import { PanelShell } from "@/components/panel-shell";
 
@@ -10,9 +10,10 @@ export default async function PanelLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [user, settings] = await Promise.all([
+  const [user, settings, prefs] = await Promise.all([
     getCurrentUser(),
     getSiteSettings(),
+    getRequestPreferences(),
   ]);
 
   if (!user) {
@@ -23,6 +24,10 @@ export default async function PanelLayout({
     <PanelShell
       brandName={settings.brandName}
       announcement={settings.announcement}
+      locale={prefs.locale}
+      currency={prefs.currency}
+      usdRate={settings.usdRate}
+      eurRate={settings.eurRate}
       user={{
         id: user.id,
         name: user.name,

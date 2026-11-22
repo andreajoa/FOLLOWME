@@ -10,9 +10,10 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
 import { formatBRL, formatInt } from "@/lib/format";
+import { formatMoney, getDictionary } from "@/lib/i18n";
 import { PublicHeader } from "@/components/public-header";
 import { PublicFooter } from "@/components/public-footer";
 import { LandingInteractive } from "@/components/landing-interactive";
@@ -20,10 +21,11 @@ import { LandingInteractive } from "@/components/landing-interactive";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [user, settings, services, totalServices, totalOrders, totalUsers] =
+  const [user, settings, prefs, services, totalServices, totalOrders, totalUsers] =
     await Promise.all([
       getCurrentUser(),
       getSiteSettings(),
+      getRequestPreferences(),
       prisma.service.findMany({
         where: { isActive: true },
         include: { category: { select: { name: true, network: true } } },
@@ -35,13 +37,16 @@ export default async function HomePage() {
       prisma.user.count(),
     ]);
 
+  const t = getDictionary(prefs.locale);
+  const rates = { usdRate: settings.usdRate, eurRate: settings.eurRate };
+
   const tickerItems = [
-    "PIX AUTOMÁTICO 24/7 SEM TAXAS",
+    "PIX & CARTÃO VIA STRIPE 24/7 COM CRÉDITO AUTOMÁTICO",
     "INSTAGRAM SEGUIDORES BR COM REPOSIÇÃO 30–365 DIAS",
     "API v2 PADRÃO MUNDIAL PARA REVENDEDORES",
-    "PEDIDO EM MASSA & DRIP-FEED NATIVOS",
+    "ASSINATURAS AUTOMÁTICAS • DRIP-FEED • PAINEL FILHO",
     "TIKTOK • YOUTUBE • FACEBOOK • KWAI • TELEGRAM • SPOTIFY",
-    "SUPORTE VIA TICKET + PROGRAMA DE AFILIADOS",
+    "SUPORTE VIA TICKET + PROGRAMA DE AFILIADOS & PARCERIAS",
   ];
 
   const interactiveServices = services.map((s) => ({
@@ -63,6 +68,8 @@ export default async function HomePage() {
       <PublicHeader
         brandName={settings.brandName}
         user={user ? { username: user.username, role: user.role } : null}
+        locale={prefs.locale}
+        currency={prefs.currency}
       />
 
       {/* Faixa de Ticker Operacional */}
@@ -88,30 +95,28 @@ export default async function HomePage() {
               <div className="inline-flex items-center gap-2 border border-[#323845] bg-[#111317] px-3 py-1.5 mb-6">
                 <span className="h-2 w-2 bg-[#10B981]" />
                 <span className="font-mono text-xs uppercase tracking-widest text-[#F4F5F6]">
-                  Painel SMM Direto da Fonte • {formatInt(totalServices)} Serviços Ativos
+                  {t.hero.badge} • {formatInt(totalServices)} {t.nav.services}
                 </span>
               </div>
 
               <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[0.98] text-[#F4F5F6]">
-                ESCALA SOCIAL EM{" "}
-                <span className="text-[#C8FF2E]">TEMPO REAL</span> PARA AGÊNCIAS
-                E REVENDEDORES.
+                {t.hero.titleLine1}{" "}
+                <span className="text-[#C8FF2E]">{t.hero.titleAccent}</span>{" "}
+                {t.hero.titleLine2}
               </h1>
 
               <div className="mt-6 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
                 <p className="max-w-2xl text-base sm:text-lg text-[#98A0AD] leading-relaxed">
-                  {settings.brandTagline} Recarregue saldo via Pix com crédito
-                  imediato, controle reposições em 1 clique e conecte sua loja
-                  ou sub-painel via API v2.
+                  {settings.brandTagline} {t.hero.subtitleSuffix}
                 </p>
 
                 <div className="flex items-center gap-6 border-l-2 border-[#C8FF2E] pl-5 font-mono">
                   <div>
                     <div className="text-2xl font-bold text-[#F4F5F6]">
-                      R$ {settings.minDeposit.toFixed(0)}
+                      {formatMoney(settings.minDeposit, prefs.currency, rates)}
                     </div>
                     <div className="text-[11px] uppercase tracking-wider text-[#98A0AD]">
-                      Recarga Mín. Pix
+                      {t.hero.minDepositLabel}
                     </div>
                   </div>
                   <div>

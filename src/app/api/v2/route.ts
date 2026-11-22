@@ -1,8 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/auth";
-import { cancelAndRefundOrder, placeSingleOrder } from "@/lib/order-service";
+import {
+  cancelAndRefundOrder,
+  createSubscriptionOrder,
+  placeSingleOrder,
+} from "@/lib/order-service";
 import { requestProviderRefill, toExternalSmmStatus } from "@/lib/smm-provider";
+
+function mapExternalServiceType(type: string): string {
+  switch (type) {
+    case "PACKAGE":
+      return "Package";
+    case "CUSTOM_COMMENTS":
+      return "Custom Comments";
+    case "COMMENT_LIKES":
+      return "Comment Likes";
+    case "POLL":
+      return "Poll";
+    case "SUBSCRIPTIONS":
+      return "Subscriptions";
+    default:
+      return "Default";
+  }
+}
+
+function parseExpiryDate(raw?: string): Date | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  const dmy = trimmed.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (dmy) {
+    const d = new Date(`${dmy[3]}-${dmy[2]}-${dmy[1]}T23:59:59Z`);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const parsed = new Date(trimmed);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
 
 async function extractParams(req: NextRequest): Promise<Record<string, string>> {
   const params: Record<string, string> = {};
@@ -81,7 +114,7 @@ async function handleApiV2(req: NextRequest) {
       services.map((s) => ({
         service: s.id,
         name: s.name,
-        type: s.type === "CUSTOM_COMMENTS" ? "Custom Comments" : "Default",
+        type: mapExternalServiceType(s.type),
         category: s.category.name,
         rate: s.rate.toFixed(2),
         min: String(s.min),
@@ -95,14 +128,56 @@ async function handleApiV2(req: NextRequest) {
 
   if (action === "add") {
     const serviceId = Number.parseInt(params.service || "", 10);
+    if (!Number.isInteger(serviceId)) {
+      return NextResponse.json({ error: "Invalid service ID" }, { status: 400 });
+    }
+
+    const svc = await prisma.service.findUnique({ where: { id: serviceId } });
+    if (!svc || !svc.isActive) {
+      return NextResponse.json({ error: "Service not found or inactive" }, { status: 400 });
+    }
+
+    // Subscriptions (FonteSMM API v2 compatible)
+    if (svc.type === "SUBSCRIPTIONS" || (params.username && params.min && params.max && !params.link)) {
+      const username = params.username?.trim() || "";
+      const min = Number.parseInt(params.min || "0", 10);
+      const max = Number.parseInt(params.max || "0", 10);
+      const posts = params.posts ? Number.parseInt(params.posts, 10) : undefined;
+      const oldPosts = params.old_posts ? Number.parseInt(params.old_posts, 10) : 0;
+      const delay = params.delay ? Number.parseInt(params.delay, 10) : 0;
+      const expiry = parseExpiryDate(params.expiry);
+
+      try {
+        const sub = await createSubscriptionOrder({
+          userId: user.id,
+          serviceId,
+          username,
+          min,
+          max,
+          posts,
+          oldPosts,
+          delay,
+          expiry,
+        });
+        return NextResponse.json({ order: sub.id, subscription: sub.id });
+      } catch (err) {
+        return NextResponse.json(
+          { error: err instanceof Error ? err.message : "Subscription rejected" },
+          { status: 400 }
+        );
+      }
+    }
+
     const link = params.link?.trim() || "";
-    const quantity = Number.parseInt(params.quantity || "0", 10);
+    const quantity = Number.parseInt(params.quantity || "1", 10);
     const runs = params.runs ? Number.parseInt(params.runs, 10) : undefined;
     const interval = params.interval ? Number.parseInt(params.interval, 10) : undefined;
     const comments = params.comments;
+    const username = params.username;
+    const answerNumber = params.answer_number;
 
-    if (!Number.isInteger(serviceId) || !link) {
-      return NextResponse.json({ error: "Missing service or link parameter" }, { status: 400 });
+    if (!link) {
+      return NextResponse.json({ error: "Missing link parameter" }, { status: 400 });
     }
 
     try {
@@ -115,6 +190,8 @@ async function handleApiV2(req: NextRequest) {
         runs,
         interval,
         comments,
+        username,
+        answerNumber,
         source: "API",
       });
 
@@ -180,6 +257,39 @@ async function handleApiV2(req: NextRequest) {
   }
 
   if (action === "refill") {
+    // Multiple refill (FonteSMM API v2)
+    if (params.orders) {
+      const ids = params.orders
+        .split(",")
+        .map((n) => Number.parseInt(n.trim(), 10))
+        .filter((n) => Number.isInteger(n))
+        .slice(0, 100);
+
+      const orders = await prisma.order.findMany({
+        where: { userId: user.id, id: { in: ids } },
+        include: { service: true, provider: true },
+      });
+      const byId = new Map(orders.map((o) => [o.id, o]));
+      const results = [];
+
+      for (const id of ids) {
+        const order = byId.get(id);
+        if (!order || !order.service.refill) {
+          results.push({ order: id, refill: { error: "Refill not available" } });
+          continue;
+        }
+        if (order.provider && order.providerOrderId && order.provider.isActive) {
+          await requestProviderRefill(order.provider, order.providerOrderId).catch(() => null);
+        }
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { refillStatus: "REQUESTED", refillRequestedAt: new Date() },
+        });
+        results.push({ order: id, refill: String(order.id) });
+      }
+      return NextResponse.json(results);
+    }
+
     const orderId = Number.parseInt(params.order || "", 10);
     const order = await prisma.order.findFirst({
       where: { id: orderId, userId: user.id },
@@ -203,6 +313,31 @@ async function handleApiV2(req: NextRequest) {
   }
 
   if (action === "refill_status") {
+    // Multiple refill status (FonteSMM API v2)
+    if (params.refills) {
+      const ids = params.refills
+        .split(",")
+        .map((n) => Number.parseInt(n.trim(), 10))
+        .filter((n) => Number.isInteger(n))
+        .slice(0, 100);
+
+      const orders = await prisma.order.findMany({
+        where: { userId: user.id, id: { in: ids } },
+      });
+      const byId = new Map(orders.map((o) => [o.id, o]));
+      const results = ids.map((id) => {
+        const order = byId.get(id);
+        if (!order || !order.refillStatus) {
+          return { refill: id, status: { error: "Refill not found" } };
+        }
+        return {
+          refill: id,
+          status: order.refillStatus === "COMPLETED" ? "Completed" : "In progress",
+        };
+      });
+      return NextResponse.json(results);
+    }
+
     const orderId = Number.parseInt(params.refill || "", 10);
     const order = await prisma.order.findFirst({
       where: { id: orderId, userId: user.id },

@@ -45,9 +45,9 @@ export function buildPixBrCode(input: PixBrCodeInput): string {
     input.description ? formatEmvField("02", sanitizeAscii(input.description, 40)) : "",
   ].join("");
 
-  const cleanName = sanitizeAscii(input.merchantName || "VELOSMM", 25) || "VELOSMM";
+  const cleanName = sanitizeAscii(input.merchantName || "FOLLOWME", 25) || "FOLLOWME";
   const cleanCity = sanitizeAscii(input.merchantCity || "SAO PAULO", 15) || "SAO PAULO";
-  const cleanTxid = input.txid.replace(/[^A-Za-z0-9]/g, "").slice(0, 25) || "VELOSMMPIX";
+  const cleanTxid = input.txid.replace(/[^A-Za-z0-9]/g, "").slice(0, 25) || "FOLLOWMEPIX";
   const amountStr = input.amount.toFixed(2);
 
   const additionalData = formatEmvField("05", cleanTxid);
@@ -73,7 +73,7 @@ export function buildPixBrCode(input: PixBrCodeInput): string {
 export function generateTxId(): string {
   const stamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 12);
   const rand = crypto.randomBytes(4).toString("hex").toUpperCase();
-  return `VSMM${stamp}${rand}`.slice(0, 25);
+  return `FLWM${stamp}${rand}`.slice(0, 25);
 }
 
 export interface PixChargeRequest {

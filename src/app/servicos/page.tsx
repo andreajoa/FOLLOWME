@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
 import { PublicHeader } from "@/components/public-header";
 import { PublicFooter } from "@/components/public-footer";
@@ -8,9 +8,10 @@ import { ServiceCatalogTable } from "@/components/service-catalog-table";
 export const dynamic = "force-dynamic";
 
 export default async function PublicServicesPage() {
-  const [user, settings, services] = await Promise.all([
+  const [user, settings, prefs, services] = await Promise.all([
     getCurrentUser(),
     getSiteSettings(),
+    getRequestPreferences(),
     prisma.service.findMany({
       where: { isActive: true, category: { isActive: true } },
       include: { category: { select: { name: true, network: true } } },
@@ -32,6 +33,8 @@ export default async function PublicServicesPage() {
       <PublicHeader
         brandName={settings.brandName}
         user={user ? { username: user.username, role: user.role } : null}
+        locale={prefs.locale}
+        currency={prefs.currency}
       />
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-12 sm:px-6 lg:px-8">

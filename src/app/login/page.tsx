@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
 import { PublicHeader } from "@/components/public-header";
 import { PublicFooter } from "@/components/public-footer";
@@ -12,9 +12,10 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ tab?: string; ref?: string; service?: string }>;
 }) {
-  const [user, settings, sp] = await Promise.all([
+  const [user, settings, prefs, sp] = await Promise.all([
     getCurrentUser(),
     getSiteSettings(),
+    getRequestPreferences(),
     searchParams,
   ]);
 
@@ -24,7 +25,12 @@ export default async function LoginPage({
 
   return (
     <div className="min-h-screen flex flex-col bg-[#090A0C]">
-      <PublicHeader brandName={settings.brandName} user={null} />
+      <PublicHeader
+        brandName={settings.brandName}
+        user={null}
+        locale={prefs.locale}
+        currency={prefs.currency}
+      />
 
       <main className="bg-tech-grid flex-1 flex items-center justify-center px-4 py-14">
         <div className="w-full max-w-md space-y-6">
@@ -36,8 +42,7 @@ export default async function LoginPage({
               Entre ou crie sua conta
             </h1>
             <p className="text-sm text-[#98A0AD]">
-              Recarga Pix automática 24h, preços de atacado e API v2 liberada no
-              ato do cadastro.
+              Recarga automática 24h via Stripe (Pix e Cartão), preços de atacado e API v2 liberada no ato do cadastro.
             </p>
           </div>
 

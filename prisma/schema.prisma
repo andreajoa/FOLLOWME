@@ -3,57 +3,65 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id               String             @id @default(cuid())
-  name             String
-  username         String             @unique
-  email            String             @unique
-  passwordHash     String
-  role             String             @default("USER")
-  status           String             @default("ACTIVE")
-  balance          Float              @default(0)
-  totalSpent       Float              @default(0)
-  apiKey           String             @unique
-  referralCode     String             @unique
-  referredById     String?
-  referredBy       User?              @relation("UserReferrals", fields: [referredById], references: [id])
-  referrals        User[]             @relation("UserReferrals")
-  affiliateBalance Float              @default(0)
-  affiliateClicks  Int                @default(0)
-  whatsapp         String?
-  orders           Order[]
-  deposits         Deposit[]
-  tickets          Ticket[]
-  ticketMessages   TicketMessage[]
-  favorites        FavoriteService[]
-  earnings         AffiliateEarning[] @relation("ReferrerEarnings")
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  id                  String               @id @default(cuid())
+  name                String
+  username            String               @unique
+  email               String               @unique
+  passwordHash        String
+  role                String               @default("USER")
+  status              String               @default("ACTIVE")
+  balance             Float                @default(0)
+  totalSpent          Float                @default(0)
+  apiKey              String               @unique
+  referralCode        String               @unique
+  referredById        String?
+  referredBy          User?                @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals           User[]               @relation("UserReferrals")
+  affiliateBalance    Float                @default(0)
+  affiliateClicks     Int                  @default(0)
+  whatsapp            String?
+  locale              String               @default("pt")
+  currency            String               @default("BRL")
+  timezone            String               @default("America/Sao_Paulo")
+  orders              Order[]
+  deposits            Deposit[]
+  tickets             Ticket[]
+  ticketMessages      TicketMessage[]
+  favorites           FavoriteService[]
+  earnings            AffiliateEarning[]   @relation("ReferrerEarnings")
+  subscriptions       Subscription[]
+  childPanels         ChildPanel[]
+  cooperationRequests CooperationRequest[]
+  passwordResets      PasswordResetToken[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 
   @@index([referredById])
   @@index([role])
 }
 
 model Provider {
-  id             String    @id @default(cuid())
+  id             String         @id @default(cuid())
   name           String
   apiUrl         String
   apiKey         String
-  mode           String    @default("LIVE")
-  markupPercent  Float     @default(40)
-  currencyRate   Float     @default(1)
-  cachedBalance  Float     @default(0)
-  cachedCurrency String    @default("BRL")
-  isActive       Boolean   @default(true)
+  mode           String         @default("LIVE")
+  markupPercent  Float          @default(40)
+  currencyRate   Float          @default(1)
+  cachedBalance  Float          @default(0)
+  cachedCurrency String         @default("BRL")
+  isActive       Boolean        @default(true)
   lastSyncedAt   DateTime?
   services       Service[]
   orders         Order[]
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  subscriptions  Subscription[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 }
 
 model Category {
@@ -92,6 +100,7 @@ model Service {
   isFeatured        Boolean           @default(false)
   isActive          Boolean           @default(true)
   orders            Order[]
+  subscriptions     Subscription[]
   favoritedBy       FavoriteService[]
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
@@ -112,53 +121,134 @@ model FavoriteService {
 }
 
 model Order {
-  id                Int       @id @default(autoincrement())
+  id                Int           @id @default(autoincrement())
   userId            String
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   serviceId         Int
-  service           Service   @relation(fields: [serviceId], references: [id])
+  service           Service       @relation(fields: [serviceId], references: [id])
   providerId        String?
-  provider          Provider? @relation(fields: [providerId], references: [id], onDelete: SetNull)
+  provider          Provider?     @relation(fields: [providerId], references: [id], onDelete: SetNull)
   providerOrderId   String?
+  subscriptionId    Int?
+  subscription      Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   link              String
   quantity          Int
   charge            Float
-  cost              Float     @default(0)
-  profit            Float     @default(0)
-  startCount        Int       @default(0)
-  remains           Int       @default(0)
-  status            String    @default("PENDING")
-  dripfeed          Boolean   @default(false)
+  cost              Float         @default(0)
+  profit            Float         @default(0)
+  startCount        Int           @default(0)
+  remains           Int           @default(0)
+  status            String        @default("PENDING")
+  dripfeed          Boolean       @default(false)
   runs              Int?
   interval          Int?
   comments          String?
+  username          String?
+  answerNumber      String?
   refillStatus      String?
   refillRequestedAt DateTime?
-  source            String    @default("WEB")
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  source            String        @default("WEB")
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   @@index([userId, createdAt])
   @@index([status])
   @@index([providerId, providerOrderId])
 }
 
+model Subscription {
+  id              Int       @id @default(autoincrement())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceId       Int
+  service         Service   @relation(fields: [serviceId], references: [id])
+  providerId      String?
+  provider        Provider? @relation(fields: [providerId], references: [id], onDelete: SetNull)
+  providerOrderId String?
+  username        String
+  min             Int
+  max             Int
+  posts           Int?
+  oldPosts        Int       @default(0)
+  delay           Int       @default(0)
+  expiry          DateTime?
+  postsDelivered  Int       @default(0)
+  status          String    @default("ACTIVE")
+  orders          Order[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId, status])
+}
+
+model ChildPanel {
+  id                Int      @id @default(autoincrement())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domain            String   @unique
+  currency          String   @default("BRL")
+  adminUsername     String
+  adminPasswordHash String
+  monthlyPrice      Float    @default(99.9)
+  status            String   @default("PENDING")
+  nameservers       String   @default("ns1.followme.nexaclouds.online, ns2.followme.nexaclouds.online")
+  nextBillingAt     DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId, status])
+}
+
+model CooperationRequest {
+  id            Int      @id @default(autoincrement())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name          String
+  email         String
+  whatsapp      String?
+  type          String   @default("RESELLER")
+  monthlyVolume String?
+  website       String?
+  message       String
+  status        String   @default("PENDING")
+  adminNote     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+}
+
 model Deposit {
-  id         String    @id @default(cuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount     Float
-  method     String    @default("PIX")
-  gateway    String    @default("SANDBOX")
-  externalId String?
-  txid       String    @unique
-  pixCode    String?
-  status     String    @default("PENDING")
-  paidAt     DateTime?
-  expiresAt  DateTime?
-  note       String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount          Float
+  currency        String    @default("BRL")
+  method          String    @default("STRIPE_PIX")
+  gateway         String    @default("STRIPE")
+  externalId      String?
+  stripeSessionId String?   @unique
+  checkoutUrl     String?
+  txid            String    @unique
+  pixCode         String?
+  status          String    @default("PENDING")
+  paidAt          DateTime?
+  expiresAt       DateTime?
+  note            String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([userId, createdAt])
   @@index([status])
@@ -220,18 +310,23 @@ model ServiceUpdate {
 
 model SiteSetting {
   id                 String   @id @default("default")
-  brandName          String   @default("VeloSMM")
-  brandTagline       String   @default("Infraestrutura SMM de alta velocidade para agências, criadores e revendedores.")
-  announcement       String   @default("PIX automático 24/7 sem taxas • Reposição 30 dias ativa nos serviços Brasileiros • API v2 pronta para revenda.")
+  brandName          String   @default("FollowMe")
+  brandTagline       String   @default("Painel SMM de alta velocidade para agências, criadores e revendedores com Pix e Cartão via Stripe 24h.")
+  announcement       String   @default("Pix e Cartão via Stripe com crédito automático 24/7 • Reposição ativa • API v2, Assinaturas e Painel Filho liberados.")
   supportWhatsapp    String   @default("5511999999999")
-  supportEmail       String   @default("suporte@velosmm.com.br")
-  pixGateway         String   @default("SANDBOX")
-  pixKey             String   @default("pix@velosmm.com.br")
-  pixMerchantName    String   @default("VELOSMM DIGITAL")
+  supportEmail       String   @default("suporte@followme.nexaclouds.online")
+  pixGateway         String   @default("STRIPE")
+  pixKey             String   @default("pix@followme.nexaclouds.online")
+  pixMerchantName    String   @default("FOLLOWME DIGITAL")
   pixMerchantCity    String   @default("SAO PAULO")
-  minDeposit         Float    @default(5)
+  minDeposit         Float    @default(10)
   affiliateRate      Float    @default(5)
   affiliateMinPayout Float    @default(20)
   defaultMarkup      Float    @default(40)
+  childPanelPrice    Float    @default(99.9)
+  usdRate            Float    @default(5.5)
+  eurRate            Float    @default(6.0)
+  stripeEnabled      Boolean  @default(true)
+  stripePixEnabled   Boolean  @default(true)
   updatedAt          DateTime @updatedAt
 }

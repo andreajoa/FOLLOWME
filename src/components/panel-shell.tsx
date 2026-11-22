@@ -7,19 +7,28 @@ import {
   Bell,
   Code2,
   CreditCard,
+  Globe,
+  Handshake,
   Layers,
   List,
   LogOut,
   Menu,
   MessageSquare,
   PlusCircle,
+  Repeat,
   ShieldCheck,
   ShoppingBag,
   Users,
   X,
 } from "lucide-react";
 import { BrandLogo } from "./brand-logo";
-import { formatBRL } from "@/lib/format";
+import { LocaleSwitcher } from "./locale-switcher";
+import {
+  AppCurrency,
+  AppLocale,
+  formatMoney,
+  getDictionary,
+} from "@/lib/i18n";
 
 export interface PanelUser {
   id: string;
@@ -37,31 +46,44 @@ interface PanelShellProps {
   brandName: string;
   announcement: string;
   user: PanelUser;
+  locale?: AppLocale;
+  currency?: AppCurrency;
+  usdRate?: number;
+  eurRate?: number;
   children: React.ReactNode;
 }
-
-const CLIENT_MENU = [
-  { href: "/painel", label: "Novo Pedido", icon: PlusCircle },
-  { href: "/painel/massa", label: "Pedido em Massa", icon: Layers },
-  { href: "/painel/servicos", label: "Serviços", icon: List },
-  { href: "/painel/pedidos", label: "Meus Pedidos", icon: ShoppingBag },
-  { href: "/painel/saldo", label: "Adicionar Saldo", icon: CreditCard },
-  { href: "/painel/afiliados", label: "Afiliados", icon: Users },
-  { href: "/painel/tickets", label: "Tickets", icon: MessageSquare },
-  { href: "/painel/atualizacoes", label: "Atualizações", icon: Bell },
-  { href: "/painel/conta", label: "Conta & API", icon: Code2 },
-];
 
 export function PanelShell({
   brandName,
   announcement,
   user,
+  locale = "pt",
+  currency = "BRL",
+  usdRate = 5.5,
+  eurRate = 6.0,
   children,
 }: PanelShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showBanner, setShowBanner] = useState(Boolean(announcement));
+  const t = getDictionary(locale);
+  const rates = { usdRate, eurRate };
+
+  const clientMenu = [
+    { href: "/painel", label: t.sidebar.newOrder, icon: PlusCircle },
+    { href: "/painel/massa", label: t.sidebar.massOrder, icon: Layers },
+    { href: "/painel/assinaturas", label: t.sidebar.subscriptions, icon: Repeat },
+    { href: "/painel/servicos", label: t.sidebar.services, icon: List },
+    { href: "/painel/pedidos", label: t.sidebar.orders, icon: ShoppingBag },
+    { href: "/painel/saldo", label: t.sidebar.addFunds, icon: CreditCard },
+    { href: "/painel/afiliados", label: t.sidebar.affiliates, icon: Users },
+    { href: "/painel/painel-filho", label: t.sidebar.childPanel, icon: Globe },
+    { href: "/painel/parcerias", label: t.sidebar.cooperation, icon: Handshake },
+    { href: "/painel/tickets", label: t.sidebar.tickets, icon: MessageSquare },
+    { href: "/painel/atualizacoes", label: t.sidebar.updates, icon: Bell },
+    { href: "/painel/conta", label: t.sidebar.account, icon: Code2 },
+  ];
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -79,21 +101,21 @@ export function PanelShell({
 
         <div className="p-4 border-b border-[#232730] bg-[#111317]">
           <div className="font-mono text-[10px] uppercase tracking-widest text-[#98A0AD]">
-            Saldo Disponível
+            {t.sidebar.availableBalance}
           </div>
           <div className="mt-1 font-mono text-2xl font-bold text-[#C8FF2E]">
-            {formatBRL(user.balance)}
+            {formatMoney(user.balance, currency, rates)}
           </div>
           <Link
             href="/painel/saldo"
             className="mt-3 btn-lime flex h-9 w-full items-center justify-center font-mono text-[11px] uppercase tracking-wider"
           >
-            + Recarregar Pix
+            {t.sidebar.addFundsBtn}
           </Link>
         </div>
 
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto" aria-label="Menu do painel">
-          {CLIENT_MENU.map((item) => {
+          {clientMenu.map((item) => {
             const active =
               item.href === "/painel"
                 ? pathname === "/painel"
@@ -102,7 +124,7 @@ export function PanelShell({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium border transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2 text-sm font-medium border transition-colors ${
                   active
                     ? "border-[#C8FF2E] bg-[#C8FF2E]/10 text-[#C8FF2E]"
                     : "border-transparent text-[#98A0AD] hover:bg-[#171A20] hover:text-[#F4F5F6]"
@@ -125,7 +147,7 @@ export function PanelShell({
                 }`}
               >
                 <ShieldCheck className="h-4 w-4 shrink-0" />
-                Painel Admin
+                {t.sidebar.adminPanel}
               </Link>
             </div>
           )}
@@ -137,14 +159,14 @@ export function PanelShell({
               @{user.username}
             </div>
             <div className="truncate font-mono text-[10px] text-[#68707E]">
-              Gasto: {formatBRL(user.totalSpent)}
+              {t.sidebar.spent}: {formatMoney(user.totalSpent, currency, rates)}
             </div>
           </div>
           <button
             type="button"
             onClick={handleLogout}
-            title="Sair"
-            aria-label="Sair"
+            title={t.sidebar.logout}
+            aria-label={t.sidebar.logout}
             className="p-2 border border-[#232730] text-[#98A0AD] hover:border-[#EF4444] hover:text-[#F87171] cursor-pointer"
           >
             <LogOut className="h-4 w-4" />
@@ -168,7 +190,7 @@ export function PanelShell({
               </button>
             </div>
             <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-              {CLIENT_MENU.map((item) => {
+              {clientMenu.map((item) => {
                 const active =
                   item.href === "/painel"
                     ? pathname === "/painel"
@@ -178,7 +200,7 @@ export function PanelShell({
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium border ${
+                    className={`flex items-center gap-3 px-3 py-2 text-sm font-medium border ${
                       active
                         ? "border-[#C8FF2E] bg-[#C8FF2E]/10 text-[#C8FF2E]"
                         : "border-transparent text-[#98A0AD]"
@@ -196,18 +218,19 @@ export function PanelShell({
                   className="mt-3 flex items-center gap-3 px-3 py-2.5 text-sm font-mono uppercase border border-[#FF6B2C]/40 text-[#FF8A58]"
                 >
                   <ShieldCheck className="h-4 w-4" />
-                  Painel Admin
+                  {t.sidebar.adminPanel}
                 </Link>
               )}
             </nav>
-            <div className="p-4 border-t border-[#232730]">
+            <div className="p-4 border-t border-[#232730] space-y-3">
+              <LocaleSwitcher locale={locale} currency={currency} compact />
               <button
                 type="button"
                 onClick={handleLogout}
                 className="btn-outline w-full h-10 flex items-center justify-center gap-2 font-mono text-xs uppercase cursor-pointer"
               >
                 <LogOut className="h-4 w-4" />
-                Sair da Conta
+                {t.sidebar.logout}
               </button>
             </div>
           </div>
@@ -233,23 +256,26 @@ export function PanelShell({
             <div className="lg:hidden">
               <BrandLogo name={brandName} href="/painel" compact />
             </div>
-            <span className="hidden sm:inline font-mono text-xs uppercase tracking-widest text-[#98A0AD]">
-              Painel Operacional • {user.name}
+            <span className="hidden md:inline font-mono text-xs uppercase tracking-widest text-[#98A0AD]">
+              {t.sidebar.operationalPanel} • {user.name}
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="hidden sm:block">
+              <LocaleSwitcher locale={locale} currency={currency} compact />
+            </div>
             <Link
               href="/painel/saldo"
-              className="border border-[#C8FF2E]/40 bg-[#C8FF2E]/10 px-3 py-1.5 font-mono text-xs text-[#C8FF2E] font-bold"
+              className="border border-[#C8FF2E]/40 bg-[#C8FF2E]/10 px-3 py-1.5 font-mono text-xs text-[#C8FF2E] font-bold whitespace-nowrap"
             >
-              Saldo: {formatBRL(user.balance)}
+              {formatMoney(user.balance, currency, rates)}
             </Link>
             <Link
               href="/api-docs"
-              className="hidden sm:inline-flex btn-outline h-9 items-center px-3 font-mono text-[11px] uppercase"
+              className="hidden sm:inline-flex btn-outline h-8 items-center px-3 font-mono text-[11px] uppercase"
             >
-              Docs API
+              {t.sidebar.apiDocs}
             </Link>
           </div>
         </header>

@@ -40,10 +40,47 @@ export const DEPOSIT_STATUS_META: Record<
   string,
   { label: string; tone: "emerald" | "amber" | "red" | "zinc" }
 > = {
-  PENDING: { label: "Aguardando Pix", tone: "amber" },
+  PENDING: { label: "Aguardando Pagamento", tone: "amber" },
   PAID: { label: "Confirmado", tone: "emerald" },
   EXPIRED: { label: "Expirado", tone: "zinc" },
   REJECTED: { label: "Recusado", tone: "red" },
+};
+
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  STRIPE_PIX: "Pix (Stripe)",
+  STRIPE_CARD: "Cartão (Stripe)",
+  STRIPE: "Stripe (Cartão / Pix)",
+  PIX: "Pix Direto",
+};
+
+export const SUBSCRIPTION_STATUS_META: Record<
+  string,
+  { label: string; tone: "emerald" | "amber" | "lime" | "red" | "zinc" }
+> = {
+  ACTIVE: { label: "Ativa", tone: "emerald" },
+  PAUSED: { label: "Pausada", tone: "amber" },
+  COMPLETED: { label: "Concluída", tone: "lime" },
+  EXPIRED: { label: "Expirada", tone: "zinc" },
+  CANCELED: { label: "Cancelada", tone: "red" },
+};
+
+export const CHILD_PANEL_STATUS_META: Record<
+  string,
+  { label: string; tone: "emerald" | "amber" | "red" | "zinc" }
+> = {
+  PENDING: { label: "Aguardando DNS", tone: "amber" },
+  ACTIVE: { label: "Ativo", tone: "emerald" },
+  SUSPENDED: { label: "Suspenso", tone: "red" },
+  CANCELED: { label: "Cancelado", tone: "zinc" },
+};
+
+export const COOPERATION_STATUS_META: Record<
+  string,
+  { label: string; tone: "emerald" | "amber" | "red" }
+> = {
+  PENDING: { label: "Em Análise", tone: "amber" },
+  APPROVED: { label: "Aprovada", tone: "emerald" },
+  REJECTED: { label: "Recusada", tone: "red" },
 };
 
 export const TICKET_STATUS_META: Record<

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
 import { PublicHeader } from "@/components/public-header";
 import { PublicFooter } from "@/components/public-footer";
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 const ENDPOINTS = [
   {
-    title: "1. Listar Serviços",
+    title: "1. Listar Serviços (Service list)",
     action: "services",
     params: [
       { name: "key", desc: "Sua chave secreta de API (gerada em Conta & API)" },
@@ -30,23 +30,44 @@ const ENDPOINTS = [
 ]`,
   },
   {
-    title: "2. Criar Novo Pedido",
+    title: "2. Criar Novo Pedido (Default / Package / Comments / Comment Likes / Poll)",
     action: "add",
     params: [
       { name: "key", desc: "Sua chave de API" },
       { name: "action", desc: "add" },
       { name: "service", desc: "ID numérico do serviço" },
       { name: "link", desc: "Link do perfil, publicação ou vídeo" },
-      { name: "quantity", desc: "Quantidade desejada (dentro do min/max)" },
-      { name: "runs (opcional)", desc: "Número de execuções para Drip-Feed" },
-      { name: "interval (opcional)", desc: "Intervalo em minutos entre execuções" },
+      { name: "quantity", desc: "Quantidade desejada (Default / Comment Likes / Poll)" },
+      { name: "runs / interval (opcional)", desc: "Execuções e intervalo em minutos para Drip-Feed" },
+      { name: "comments (Custom Comments)", desc: "Lista de comentários separados por \\n" },
+      { name: "username (Comment Likes)", desc: "Usuário autor do comentário" },
+      { name: "answer_number (Poll)", desc: "Número da opção da enquete" },
     ],
     response: `{
   "order": 1042
 }`,
   },
   {
-    title: "3. Consultar Status (Individual ou Múltiplos)",
+    title: "3. Criar Assinatura Automática (Subscriptions)",
+    action: "add (Subscriptions)",
+    params: [
+      { name: "key", desc: "Sua chave de API" },
+      { name: "action", desc: "add" },
+      { name: "service", desc: "ID de um serviço tipo Subscriptions" },
+      { name: "username", desc: "Usuário do perfil público monitorado" },
+      { name: "min / max", desc: "Quantidade mínima e máxima por novo post" },
+      { name: "posts (opcional)", desc: "Limite de novos posts (omita para ilimitado)" },
+      { name: "old_posts (opcional)", desc: "Quantidade de posts antigos a engajar" },
+      { name: "delay", desc: "Atraso em minutos (0, 5, 10, 15, 30, 60...)" },
+      { name: "expiry (opcional)", desc: "Data de expiração (d/m/Y)" },
+    ],
+    response: `{
+  "order": 58,
+  "subscription": 58
+}`,
+  },
+  {
+    title: "4. Consultar Status (Individual ou Múltiplos)",
     action: "status",
     params: [
       { name: "key", desc: "Sua chave de API" },
@@ -62,19 +83,32 @@ const ENDPOINTS = [
 }`,
   },
   {
-    title: "4. Solicitar Reposição (Refill)",
+    title: "5. Solicitar Reposição (Individual ou Múltiplos Refills)",
     action: "refill",
     params: [
       { name: "key", desc: "Sua chave de API" },
       { name: "action", desc: "refill" },
-      { name: "order", desc: "ID do pedido concluído elegível a reposição" },
+      { name: "order", desc: "ID de um pedido único elegível" },
+      { name: "orders (múltiplo)", desc: "Até 100 IDs separados por vírgula (ex: 1042,1043)" },
     ],
     response: `{
   "refill": "1042"
 }`,
   },
   {
-    title: "5. Cancelar Pedido(s)",
+    title: "6. Status da Reposição (Individual ou Múltiplos)",
+    action: "refill_status",
+    params: [
+      { name: "key", desc: "Sua chave de API" },
+      { name: "action", desc: "refill_status" },
+      { name: "refill", desc: "ID da reposição (ou 'refills=1042,1043' para múltiplas)" },
+    ],
+    response: `{
+  "status": "Completed"
+}`,
+  },
+  {
+    title: "7. Cancelar Pedido(s)",
     action: "cancel",
     params: [
       { name: "key", desc: "Sua chave de API" },
@@ -86,7 +120,7 @@ const ENDPOINTS = [
 ]`,
   },
   {
-    title: "6. Consultar Saldo da Conta",
+    title: "8. Consultar Saldo da Conta",
     action: "balance",
     params: [
       { name: "key", desc: "Sua chave de API" },
@@ -100,35 +134,40 @@ const ENDPOINTS = [
 ];
 
 export default async function ApiDocsPage() {
-  const [user, settings] = await Promise.all([
+  const [user, settings, prefs] = await Promise.all([
     getCurrentUser(),
     getSiteSettings(),
+    getRequestPreferences(),
   ]);
 
-  const baseUrl = process.env.APP_URL || "http://localhost:3000";
+  const baseUrl = (process.env.APP_URL || "https://followme.nexaclouds.online").replace(
+    /\/+$/,
+    ""
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-[#090A0C]">
       <PublicHeader
         brandName={settings.brandName}
         user={user ? { username: user.username, role: user.role } : null}
+        locale={prefs.locale}
+        currency={prefs.currency}
       />
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-12 sm:px-6 lg:px-8 space-y-8">
         <div>
           <span className="font-mono text-xs uppercase tracking-widest text-[#C8FF2E]">
-            Integração para Revendedores & Lojas
+            Integração para Revendedores, Painéis Filhos &amp; Lojas
           </span>
           <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold tracking-tight">
             Documentação API v2
           </h1>
           <p className="mt-2 text-sm text-[#98A0AD]">
-            Compatível com qualquer painel SMM, WooCommerce, Shopify, N8N ou
-            sistema próprio.
+            100% compatível com o padrão mundial SMM Panel v2 (Perfect Panel,
+            WooCommerce, Shopify, N8N ou sistemas próprios).
           </p>
         </div>
 
-        {/* Resumo técnico */}
         <div className="grid grid-cols-1 sm:grid-cols-3 border border-[#232730] bg-[#111317] font-mono text-xs">
           <div className="p-4 border-b sm:border-b-0 sm:border-r border-[#232730]">
             <div className="text-[#68707E]">MÉTODO HTTP</div>
@@ -177,11 +216,10 @@ export default async function ApiDocsPage() {
           </div>
         )}
 
-        {/* Endpoints */}
         <div className="space-y-6">
           {ENDPOINTS.map((ep) => (
             <section
-              key={ep.action}
+              key={ep.title}
               className="border border-[#232730] bg-[#111317]"
             >
               <div className="flex items-center justify-between border-b border-[#232730] bg-[#171A20] px-5 py-3.5">

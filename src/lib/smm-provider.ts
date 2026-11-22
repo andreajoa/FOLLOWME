@@ -166,11 +166,19 @@ export async function submitProviderOrder(
   provider: ProviderConfig,
   payload: {
     providerServiceId: string;
-    link: string;
-    quantity: number;
+    link?: string;
+    quantity?: number;
     runs?: number;
     interval?: number;
     comments?: string;
+    username?: string;
+    answerNumber?: string;
+    min?: number;
+    max?: number;
+    posts?: number;
+    oldPosts?: number;
+    delay?: number;
+    expiry?: string;
   }
 ): Promise<{ providerOrderId: string }> {
   if (provider.mode === "SIMULATED") {
@@ -186,6 +194,14 @@ export async function submitProviderOrder(
     runs: payload.runs,
     interval: payload.interval,
     comments: payload.comments,
+    username: payload.username,
+    answer_number: payload.answerNumber,
+    min: payload.min,
+    max: payload.max,
+    posts: payload.posts,
+    old_posts: payload.oldPosts,
+    delay: payload.delay,
+    expiry: payload.expiry,
   });
 
   if (!data.order) {

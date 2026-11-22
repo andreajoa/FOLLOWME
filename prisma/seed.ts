@@ -9,63 +9,70 @@ function makeKey(prefix: string) {
 }
 
 async function main() {
-  console.log("Seeding VeloSMM database...");
+  console.log("Seeding FollowMe database...");
 
   await prisma.siteSetting.upsert({
     where: { id: "default" },
     update: {},
     create: {
       id: "default",
-      brandName: "VeloSMM",
+      brandName: "FollowMe",
       brandTagline:
-        "Painel SMM de alta velocidade para agências, criadores e revendedores com Pix automático 24h.",
+        "Painel SMM de alta velocidade para agências, criadores e revendedores com Pix e Cartão via Stripe 24h.",
       announcement:
-        "PIX automático 24/7 liberado em segundos • Serviços Instagram & TikTok Brasileiros com Reposição 30 dias ativos • API v2 compatível com revendedores.",
+        "Pix e Cartão via Stripe com crédito automático 24/7 • Serviços Instagram & TikTok BR com Reposição 30 dias • API v2, Assinaturas e Painel Filho ativos.",
       supportWhatsapp: "5511999999999",
-      supportEmail: "suporte@velosmm.com.br",
-      pixGateway: "SANDBOX",
-      pixKey: "pix@velosmm.com.br",
-      pixMerchantName: "VELOSMM DIGITAL",
+      supportEmail: "suporte@followme.nexaclouds.online",
+      pixGateway: "STRIPE",
+      pixKey: "pix@followme.nexaclouds.online",
+      pixMerchantName: "FOLLOWME DIGITAL",
       pixMerchantCity: "SAO PAULO",
-      minDeposit: 5,
+      minDeposit: 10,
       affiliateRate: 5,
       affiliateMinPayout: 20,
       defaultMarkup: 40,
+      childPanelPrice: 99.9,
+      usdRate: 5.5,
+      eurRate: 6.0,
+      stripeEnabled: true,
+      stripePixEnabled: true,
     },
   });
 
-  const adminPass = await bcrypt.hash("Admin@123", 10);
-  const clientPass = await bcrypt.hash("Demo@123", 10);
+  const adminEmail = (process.env.ADMIN_INITIAL_EMAIL || "admin@followme.nexaclouds.online").toLowerCase();
+  const adminRawPass = process.env.ADMIN_INITIAL_PASSWORD || "FollowMe#Adm2026!";
+  const adminPass = await bcrypt.hash(adminRawPass, 10);
+  const clientPass = await bcrypt.hash("Demo@FollowMe2026", 10);
 
   const admin = await prisma.user.upsert({
-    where: { email: "admin@velosmm.com.br" },
+    where: { email: adminEmail },
     update: {},
     create: {
-      name: "Administrador VeloSMM",
+      name: "Administrador FollowMe",
       username: "admin",
-      email: "admin@velosmm.com.br",
+      email: adminEmail,
       passwordHash: adminPass,
       role: "ADMIN",
       balance: 2500.0,
       totalSpent: 0,
-      apiKey: makeKey("vsmm_adm"),
+      apiKey: makeKey("flwm_adm"),
       referralCode: "ADMINVIP",
       whatsapp: "5511999999999",
     },
   });
 
   const demoUser = await prisma.user.upsert({
-    where: { email: "demo@velosmm.com.br" },
+    where: { email: "agencia@followme.nexaclouds.online" },
     update: {},
     create: {
-      name: "Agência Impulso Demo",
-      username: "agenciademo",
-      email: "demo@velosmm.com.br",
+      name: "Agência Impulso Parceira",
+      username: "agenciaimpulso",
+      email: "agencia@followme.nexaclouds.online",
       passwordHash: clientPass,
       role: "USER",
       balance: 150.0,
       totalSpent: 48.6,
-      apiKey: makeKey("vsmm_cli"),
+      apiKey: makeKey("flwm_cli"),
       referralCode: "AGENCIA10",
       affiliateBalance: 14.5,
       affiliateClicks: 87,
@@ -74,17 +81,17 @@ async function main() {
   });
 
   const referredUser = await prisma.user.upsert({
-    where: { email: "cliente2@velosmm.com.br" },
+    where: { email: "criador@followme.nexaclouds.online" },
     update: {},
     create: {
       name: "Lucas Criador",
       username: "lucascriador",
-      email: "cliente2@velosmm.com.br",
+      email: "criador@followme.nexaclouds.online",
       passwordHash: clientPass,
       role: "USER",
       balance: 65.0,
       totalSpent: 22.4,
-      apiKey: makeKey("vsmm_cli"),
+      apiKey: makeKey("flwm_cli"),
       referralCode: "LUCASBR",
       referredById: demoUser.id,
     },
@@ -98,7 +105,7 @@ async function main() {
     simProvider = await prisma.provider.create({
       data: {
         name: "Fornecedor Principal BR (Simulado)",
-        apiUrl: "https://provider-simulado.velosmm.local/api/v2",
+        apiUrl: "https://provider-simulado.followme.local/api/v2",
         apiKey: "sim_provider_internal_key",
         mode: "SIMULATED",
         markupPercent: 45,
@@ -175,6 +182,78 @@ async function main() {
   const existingServiceCount = await prisma.service.count();
   if (existingServiceCount === 0) {
     const servicesData = [
+      {
+        categorySlug: "instagram-engajamento",
+        providerServiceId: "1091",
+        type: "SUBSCRIPTIONS",
+        name: "Instagram Auto-Curtidas Brasileiras (Assinatura Novos Posts)",
+        description:
+          "• Envio automático em cada novo post publicado no perfil\n• Configure min/max, limite de posts e delay na aba Assinaturas ou via API v2.",
+        rate: 14.9,
+        providerRate: 8.5,
+        min: 50,
+        max: 10000,
+        averageTime: "Automático",
+        refill: false,
+        refillDays: 0,
+        cancel: true,
+        dripfeed: false,
+        isFeatured: true,
+      },
+      {
+        categorySlug: "instagram-engajamento",
+        providerServiceId: "1092",
+        type: "COMMENT_LIKES",
+        name: "Instagram Curtidas em Comentário Específico | Brasileiras",
+        description:
+          "• Destaque seu comentário no topo da publicação\n• Informe o link do post e o @usuário autor do comentário.",
+        rate: 18.5,
+        providerRate: 10.2,
+        min: 20,
+        max: 5000,
+        averageTime: "10 minutos",
+        refill: false,
+        refillDays: 0,
+        cancel: true,
+        dripfeed: false,
+        isFeatured: false,
+      },
+      {
+        categorySlug: "instagram-engajamento",
+        providerServiceId: "1093",
+        type: "POLL",
+        name: "Instagram Votos em Enquete (Stories Poll) | Brasileiros",
+        description:
+          "• Votos rápidos na opção escolhida (answer_number = 1 ou 2)\n• Perfil deve estar público.",
+        rate: 22.0,
+        providerRate: 12.5,
+        min: 50,
+        max: 20000,
+        averageTime: "5 minutos",
+        refill: false,
+        refillDays: 0,
+        cancel: false,
+        dripfeed: false,
+        isFeatured: false,
+      },
+      {
+        categorySlug: "instagram-seguidores-br",
+        providerServiceId: "1094",
+        type: "PACKAGE",
+        name: "Pacote Completo Lançamento Instagram (1k Seguidores + 1k Curtidas + 5k Views)",
+        description:
+          "• Pacote fechado com entrega coordenada\n• Preço fixo por pacote — basta informar o link do perfil.",
+        rate: 39.9,
+        providerRate: 23.0,
+        min: 1,
+        max: 1,
+        averageTime: "15 minutos",
+        refill: true,
+        refillDays: 30,
+        cancel: true,
+        dripfeed: false,
+        isFeatured: true,
+      },
       // Instagram Seguidores BR
       {
         categorySlug: "instagram-seguidores-br",
@@ -695,12 +774,12 @@ async function main() {
       data: {
         userId: demoUser.id,
         amount: 200.0,
-        method: "PIX",
-        gateway: "SANDBOX",
-        txid: "VSMM20261119DEMO0001",
+        method: "STRIPE_PIX",
+        gateway: "STRIPE",
+        txid: "FLWM20261122INIT0001",
         status: "PAID",
         paidAt: new Date(Date.now() - 86400 * 1000),
-        note: "Recarga inicial via Pix Automático",
+        note: "Recarga inicial via Stripe Pix",
       },
     });
 
@@ -708,12 +787,12 @@ async function main() {
       data: {
         userId: referredUser.id,
         amount: 290.0,
-        method: "PIX",
-        gateway: "SANDBOX",
-        txid: "VSMM20261119REF0002",
+        method: "STRIPE_CARD",
+        gateway: "STRIPE",
+        txid: "FLWM20261122INIT0002",
         status: "PAID",
         paidAt: new Date(Date.now() - 43200 * 1000),
-        note: "Recarga Pix",
+        note: "Recarga via Stripe Cartão",
       },
     });
 
@@ -781,9 +860,8 @@ async function main() {
     });
   }
 
-  console.log("Seed completed!");
-  console.log("Admin login: admin@velosmm.com.br / Admin@123");
-  console.log("Demo client: demo@velosmm.com.br / Demo@123");
+  console.log("FollowMe seed completed!");
+  console.log(`Admin account ensured: ${adminEmail}`);
 }
 
 main()

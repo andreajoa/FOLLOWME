@@ -19,13 +19,17 @@ export async function POST(
   }
 
   const isAdmin = user.role === "ADMIN";
+  const allowDevSandbox =
+    process.env.NODE_ENV !== "production" &&
+    process.env.ALLOW_SANDBOX_CONFIRM === "true";
   const isOwnerSandbox =
+    allowDevSandbox &&
     deposit.userId === user.id &&
-    (deposit.gateway === "SANDBOX" || deposit.gateway.endsWith("_FALLBACK"));
+    deposit.gateway === "SANDBOX";
 
   if (!isAdmin && !isOwnerSandbox) {
     return NextResponse.json(
-      { error: "Aguarde a confirmação automática do banco via webhook Pix." },
+      { error: "Aguarde a confirmação automática da Stripe ou contate o suporte." },
       { status: 403 }
     );
   }
@@ -35,7 +39,7 @@ export async function POST(
       deposit.id,
       isAdmin
         ? `Confirmado manualmente por ${user.username}`
-        : "Confirmado instantaneamente via Pix Sandbox"
+        : "Confirmado em modo Sandbox local"
     );
 
     const refreshed = await prisma.user.findUnique({

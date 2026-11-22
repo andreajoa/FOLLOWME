@@ -251,12 +251,20 @@ export function LandingInteractive({
               </div>
 
               <div>
-                <label
-                  htmlFor="quick-pass"
-                  className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1.5"
-                >
-                  Senha
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label
+                    htmlFor="quick-pass"
+                    className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD]"
+                  >
+                    Senha
+                  </label>
+                  <Link
+                    href="/esqueci-senha"
+                    className="font-mono text-[11px] text-[#C8FF2E] hover:underline"
+                  >
+                    Esqueceu sua senha?
+                  </Link>
+                </div>
                 <input
                   id="quick-pass"
                   type="password"
@@ -296,7 +304,7 @@ export function LandingInteractive({
             </Link>
           </div>
           <p className="font-mono text-[11px] text-[#68707E]">
-            Demo local: demo@velosmm.com.br / Demo@123
+            Recargas automáticas 24/7 via Stripe (Pix e Cartão)
           </p>
         </div>
       </div>

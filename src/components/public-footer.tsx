@@ -20,8 +20,8 @@ export function PublicFooter({
             <BrandLogo name={brandName} />
             <p className="text-sm text-[#98A0AD] max-w-sm leading-relaxed">
               Infraestrutura automatizada de marketing em mídias sociais para
-              agências, gestores de tráfego, criadores e revendedores com Pix
-              24 horas e API v2 padrão de mercado.
+              agências, gestores de tráfego, criadores e revendedores com Pix e
+              Cartão via Stripe 24h, Painel Filho, Assinaturas e API v2.
             </p>
             <p className="font-mono text-xs text-[#68707E]">
               Suporte: {supportEmail} • WhatsApp +{supportWhatsapp}
@@ -44,6 +44,11 @@ export function PublicFooter({
                 </Link>
               </li>
               <li>
+                <Link href="/parcerias" className="hover:text-[#F4F5F6]">
+                  Parcerias &amp; Revenda VIP
+                </Link>
+              </li>
+              <li>
                 <Link href="/login" className="hover:text-[#F4F5F6]">
                   Acessar Painel
                 </Link>
@@ -58,7 +63,7 @@ export function PublicFooter({
 
           <div className="md:col-span-4 space-y-2.5">
             <h3 className="font-mono text-xs uppercase tracking-widest text-[#C8FF2E]">
-              Ajuda & Políticas
+              Ajuda &amp; Políticas
             </h3>
             <ul className="space-y-2 text-sm text-[#98A0AD]">
               <li>
@@ -69,6 +74,11 @@ export function PublicFooter({
               <li>
                 <Link href="/termos" className="hover:text-[#F4F5F6]">
                   Termos de Uso e Política de Reembolso
+                </Link>
+              </li>
+              <li>
+                <Link href="/esqueci-senha" className="hover:text-[#F4F5F6]">
+                  Recuperar Senha
                 </Link>
               </li>
               <li>
@@ -85,7 +95,7 @@ export function PublicFooter({
             © {new Date().getFullYear()} {brandName}. Todos os direitos reservados.
           </p>
           <p className="font-mono text-xs text-[#68707E]">
-            PIX 24/7 • API v2 REST • SISTEMA AUTOMATIZADO
+            STRIPE CARTÃO &amp; PIX 24/7 • API v2 REST • PAINEL FILHO
           </p>
         </div>
       </div>
