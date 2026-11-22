@@ -1,11 +1,30 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
 import { PublicHeader } from "@/components/public-header";
 import { PublicFooter } from "@/components/public-footer";
 import { ServiceCatalogTable } from "@/components/service-catalog-table";
+import { getLocalizedServiceName, getServiceMarketRate } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const prefs = await getRequestPreferences().catch(() => ({
+    locale: "en" as const,
+    currency: "USD" as const,
+  }));
+  const isPt = prefs.locale === "pt";
+  return {
+    title: isPt
+      ? "Catálogo Completo de Serviços SMM e Preços | FollowMe"
+      : "Full Social Growth Service Catalog & Live USD Rates | FollowMe",
+    description: isPt
+      ? "Compare todos os 26 serviços ativos para Instagram, TikTok, YouTube, Facebook, Telegram, X e Spotify com preços por 1.000 unidades em Reais e reposição garantida."
+      : "Compare all 26 live services for Instagram, TikTok, YouTube, Facebook, Telegram, X, and Spotify with transparent per-1,000 USD pricing and refill warranties.",
+    alternates: { canonical: "/servicos" },
+  };
+}
 
 export default async function PublicServicesPage() {
   const [user, settings, prefs, services] = await Promise.all([
@@ -29,9 +48,31 @@ export default async function PublicServicesPage() {
   }
 
   const isPt = prefs.locale === "pt";
+  const appUrl = (process.env.APP_URL || "https://followme.nexaclouds.online").replace(/\/+$/, "");
+
+  const catalogJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "OfferCatalog",
+    name: isPt
+      ? `${settings.brandName} — Catálogo Completo de Serviços (${prefs.currency})`
+      : `${settings.brandName} — Full Social Growth Catalog (${prefs.currency})`,
+    url: `${appUrl}/servicos`,
+    itemListElement: services.map((s) => ({
+      "@type": "Offer",
+      name: getLocalizedServiceName(s, prefs.locale),
+      price: getServiceMarketRate(s, prefs.currency).toFixed(2),
+      priceCurrency: prefs.currency,
+      availability: "https://schema.org/InStock",
+      url: `${appUrl}/servicos`,
+    })),
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#faf8fd] text-[#111015]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(catalogJsonLd) }}
+      />
       <div className="fn-hero-canvas border-b border-[#ece5f2]">
         <PublicHeader
           brandName={settings.brandName}

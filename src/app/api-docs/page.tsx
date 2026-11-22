@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
@@ -5,6 +6,13 @@ import { PublicHeader } from "@/components/public-header";
 import { PublicFooter } from "@/components/public-footer";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "SMM Panel API v2 Documentation — Resellers & Agencies | FollowMe",
+  description:
+    "Full SMM Panel API v2 reference for FollowMe: services, orders, drip-feed, subscriptions, refill, cancel, and balance endpoints compatible with Perfect Panel, Shopify, and N8N.",
+  alternates: { canonical: "/api-docs" },
+};
 
 const ENDPOINTS = [
   {

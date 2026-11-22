@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
 import { PublicHeader } from "@/components/public-header";
@@ -5,6 +6,13 @@ import { PublicFooter } from "@/components/public-footer";
 import { CooperationClient } from "@/components/cooperation-client";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Agency, Reseller & White-Label Child Panel Program | FollowMe",
+  description:
+    "Scale client accounts or launch a white-label SMM Child Panel with VIP wholesale rates, API v2 integration, and dedicated support on FollowMe.",
+  alternates: { canonical: "/parcerias" },
+};
 
 export default async function PublicCooperationPage() {
   const [user, settings, prefs] = await Promise.all([

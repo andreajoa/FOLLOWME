@@ -31,12 +31,45 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(appUrl),
     title: copy.metaTitle.replace("FollowMe", brand),
     description: copy.metaDescription,
+    keywords:
+      prefs.locale === "pt"
+        ? [
+            "comprar seguidores instagram",
+            "comprar curtidas instagram pix",
+            "comprar seguidores tiktok liberar live",
+            "comprar inscritos youtube",
+            "painel smm brasil stripe pix",
+          ]
+        : [
+            "buy instagram followers usa",
+            "buy instagram likes and reels views",
+            "buy tiktok followers live",
+            "buy youtube subscribers watch time",
+            "smm panel api v2 stripe usd",
+          ],
+    authors: [{ name: `${brand} Growth Editorial Team`, url: appUrl }],
+    creator: brand,
+    publisher: brand,
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-snippet": -1,
+        "max-image-preview": "large",
+        "max-video-preview": -1,
+      },
+    },
     alternates: {
       canonical: "/",
       languages: {
         "en-US": "/en",
         "pt-BR": "/pt",
         "x-default": "/en",
+      },
+      types: {
+        "text/plain": "/llms.txt",
       },
     },
     openGraph: {

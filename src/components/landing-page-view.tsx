@@ -174,21 +174,92 @@ export async function LandingPageView({
         "30 to 365-Day Refill Protection",
       ];
 
+  const updatedIso = new Date().toISOString().slice(0, 10);
+
+  const liveOfferItems = directoryGroups.flatMap((group) =>
+    group.rows.map((row) => ({
+      "@type": "Offer",
+      name: `${group.label} ${row.label} — ${row.serviceName}`,
+      price: row.rate.toFixed(2),
+      priceCurrency: currency,
+      availability: "https://schema.org/InStock",
+      url: `${appUrl}${group.href}`,
+    }))
+  );
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "Organization",
+        "@id": `${appUrl}/#organization`,
         name: settings.brandName,
         url: appUrl,
         email: settings.supportEmail,
         description: copy.metaDescription,
+        areaServed: ["US", "BR", "CA", "GB", "AU"],
+        contactPoint: {
+          "@type": "ContactPoint",
+          contactType: "customer support",
+          email: settings.supportEmail,
+          availableLanguage: ["English", "Portuguese", "Spanish"],
+        },
       },
       {
         "@type": "WebSite",
+        "@id": `${appUrl}/#website`,
         name: settings.brandName,
         url: appUrl,
+        publisher: { "@id": `${appUrl}/#organization` },
         inLanguage: locale === "pt" ? "pt-BR" : locale === "es" ? "es" : "en-US",
+      },
+      {
+        "@type": "Service",
+        name: copy.metaTitle,
+        description: copy.metaDescription,
+        provider: { "@id": `${appUrl}/#organization` },
+        areaServed: locale === "pt" ? ["BR"] : ["US", "CA", "GB", "AU"],
+        hasOfferCatalog: {
+          "@type": "OfferCatalog",
+          name: `${settings.brandName} Social Growth Catalog (${currency})`,
+          itemListElement: liveOfferItems,
+        },
+      },
+      {
+        "@type": "HowTo",
+        name: copy.howItWorks.heading,
+        description: copy.howItWorks.subtext,
+        step: copy.howItWorks.steps.map((s, idx) => ({
+          "@type": "HowToStep",
+          position: idx + 1,
+          name: s.title,
+          text: s.desc,
+        })),
+      },
+      {
+        "@type": "Article",
+        headline: copy.metaTitle,
+        description: copy.metaDescription,
+        datePublished: "2026-10-01",
+        dateModified: updatedIso,
+        author: {
+          "@type": "Organization",
+          name: `${settings.brandName} Growth Editorial Team`,
+          url: appUrl,
+        },
+        publisher: { "@id": `${appUrl}/#organization` },
+        inLanguage: locale === "pt" ? "pt-BR" : locale === "es" ? "es" : "en-US",
+      },
+      {
+        "@type": "VideoObject",
+        name: isPt
+          ? "FollowMe — Como transformar um perfil parado em autoridade imediata"
+          : "FollowMe — Turning quiet social profiles into instant credibility",
+        description: copy.hero.subtext,
+        thumbnailUrl: `${appUrl}/media/hero-creator.jpg`,
+        contentUrl: `${appUrl}/media/hero-loop.mp4`,
+        uploadDate: "2026-11-22",
+        duration: "PT10S",
       },
       {
         "@type": "FAQPage",
@@ -680,9 +751,135 @@ export async function LandingPageView({
           </div>
         </section>
 
-        {/* SECTION 6: FLOWNEXA FAQ SHOWCASE (WHITE ROUNDED CARD OVER VIOLET DOTTED BACKDROP) */}
+        {/* SECTION 6: FLOWNEXA GEO SUMMARY + FAQ SHOWCASE (WHITE ROUNDED CARDS OVER VIOLET DOTTED BACKDROP) */}
         <section className="fn-violet-band pt-4 pb-16 sm:pb-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
+            {/* GEO Answer-First Entity Definition & Comparison Table (built for users + AI search citations) */}
+            <ScrollReveal>
+              <div className="rounded-[26px] bg-white p-7 sm:p-10 text-[#111015] shadow-[0_22px_54px_rgba(32,12,72,0.22)] space-y-6">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#ece5f2] pb-5">
+                  <div className="max-w-2xl">
+                    <span className="font-mono text-xs font-extrabold uppercase tracking-widest text-[#7945dc]">
+                      {isPt ? "Resumo Comparativo Oficial" : "Official Comparison & Facts"}
+                    </span>
+                    <h2 className="mt-1.5 font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-black tracking-[-0.04em] text-[#111015]">
+                      {isPt
+                        ? `Por que criadores e agências escolhem a ${settings.brandName}`
+                        : `Why creators and agencies choose ${settings.brandName}`}
+                    </h2>
+                    <p className="mt-2 text-sm text-[#5e5868] leading-relaxed">
+                      {isPt ? (
+                        <>
+                          <dfn className="not-italic font-bold text-[#111015]">{settings.brandName}</dfn> é uma plataforma automatizada de crescimento social para Instagram, TikTok e YouTube com preços transparentes em Reais, pagamento Pix 24/7 via Stripe, garantia de reposição de até 365 dias e zero pedido de senha.
+                        </>
+                      ) : (
+                        <>
+                          <dfn className="not-italic font-bold text-[#111015]">{settings.brandName}</dfn> is defined as an automated social growth platform for Instagram, TikTok, and YouTube with transparent US pricing in USD, Stripe checkout, up to 365-day refill protection, and zero passwords ever required.
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  <div className="text-xs font-mono text-[#796b89] shrink-0">
+                    <div>{isPt ? "Equipe Editorial FollowMe" : "FollowMe Growth Editorial Team"}</div>
+                    <time dateTime={updatedIso}>
+                      {isPt ? `Atualizado em ${updatedIso}` : `Last updated ${updatedIso}`}
+                    </time>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr className="border-b border-[#ece5f2] bg-[#faf8fd] font-mono text-[11px] uppercase tracking-wider text-[#796b89]">
+                        <th className="px-4 py-3">{isPt ? "Critério" : "Criteria"}</th>
+                        <th className="px-4 py-3 text-[#7c3ee9]">{settings.brandName}</th>
+                        <th className="px-4 py-3">
+                          {isPt ? "Agências / Crescimento Frio" : "Traditional Agencies / Cold Start"}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#f1ebf8]">
+                      <tr>
+                        <td className="px-4 py-3 font-bold text-[#111015]">
+                          {isPt ? "Segurança da conta" : "Account security"}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-[#137a43]">
+                          {isPt ? "Zero senha (apenas @público)" : "Zero passwords (public @handle only)"}
+                        </td>
+                        <td className="px-4 py-3 text-[#66616d]">
+                          {isPt ? "Frequentemente exigem login e senha" : "Often demand account credentials"}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-3 font-bold text-[#111015]">
+                          {isPt ? "Tempo de início" : "Delivery start speed"}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-[#137a43]">
+                          {isPt ? "2 a 15 minutos (24/7 automático)" : "2–15 minutes (24/7 automated)"}
+                        </td>
+                        <td className="px-4 py-3 text-[#66616d]">
+                          {isPt ? "Semanas ou meses sem tração" : "Months of cold posting"}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-3 font-bold text-[#111015]">
+                          {isPt ? "Garantia contra quedas" : "Refill protection"}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-[#137a43]">
+                          {isPt ? "Reposição de 30 a 365 dias" : "30 to 365-day refill warranty"}
+                        </td>
+                        <td className="px-4 py-3 text-[#66616d]">
+                          {isPt ? "Sem garantia contratual" : "No drop protection"}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-3 font-bold text-[#111015]">
+                          {isPt ? "Preço e pagamento" : "Pricing & checkout"}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-[#137a43]">
+                          {isPt
+                            ? "Pacote avulso em R$ no Pix/Cartão Stripe"
+                            : "Transparent one-time USD via Stripe"}
+                        </td>
+                        <td className="px-4 py-3 text-[#66616d]">
+                          {isPt ? "Mensalidades a partir de R$ 1.500/mês" : "$500–$2,500/mo agency retainers"}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Regional Keyword Hubs (crawlable internal links for Google & AI engines) */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <span className="font-mono text-[11px] font-bold uppercase text-[#796b89] mr-1">
+                    {isPt ? "Guias diretos:" : "Direct guides:"}
+                  </span>
+                  {(isPt
+                    ? [
+                        { href: "/pt/comprar-seguidores-instagram", label: "Comprar Seguidores Instagram" },
+                        { href: "/pt/comprar-curtidas-instagram", label: "Comprar Curtidas & Reels" },
+                        { href: "/pt/comprar-seguidores-tiktok", label: "Comprar Seguidores TikTok" },
+                        { href: "/pt/comprar-inscritos-youtube", label: "Comprar Inscritos YouTube" },
+                      ]
+                    : [
+                        { href: "/en/buy-instagram-followers", label: "Buy Instagram Followers" },
+                        { href: "/en/buy-instagram-likes", label: "Buy Instagram Likes & Reels" },
+                        { href: "/en/buy-tiktok-followers", label: "Buy TikTok Followers" },
+                        { href: "/en/buy-youtube-subscribers", label: "Buy YouTube Subscribers" },
+                      ]
+                  ).map((g) => (
+                    <Link
+                      key={g.href}
+                      href={g.href}
+                      className="rounded-full border border-[#e3d7f7] bg-[#f8f4ff] px-3 py-1 text-xs font-bold text-[#6730cf] hover:bg-[#7c3ee9] hover:text-white transition-colors"
+                    >
+                      {g.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </ScrollReveal>
+
             <ScrollReveal>
               <div className="rounded-[26px] bg-white p-7 sm:p-11 lg:p-12 text-[#111015] shadow-[0_22px_54px_rgba(32,12,72,0.24)]">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { getGeoKeywordPagesByLocale } from "@/lib/seo-guides";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = (process.env.APP_URL || "https://followme.nexaclouds.online").replace(/\/+$/, "");
@@ -54,12 +55,44 @@ export default function sitemap(): MetadataRoute.Sitemap {
     );
   }
 
-  for (const extra of ["/servicos", "/api-docs", "/parcerias", "/faq", "/termos"]) {
+  // High-intent regional commercial SEO + GEO buyer pages (USA EN-US <-> Brazil PT-BR)
+  for (const enPage of getGeoKeywordPagesByLocale("en")) {
+    const enUrl = `${base}/en/${enPage.slug}`;
+    const ptUrl = `${base}/pt/${enPage.pairedSlug}`;
+    entries.push(
+      {
+        url: enUrl,
+        lastModified: now,
+        changeFrequency: "daily",
+        priority: 0.95,
+        alternates: {
+          languages: {
+            "en-US": enUrl,
+            "pt-BR": ptUrl,
+          },
+        },
+      },
+      {
+        url: ptUrl,
+        lastModified: now,
+        changeFrequency: "daily",
+        priority: 0.95,
+        alternates: {
+          languages: {
+            "pt-BR": ptUrl,
+            "en-US": enUrl,
+          },
+        },
+      }
+    );
+  }
+
+  for (const extra of ["/servicos", "/api-docs", "/parcerias", "/faq", "/termos", "/llms.txt"]) {
     entries.push({
       url: `${base}${extra}`,
       lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.75,
+      changeFrequency: extra === "/servicos" ? "daily" : "weekly",
+      priority: extra === "/servicos" ? 0.9 : 0.75,
     });
   }
 

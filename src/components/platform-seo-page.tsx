@@ -271,9 +271,18 @@ export async function PlatformSeoPage({
 
   const platformOnly = storefrontServices.filter((s) => s.network === platform);
 
+  const updatedIso = new Date().toISOString().slice(0, 10);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${appUrl}/#organization`,
+        name: settings.brandName,
+        url: appUrl,
+        email: settings.supportEmail,
+      },
       {
         "@type": "BreadcrumbList",
         itemListElement: [
@@ -284,9 +293,35 @@ export async function PlatformSeoPage({
       {
         "@type": "Service",
         name: bundle.title,
-        provider: { "@type": "Organization", name: settings.brandName, url: appUrl },
+        provider: { "@id": `${appUrl}/#organization` },
         areaServed: locale === "pt" ? ["BR"] : ["US", "CA", "GB", "AU"],
         description: bundle.description,
+        hasOfferCatalog: {
+          "@type": "OfferCatalog",
+          name: `${settings.brandName} ${platform} (${currency})`,
+          itemListElement: platformOnly.slice(0, 10).map((s) => ({
+            "@type": "Offer",
+            name: getLocalizedServiceName(s, locale),
+            price: getServiceMarketRate(s, currency).toFixed(2),
+            priceCurrency: currency,
+            availability: "https://schema.org/InStock",
+            url: `${appUrl}${routePrefix}/${platform}`,
+          })),
+        },
+      },
+      {
+        "@type": "Article",
+        headline: bundle.title,
+        description: bundle.description,
+        datePublished: "2026-10-01",
+        dateModified: updatedIso,
+        author: {
+          "@type": "Organization",
+          name: `${settings.brandName} Growth Editorial Team`,
+          url: appUrl,
+        },
+        publisher: { "@id": `${appUrl}/#organization` },
+        inLanguage: locale === "pt" ? "pt-BR" : "en-US",
       },
       {
         "@type": "FAQPage",

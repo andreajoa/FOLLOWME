@@ -50,6 +50,7 @@ interface PackageSelectorProps {
   currency: AppCurrency;
   isLoggedIn: boolean;
   initialNetwork?: "instagram" | "tiktok" | "youtube";
+  initialMetric?: ServiceMetricType;
 }
 
 const NETWORKS: Array<{ id: "instagram" | "tiktok" | "youtube"; label: string }> = [
@@ -78,10 +79,11 @@ export function PackageSelector({
   currency,
   isLoggedIn,
   initialNetwork = "instagram",
+  initialMetric = "followers",
 }: PackageSelectorProps) {
   const copy = getLandingCopy(locale).selector;
   const [network, setNetwork] = useState<"instagram" | "tiktok" | "youtube">(initialNetwork);
-  const [metric, setMetric] = useState<ServiceMetricType>("followers");
+  const [metric, setMetric] = useState<ServiceMetricType>(initialMetric);
   const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
   const [selectedQty, setSelectedQty] = useState<number>(1000);
 

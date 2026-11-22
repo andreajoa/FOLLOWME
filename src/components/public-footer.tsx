@@ -52,17 +52,39 @@ export function PublicFooter({
             <ul className="space-y-2.5 text-sm text-[#b7afc9]">
               <li>
                 <Link href={`${routePrefix}/instagram`} className="hover:text-white transition-colors">
-                  Instagram
+                  Instagram · TikTok · YouTube
                 </Link>
               </li>
               <li>
-                <Link href={`${routePrefix}/tiktok`} className="hover:text-white transition-colors">
-                  TikTok
+                <Link
+                  href={locale === "pt" ? "/pt/comprar-seguidores-instagram" : "/en/buy-instagram-followers"}
+                  className="hover:text-white transition-colors"
+                >
+                  {locale === "pt" ? "Comprar Seguidores IG" : "Buy Instagram Followers"}
                 </Link>
               </li>
               <li>
-                <Link href={`${routePrefix}/youtube`} className="hover:text-white transition-colors">
-                  YouTube
+                <Link
+                  href={locale === "pt" ? "/pt/comprar-curtidas-instagram" : "/en/buy-instagram-likes"}
+                  className="hover:text-white transition-colors"
+                >
+                  {locale === "pt" ? "Curtidas & Reels IG" : "Buy Instagram Likes"}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={locale === "pt" ? "/pt/comprar-seguidores-tiktok" : "/en/buy-tiktok-followers"}
+                  className="hover:text-white transition-colors"
+                >
+                  {locale === "pt" ? "Seguidores TikTok Live" : "Buy TikTok Followers"}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={locale === "pt" ? "/pt/comprar-inscritos-youtube" : "/en/buy-youtube-subscribers"}
+                  className="hover:text-white transition-colors"
+                >
+                  {locale === "pt" ? "Inscritos YouTube" : "Buy YouTube Subscribers"}
                 </Link>
               </li>
               <li>
@@ -135,6 +157,11 @@ export function PublicFooter({
                 <Link href="/painel/tickets" className="hover:text-white transition-colors">
                   {f.supportTicket}
                 </Link>
+              </li>
+              <li>
+                <a href="/llms.txt" className="hover:text-white transition-colors font-mono text-xs">
+                  llms.txt (AI &amp; Search)
+                </a>
               </li>
             </ul>
           </div>

@@ -1,9 +1,17 @@
+import type { Metadata } from "next";
 import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
 import { PublicHeader } from "@/components/public-header";
 import { PublicFooter } from "@/components/public-footer";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Termos de Uso, Garantia de Reposição e Reembolso | FollowMe",
+  description:
+    "Política oficial de uso, regras de perfis públicos, reembolso de créditos via Stripe Pix/Cartão e termos de API v2 da FollowMe.",
+  alternates: { canonical: "/termos" },
+};
 
 export default async function TermsPage() {
   const [user, settings, prefs] = await Promise.all([

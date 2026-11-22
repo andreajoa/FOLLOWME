@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
@@ -7,6 +8,23 @@ import { PublicFooter } from "@/components/public-footer";
 import { FaqAccordion } from "@/components/faq-accordion";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const prefs = await getRequestPreferences().catch(() => ({
+    locale: "en" as const,
+    currency: "USD" as const,
+  }));
+  const isPt = prefs.locale === "pt";
+  return {
+    title: isPt
+      ? "Perguntas Frequentes (FAQ) — Segurança, Pix e Reposição | FollowMe"
+      : "Frequently Asked Questions — Safety, Refills & Stripe USD | FollowMe",
+    description: isPt
+      ? "Respostas diretas sobre segurança sem senha, velocidade de entrega, garantia de reposição 30 a 365 dias, Pix via Stripe e API v2 na FollowMe."
+      : "Direct answers on password-free delivery, start times, 30–365 day refill protection, Stripe USD payments, and SMM Panel API v2 on FollowMe.",
+    alternates: { canonical: "/faq" },
+  };
+}
 
 export default async function FaqPage() {
   const [user, settings, prefs] = await Promise.all([
