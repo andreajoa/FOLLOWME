@@ -4,9 +4,15 @@ export async function getSiteSettings() {
   const existing = await prisma.siteSetting.findUnique({
     where: { id: "default" },
   });
-  if (existing) return existing;
+  const record =
+    existing ??
+    (await prisma.siteSetting.create({
+      data: { id: "default" },
+    }));
 
-  return prisma.siteSetting.create({
-    data: { id: "default" },
-  });
+  return {
+    ...record,
+    atenzaMcpToken: undefined,
+    supportWebhookSecret: undefined,
+  };
 }

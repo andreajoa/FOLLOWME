@@ -172,9 +172,9 @@ export async function LandingPageView({
         {/* SECTION 1: CINEMATIC AMBIENT VIDEO HERO (Pain-first hook, fits above the fold) */}
         <section className="relative min-h-[82dvh] flex items-center overflow-hidden border-b border-[#232730]">
           <AmbientVideoBackdrop
-            src="/media/hero-loop.mp4"
-            poster="/media/hero-creator.jpg"
-            playbackRate={0.82}
+            src="/media/hero-loop.mp4?v=flow2"
+            poster="/media/hero-creator.jpg?v=flow2"
+            playbackRate={1}
           />
           <div
             className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#090A0C] via-[#090A0C]/88 to-[#090A0C]/25"
@@ -289,16 +289,20 @@ export async function LandingPageView({
             {/* Pain 1: Featured full-width asymmetric 7/5 row with looping ambient video */}
             <ScrollReveal>
               <SpotlightSurface className="grid grid-cols-1 lg:grid-cols-12 border border-[#232730] bg-[#111317] overflow-hidden">
-                <div className="lg:col-span-7 relative min-h-[300px] sm:min-h-[380px] overflow-hidden bg-[#090A0C]">
+                <div className="lg:col-span-7 relative min-h-[320px] sm:min-h-[400px] overflow-hidden bg-[#090A0C]">
                   <AmbientVideoBackdrop
-                    src="/media/pain-loop-1.mp4"
-                    poster="/media/pain-invisible.jpg"
-                    playbackRate={0.9}
+                    src="/media/pain-loop-1.mp4?v=flow2"
+                    poster="/media/pain-invisible.jpg?v=flow2"
+                    playbackRate={1}
                   />
                   <div
-                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#090A0C]/70 via-transparent to-transparent"
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#090A0C]/75 via-transparent to-transparent"
                     aria-hidden="true"
                   />
+                  <div className="pointer-events-none absolute bottom-4 left-4 right-4 flex items-center justify-between gap-2 border border-[#232730] bg-[#090A0C]/85 backdrop-blur-sm px-3.5 py-2 font-mono text-xs">
+                    <span className="text-[#F87171]">{copy.pains.items[0].statBefore}</span>
+                    <span className="text-[#C8FF2E] font-bold">→ {copy.pains.items[0].statAfter}</span>
+                  </div>
                 </div>
 
                 <div className="lg:col-span-5 p-7 sm:p-10 flex flex-col justify-between gap-6">
@@ -344,29 +348,33 @@ export async function LandingPageView({
               {[
                 {
                   pain: copy.pains.items[1],
-                  video: "/media/pain-loop-2.mp4",
-                  poster: "/media/pain-trust.jpg",
+                  video: "/media/pain-loop-2.mp4?v=flow2",
+                  poster: "/media/pain-trust.jpg?v=flow2",
                   span: "lg:col-span-5",
                 },
                 {
                   pain: copy.pains.items[2],
-                  video: "/media/pain-loop-3.mp4",
-                  poster: "/media/pain-slow.jpg",
+                  video: "/media/pain-loop-3.mp4?v=flow2",
+                  poster: "/media/pain-slow.jpg?v=flow2",
                   span: "lg:col-span-7",
                 },
               ].map((block, idx) => (
                 <ScrollReveal key={block.pain.tag} delayMs={idx * 100} className={block.span}>
                   <SpotlightSurface className="h-full flex flex-col border border-[#232730] bg-[#111317] overflow-hidden">
-                    <div className="relative h-64 sm:h-72 overflow-hidden bg-[#090A0C]">
+                    <div className="relative h-64 sm:h-80 overflow-hidden bg-[#090A0C]">
                       <AmbientVideoBackdrop
                         src={block.video}
                         poster={block.poster}
-                        playbackRate={0.9}
+                        playbackRate={1}
                       />
                       <div
                         className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#111317] via-transparent to-transparent"
                         aria-hidden="true"
                       />
+                      <div className="pointer-events-none absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 border border-[#232730] bg-[#090A0C]/85 backdrop-blur-sm px-3 py-1.5 font-mono text-[11px]">
+                        <span className="text-[#F87171]">{block.pain.statBefore}</span>
+                        <span className="text-[#C8FF2E] font-bold">→ {block.pain.statAfter}</span>
+                      </div>
                     </div>
                     <div className="p-7 sm:p-8 flex-1 flex flex-col justify-between gap-6">
                       <div>

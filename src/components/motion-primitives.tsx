@@ -10,15 +10,14 @@ function checkReducedMotion(): boolean {
 }
 
 /**
- * Seamless looping ambient video with zero black-flash reveal and crossfade restart.
- * Respects prefers-reduced-motion by freezing gracefully on the editorial poster frame.
+ * Continuous looping real video backdrop.
+ * Always plays smoothly when in viewport and never gets stuck on a static poster frame.
  */
 export function AmbientVideoBackdrop({
   src,
   poster,
   className = "",
-  playbackRate = 0.85,
-  fadeSeconds = 1.1,
+  playbackRate = 1,
 }: {
   src: string;
   poster: string;
@@ -27,114 +26,65 @@ export function AmbientVideoBackdrop({
   fadeSeconds?: number;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const phaseRef = useRef<"idle" | "in" | "play" | "out">("idle");
-  const [opacity, setOpacity] = useState(0);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
+    video.defaultMuted = true;
+    video.muted = true;
+    video.loop = true;
+    video.playbackRate = playbackRate;
+
     if (checkReducedMotion()) {
       video.pause();
-      setOpacity(0);
       return;
     }
 
-    video.loop = false;
-    video.playbackRate = playbackRate;
-
-    const fadeIn = () => {
-      phaseRef.current = "in";
-      setOpacity(1);
-    };
-
-    const revealWhenFramed = () => {
-      if (phaseRef.current !== "idle") return;
-      const show = () => {
-        if (phaseRef.current !== "idle") return;
-        fadeIn();
-      };
-      const withCallback = video as HTMLVideoElement & {
-        requestVideoFrameCallback?: (cb: () => void) => number;
-      };
-      if (typeof withCallback.requestVideoFrameCallback === "function") {
-        withCallback.requestVideoFrameCallback(() => requestAnimationFrame(show));
-        return;
-      }
-      requestAnimationFrame(() => requestAnimationFrame(show));
-    };
-
-    const play = () => {
+    const ensurePlaying = () => {
+      if (!video) return;
       video.playbackRate = playbackRate;
-      video.play().catch(() => {});
-    };
-
-    const onPlaying = () => revealWhenFramed();
-
-    const onTimeUpdate = () => {
-      if (phaseRef.current !== "play") return;
-      const duration = video.duration;
-      if (!Number.isFinite(duration) || duration < fadeSeconds + 0.5) return;
-      if (video.currentTime < fadeSeconds + 0.3) return;
-      const remaining = (duration - video.currentTime) / Math.max(video.playbackRate, 0.2);
-      if (remaining <= fadeSeconds) {
-        phaseRef.current = "out";
-        setOpacity(0);
-      }
-    };
-
-    const onTransitionEnd = (event: TransitionEvent) => {
-      if (event.propertyName !== "opacity" || event.target !== video) return;
-      if (phaseRef.current === "out") {
-        video.currentTime = 0.05;
-        video.playbackRate = playbackRate;
+      if (video.paused) {
         video.play().catch(() => {});
-        requestAnimationFrame(() => fadeIn());
-        return;
-      }
-      if (phaseRef.current === "in") {
-        phaseRef.current = "play";
       }
     };
 
-    play();
-    if (!video.paused && video.readyState >= 2) revealWhenFramed();
+    ensurePlaying();
 
-    video.addEventListener("canplay", play);
-    video.addEventListener("playing", onPlaying);
-    video.addEventListener("timeupdate", onTimeUpdate);
-    video.addEventListener("transitionend", onTransitionEnd);
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          ensurePlaying();
+        }
+      },
+      { threshold: 0.05 }
+    );
+    obs.observe(video);
+
+    video.addEventListener("loadeddata", ensurePlaying);
+    video.addEventListener("canplay", ensurePlaying);
+    video.addEventListener("ended", ensurePlaying);
 
     return () => {
-      video.removeEventListener("canplay", play);
-      video.removeEventListener("playing", onPlaying);
-      video.removeEventListener("timeupdate", onTimeUpdate);
-      video.removeEventListener("transitionend", onTransitionEnd);
+      obs.disconnect();
+      video.removeEventListener("loadeddata", ensurePlaying);
+      video.removeEventListener("canplay", ensurePlaying);
+      video.removeEventListener("ended", ensurePlaying);
     };
-  }, [playbackRate, fadeSeconds]);
+  }, [playbackRate, src]);
 
   return (
-    <div className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`} aria-hidden="true">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={poster}
-        alt=""
-        fetchPriority="high"
-        className="absolute inset-0 h-full w-full object-cover object-center"
-      />
+    <div className={`pointer-events-none absolute inset-0 overflow-hidden bg-[#090A0C] ${className}`} aria-hidden="true">
       <video
         ref={videoRef}
         src={src}
         poster={poster}
         autoPlay
+        loop
         muted
         playsInline
-        preload="metadata"
-        style={{
-          opacity,
-          transition: `opacity ${fadeSeconds}s cubic-bezier(0.22, 1, 0.36, 1)`,
-        }}
-        className="absolute inset-0 h-full w-full object-cover object-center will-change-[opacity]"
+        preload="auto"
+        className="absolute inset-0 h-full w-full object-cover object-center"
       />
     </div>
   );

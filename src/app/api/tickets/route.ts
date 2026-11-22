@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { sendWhatsAppSupportAlert } from "@/lib/support-notify";
 
 const createTicketSchema = z.object({
   subject: z.string().trim().min(3, "Informe o assunto.").max(120),
@@ -65,6 +66,18 @@ export async function POST(req: NextRequest) {
       },
     },
   });
+
+  await sendWhatsAppSupportAlert({
+    kind: "TICKET",
+    referenceId: ticket.id,
+    senderName: user.name,
+    senderEmail: user.email,
+    senderUsername: user.username,
+    senderWhatsapp: user.whatsapp,
+    subject: ticket.subject,
+    message: parsed.data.message,
+    orderId: ticket.orderId,
+  }).catch(() => null);
 
   return NextResponse.json({ ticket }, { status: 201 });
 }

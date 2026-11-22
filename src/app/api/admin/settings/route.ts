@@ -55,5 +55,11 @@ export async function PATCH(req: NextRequest) {
     create: { id: "default", ...parsed.data },
   });
 
-  return NextResponse.json({ settings });
+  return NextResponse.json({
+    settings: {
+      ...settings,
+      atenzaMcpToken: undefined,
+      supportWebhookSecret: undefined,
+    },
+  });
 }

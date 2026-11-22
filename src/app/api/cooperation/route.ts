@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getCurrentUser } from "@/lib/auth";
+import { sendWhatsAppSupportAlert } from "@/lib/support-notify";
 
 const cooperationSchema = z.object({
   name: z.string().trim().min(2, "Informe seu nome.").max(100),
@@ -63,6 +64,16 @@ export async function POST(req: NextRequest) {
       status: "PENDING",
     },
   });
+
+  await sendWhatsAppSupportAlert({
+    kind: "COOPERATION",
+    referenceId: request.id,
+    senderName: request.name,
+    senderEmail: request.email,
+    senderWhatsapp: request.whatsapp,
+    subject: `Parceria ${request.type}${request.monthlyVolume ? ` (${request.monthlyVolume})` : ""}`,
+    message: request.message,
+  }).catch(() => null);
 
   return NextResponse.json({ request }, { status: 201 });
 }

@@ -158,6 +158,21 @@ interface AdminTicket {
   }>;
 }
 
+interface AdminSupportEmail {
+  id: number;
+  fromEmail: string;
+  fromName: string | null;
+  toEmail: string;
+  subject: string;
+  bodyText: string;
+  status: string;
+  replyText: string | null;
+  repliedAt: string | null;
+  whatsappSent: boolean;
+  whatsappError: string | null;
+  createdAt: string;
+}
+
 interface AdminSettings {
   brandName: string;
   brandTagline: string;
@@ -224,7 +239,7 @@ const TABS: Array<{ id: AdminTab; label: string; icon: typeof Activity }> = [
   { id: "services", label: "Serviços", icon: List },
   { id: "users", label: "Usuários", icon: Users },
   { id: "deposits", label: "Stripe / Pix", icon: CreditCard },
-  { id: "tickets", label: "Tickets", icon: MessageSquare },
+  { id: "tickets", label: "Suporte & E-mails", icon: MessageSquare },
   { id: "extras", label: "Assinaturas & Filhos", icon: Globe },
   { id: "settings", label: "Marca & Stripe", icon: Settings },
 ];
@@ -243,6 +258,8 @@ export function AdminDashboard() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [deposits, setDeposits] = useState<AdminDeposit[]>([]);
   const [tickets, setTickets] = useState<AdminTicket[]>([]);
+  const [supportEmails, setSupportEmails] = useState<AdminSupportEmail[]>([]);
+  const [emailReplyInputs, setEmailReplyInputs] = useState<Record<number, string>>({});
   const [extras, setExtras] = useState<AdminExtrasData | null>(null);
   const [settings, setSettings] = useState<AdminSettings | null>(null);
 
@@ -323,7 +340,11 @@ export function AdminDashboard() {
       if (res.ok) setDeposits((await res.json()).deposits);
     } else if (target === "tickets") {
       const res = await fetch("/api/admin/tickets");
-      if (res.ok) setTickets((await res.json()).tickets);
+      if (res.ok) {
+        const data = await res.json();
+        setTickets(data.tickets || []);
+        setSupportEmails(data.supportEmails || []);
+      }
     } else if (target === "extras") {
       const res = await fetch("/api/admin/extras");
       if (res.ok) setExtras(await res.json());
@@ -569,6 +590,26 @@ export function AdminDashboard() {
       flash("ok", `Resposta enviada no Ticket #${ticketId}.`);
       loadTab("tickets");
     }
+  }
+
+  async function handleAdminEmailReply(supportEmailId: number, close = false) {
+    const body = emailReplyInputs[supportEmailId]?.trim();
+    if (!body) return;
+    setBusyKey(`eml-${supportEmailId}`);
+    const res = await fetch("/api/admin/tickets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ supportEmailId, body, close }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setBusyKey("");
+    if (!res.ok) {
+      flash("err", data.error || "Falha ao enviar resposta por e-mail.");
+      return;
+    }
+    setEmailReplyInputs((prev) => ({ ...prev, [supportEmailId]: "" }));
+    flash("ok", `E-mail de resposta enviado com sucesso para o cliente (#${supportEmailId}).`);
+    loadTab("tickets");
   }
 
   async function handleSaveSettings(e: React.FormEvent) {
@@ -1432,9 +1473,131 @@ export function AdminDashboard() {
         </div>
       )}
 
-      {/* TAB 7: TICKETS */}
+      {/* TAB 7: SUPORTE & E-MAILS */}
       {tab === "tickets" && (
-        <div className="space-y-4">
+        <div className="space-y-8">
+          {/* Caixa de Entrada de E-mails do Suporte -> Encaminhados automaticamente ao WhatsApp +5511992598585 */}
+          <section className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#232730] pb-3">
+              <div>
+                <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[#F4F5F6]">
+                  Caixa de Entrada de E-mails (suporte@followme.nexaclouds.online)
+                </h2>
+                <p className="text-xs text-[#98A0AD]">
+                  Todo e-mail recebido é salvo aqui e enviado instantaneamente para o seu WhatsApp (+55 11 99259-8585).
+                </p>
+              </div>
+              <span className="font-mono text-xs text-[#C8FF2E]">
+                {supportEmails.length} e-mail(s)
+              </span>
+            </div>
+
+            {supportEmails.length === 0 ? (
+              <div className="surface-card p-5 text-xs text-[#98A0AD]">
+                Nenhum e-mail recebido ainda. Assim que um cliente enviar e-mail para o suporte, ele aparecerá aqui e chegará no seu WhatsApp +5511992598585.
+              </div>
+            ) : (
+              supportEmails.map((em) => {
+                const m = TICKET_STATUS_META[em.status] ?? {
+                  label: em.status,
+                  tone: "zinc" as const,
+                };
+                return (
+                  <div key={em.id} className="surface-card p-5 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#232730] pb-3">
+                      <div>
+                        <span className="font-mono text-xs text-[#C8FF2E]">
+                          E-mail #{em.id} • {em.fromName ? `${em.fromName} ` : ""}&lt;{em.fromEmail}&gt; •{" "}
+                          {formatDateBR(em.createdAt)}
+                        </span>
+                        <h3 className="font-semibold text-base text-[#F4F5F6] mt-0.5">
+                          {em.subject}
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`font-mono text-[10px] px-2 py-0.5 border ${
+                            em.whatsappSent
+                              ? "border-[#10B981]/40 bg-[#10B981]/10 text-[#34D399]"
+                              : "border-[#232730] bg-[#0C0E12] text-[#98A0AD]"
+                          }`}
+                        >
+                          {em.whatsappSent ? "WhatsApp +5511992598585 ✓" : "Salvo no Painel"}
+                        </span>
+                        <StatusBadge label={m.label} tone={m.tone} />
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 border border-[#232730] bg-[#0C0E12] text-xs text-[#D2D7E0] whitespace-pre-wrap leading-relaxed">
+                      {em.bodyText}
+                    </div>
+
+                    {em.replyText && (
+                      <div className="p-3.5 border border-[#C8FF2E]/40 bg-[#C8FF2E]/5 text-xs space-y-1 ml-4">
+                        <div className="font-mono text-[10px] text-[#C8FF2E]">
+                          RESPOSTA ENVIADA POR E-MAIL{" "}
+                          {em.repliedAt ? `• ${formatDateBR(em.repliedAt)}` : ""}
+                        </div>
+                        <div className="text-[#F4F5F6] whitespace-pre-wrap">
+                          {em.replyText}
+                        </div>
+                      </div>
+                    )}
+
+                    {em.status !== "CLOSED" && (
+                      <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                        <input
+                          type="text"
+                          value={emailReplyInputs[em.id] || ""}
+                          onChange={(e) =>
+                            setEmailReplyInputs((prev) => ({
+                              ...prev,
+                              [em.id]: e.target.value,
+                            }))
+                          }
+                          placeholder={`Responder por e-mail para ${em.fromEmail}...`}
+                          className="input-terminal flex-1 h-10 px-3 text-sm"
+                        />
+                        <button
+                          type="button"
+                          disabled={busyKey === `eml-${em.id}`}
+                          onClick={() => handleAdminEmailReply(em.id, false)}
+                          className="btn-lime h-10 px-4 font-mono text-xs uppercase cursor-pointer"
+                        >
+                          {busyKey === `eml-${em.id}` ? "Enviando..." : "Enviar E-mail"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busyKey === `eml-${em.id}`}
+                          onClick={() => handleAdminEmailReply(em.id, true)}
+                          className="btn-outline h-10 px-4 font-mono text-xs uppercase cursor-pointer"
+                        >
+                          Enviar &amp; Fechar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </section>
+
+          {/* Tickets abertos dentro do painel de clientes (/painel/tickets) */}
+          <section className="space-y-4">
+            <div className="flex items-center justify-between border-b border-[#232730] pb-3">
+              <div>
+                <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[#F4F5F6]">
+                  Tickets Internos do Painel (/painel/tickets)
+                </h2>
+                <p className="text-xs text-[#98A0AD]">
+                  Chamados abertos por clientes logados (também disparam alerta no seu WhatsApp +55 11 99259-8585).
+                </p>
+              </div>
+              <span className="font-mono text-xs text-[#98A0AD]">
+                {tickets.length} ticket(s)
+              </span>
+            </div>
+
           {tickets.map((t) => {
             const m = TICKET_STATUS_META[t.status] ?? {
               label: t.status,
@@ -1507,6 +1670,7 @@ export function AdminDashboard() {
               </div>
             );
           })}
+          </section>
         </div>
       )}
 
