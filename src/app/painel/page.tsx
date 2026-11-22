@@ -69,6 +69,7 @@ export default async function PanelHomePage({
           : undefined
       }
       userBalance={user.balance}
+      isAdmin={user.role === "ADMIN"}
       stats={{
         totalOrders,
         activeOrders,

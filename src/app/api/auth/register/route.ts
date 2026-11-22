@@ -6,6 +6,7 @@ import {
   generateApiKey,
   generateReferralCode,
   hashPassword,
+  isAdminEmail,
   setSessionCookie,
 } from "@/lib/auth";
 
@@ -79,7 +80,7 @@ export async function POST(req: NextRequest) {
         email,
         passwordHash,
         whatsapp: whatsapp || null,
-        role: "USER",
+        role: isAdminEmail(email) ? "ADMIN" : "USER",
         apiKey: generateApiKey(),
         referralCode: generateReferralCode(username),
         referredById,

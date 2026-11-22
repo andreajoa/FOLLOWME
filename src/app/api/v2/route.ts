@@ -87,13 +87,13 @@ async function handleApiV2(req: NextRequest) {
     return NextResponse.json({ error: "API key is required" }, { status: 401 });
   }
 
-  if (!checkRateLimit(`apiv2:${key.slice(0, 16)}`, 120, 60_000)) {
-    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
-  }
-
   const user = await prisma.user.findUnique({ where: { apiKey: key } });
   if (!user || user.status !== "ACTIVE") {
     return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+  }
+
+  if (user.role !== "ADMIN" && !checkRateLimit(`apiv2:${key.slice(0, 16)}`, 120, 60_000)) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
   }
 
   if (action === "balance") {

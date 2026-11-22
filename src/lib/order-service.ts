@@ -88,27 +88,41 @@ export async function placeSingleOrder(params: PlaceOrderParams) {
           runs,
         });
 
-  const { totalQuantity, charge, cost, profit } = totals;
+  const actor = await prisma.user.findUnique({
+    where: { id: params.userId },
+    select: { id: true, role: true, status: true },
+  });
 
-  if (charge <= 0) {
+  if (!actor || actor.status !== "ACTIVE") {
+    throw new Error("Conta inativa ou não encontrada.");
+  }
+
+  const isAdminFree = actor.role === "ADMIN";
+  const { totalQuantity, cost } = totals;
+  const charge = isAdminFree ? 0 : totals.charge;
+  const profit = isAdminFree ? 0 : totals.profit;
+
+  if (!isAdminFree && charge <= 0) {
     throw new Error("Valor do pedido inválido.");
   }
 
   const createdOrder = await prisma.$transaction(async (tx) => {
-    const updated = await tx.user.updateMany({
-      where: {
-        id: params.userId,
-        status: "ACTIVE",
-        balance: { gte: charge },
-      },
-      data: {
-        balance: { decrement: charge },
-        totalSpent: { increment: charge },
-      },
-    });
+    if (!isAdminFree) {
+      const updated = await tx.user.updateMany({
+        where: {
+          id: params.userId,
+          status: "ACTIVE",
+          balance: { gte: charge },
+        },
+        data: {
+          balance: { decrement: charge },
+          totalSpent: { increment: charge },
+        },
+      });
 
-    if (updated.count === 0) {
-      throw new Error("Saldo insuficiente. Adicione saldo via Pix ou Cartão (Stripe) para continuar.");
+      if (updated.count === 0) {
+        throw new Error("Saldo insuficiente. Adicione saldo via Pix ou Cartão (Stripe) para continuar.");
+      }
     }
 
     return tx.order.create({
@@ -167,19 +181,27 @@ export async function placeSingleOrder(params: PlaceOrderParams) {
           where: { id: createdOrder.id },
           data: { status: "CANCELED", remains: createdOrder.quantity },
         }),
-        prisma.user.update({
-          where: { id: params.userId },
-          data: {
-            balance: { increment: charge },
-            totalSpent: { decrement: charge },
-          },
-        }),
+        ...(charge > 0
+          ? [
+              prisma.user.update({
+                where: { id: params.userId },
+                data: {
+                  balance: { increment: charge },
+                  totalSpent: { decrement: charge },
+                },
+              }),
+            ]
+          : []),
       ]);
       const msg =
         providerErr instanceof Error
           ? providerErr.message
           : "Falha ao enviar pedido ao fornecedor.";
-      throw new Error(`${msg} Seu saldo foi estornado automaticamente.`);
+      throw new Error(
+        charge > 0
+          ? `${msg} Seu saldo foi estornado automaticamente.`
+          : msg
+      );
     }
   }
 
@@ -225,9 +247,20 @@ export async function createSubscriptionOrder(params: CreateSubscriptionParams) 
   const oldPostsCount = Math.max(0, Math.floor(params.oldPosts ?? 0));
   const delayMinutes = Math.max(0, Math.floor(params.delay ?? 0));
 
-  // Cobra a reserva proporcional do primeiro lote (ou pacote de posts definido)
+  const actor = await prisma.user.findUnique({
+    where: { id: params.userId },
+    select: { id: true, role: true, status: true },
+  });
+  if (!actor || actor.status !== "ACTIVE") {
+    throw new Error("Conta inativa ou não encontrada.");
+  }
+
+  // Cobra a reserva proporcional do primeiro lote (grátis para ADMIN)
+  const isAdminFree = actor.role === "ADMIN";
   const estimatedUnits = max * Math.min(postsCount ?? 1, 5);
-  const estimatedCharge = round4((estimatedUnits / 1000) * service.rate);
+  const estimatedCharge = isAdminFree
+    ? 0
+    : round4((estimatedUnits / 1000) * service.rate);
 
   const sub = await prisma.$transaction(async (tx) => {
     if (estimatedCharge > 0) {

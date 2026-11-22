@@ -46,6 +46,7 @@ interface NewOrderClientProps {
   favoriteIds: number[];
   initialServiceId?: number;
   userBalance: number;
+  isAdmin?: boolean;
   stats: {
     totalOrders: number;
     activeOrders: number;
@@ -69,6 +70,7 @@ export function NewOrderClient({
   favoriteIds,
   initialServiceId,
   userBalance,
+  isAdmin = false,
   stats,
 }: NewOrderClientProps) {
   const router = useRouter();
@@ -238,7 +240,7 @@ export function NewOrderClient({
     }
   }
 
-  const insufficientBalance = totals.charge > userBalance;
+  const insufficientBalance = !isAdmin && totals.charge > userBalance;
 
   return (
     <div className="space-y-6">
@@ -552,19 +554,30 @@ export function NewOrderClient({
           <div className="flex items-center justify-between border border-[#323845] bg-[#0C0E12] px-4 py-3.5">
             <div>
               <div className="font-mono text-[10px] uppercase tracking-widest text-[#98A0AD]">
-                Valor Total a Debitar
+                {isAdmin ? "Modo Admin • Custo na Plataforma" : "Valor Total a Debitar"}
               </div>
-              <div className="font-mono text-2xl font-bold text-[#C8FF2E]">
-                {formatBRL(totals.charge, true)}
+              <div className="font-mono text-2xl font-bold text-[#C8FF2E] flex items-baseline gap-2.5">
+                {isAdmin ? "R$ 0,00" : formatBRL(totals.charge, true)}
+                {isAdmin && (
+                  <span className="text-xs font-normal text-[#98A0AD] line-through">
+                    {formatBRL(totals.charge, true)}
+                  </span>
+                )}
               </div>
             </div>
-            {insufficientBalance && (
-              <Link
-                href="/painel/saldo"
-                className="border border-[#FF6B2C] bg-[#FF6B2C]/15 px-3 py-2 font-mono text-xs uppercase text-[#FF8A58] hover:bg-[#FF6B2C]/25"
-              >
-                Saldo insuficiente • Adicionar Saldo
-              </Link>
+            {isAdmin ? (
+              <span className="border border-[#C8FF2E]/40 bg-[#C8FF2E]/10 px-3 py-1.5 font-mono text-[11px] uppercase text-[#C8FF2E]">
+                Admin · Uso Grátis Ilimitado
+              </span>
+            ) : (
+              insufficientBalance && (
+                <Link
+                  href="/painel/saldo"
+                  className="border border-[#FF6B2C] bg-[#FF6B2C]/15 px-3 py-2 font-mono text-xs uppercase text-[#FF8A58] hover:bg-[#FF6B2C]/25"
+                >
+                  Saldo insuficiente • Adicionar Saldo
+                </Link>
+              )
             )}
           </div>
 

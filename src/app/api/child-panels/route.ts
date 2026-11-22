@@ -82,28 +82,31 @@ export async function POST(req: NextRequest) {
   }
 
   const settings = await getSiteSettings();
-  const price = Math.max(1, settings.childPanelPrice);
+  const isAdminFree = user.role === "ADMIN";
+  const price = isAdminFree ? 0 : Math.max(1, settings.childPanelPrice);
   const passwordHash = await hashPassword(parsed.data.adminPassword);
   const nextBillingAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   try {
     const panel = await prisma.$transaction(async (tx) => {
-      const updated = await tx.user.updateMany({
-        where: {
-          id: user.id,
-          status: "ACTIVE",
-          balance: { gte: price },
-        },
-        data: {
-          balance: { decrement: price },
-          totalSpent: { increment: price },
-        },
-      });
+      if (!isAdminFree && price > 0) {
+        const updated = await tx.user.updateMany({
+          where: {
+            id: user.id,
+            status: "ACTIVE",
+            balance: { gte: price },
+          },
+          data: {
+            balance: { decrement: price },
+            totalSpent: { increment: price },
+          },
+        });
 
-      if (updated.count === 0) {
-        throw new Error(
-          `Saldo insuficiente. Recarregue ao menos R$ ${price.toFixed(2)} via Pix ou Cartão (Stripe).`
-        );
+        if (updated.count === 0) {
+          throw new Error(
+            `Saldo insuficiente. Recarregue ao menos R$ ${price.toFixed(2)} via Pix ou Cartão (Stripe).`
+          );
+        }
       }
 
       return tx.childPanel.create({

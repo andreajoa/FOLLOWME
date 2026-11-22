@@ -29,7 +29,7 @@ export default async function PanelChildPanelPage() {
         nextBillingAt: p.nextBillingAt.toISOString(),
         createdAt: p.createdAt.toISOString(),
       }))}
-      monthlyPrice={settings.childPanelPrice}
+      monthlyPrice={user!.role === "ADMIN" ? 0 : settings.childPanelPrice}
       brandName={settings.brandName}
     />
   );

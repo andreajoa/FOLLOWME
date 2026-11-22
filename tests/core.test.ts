@@ -6,7 +6,7 @@ import {
   parseMassOrderText,
 } from "../src/lib/pricing";
 import { buildPixBrCode, computeCrc16Ccitt } from "../src/lib/pix";
-import { signSessionToken, verifySessionToken } from "../src/lib/auth";
+import { isAdminEmail, signSessionToken, verifySessionToken } from "../src/lib/auth";
 import {
   normalizeExternalStatus,
   toExternalSmmStatus,
@@ -142,6 +142,15 @@ describe("FollowMe Core Engine", () => {
 
     const tampered = `${token.slice(0, -2)}xx`;
     expect(verifySessionToken(tampered)).toBeNull();
+  });
+
+  it("matches configured ADMIN_EMAILS case-insensitively", () => {
+    const prev = process.env.ADMIN_EMAILS;
+    process.env.ADMIN_EMAILS = "contact@andre-almieda.online, andrealmeidaca23@gmail.com";
+    expect(isAdminEmail("CONTACT@andre-almieda.online")).toBe(true);
+    expect(isAdminEmail("andrealmeidaca23@gmail.com")).toBe(true);
+    expect(isAdminEmail("cliente@externo.com")).toBe(false);
+    process.env.ADMIN_EMAILS = prev;
   });
 
   it("normalizes and converts SMM provider order statuses", () => {

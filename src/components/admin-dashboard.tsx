@@ -448,6 +448,22 @@ export function AdminDashboard() {
     }
   }
 
+  async function handleToggleUserRole(user: AdminUser) {
+    const next = user.role === "ADMIN" ? "USER" : "ADMIN";
+    const res = await fetch("/api/admin/users", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: user.id, role: next }),
+    });
+    if (res.ok) {
+      flash(
+        "ok",
+        `Papel de @${user.username} alterado para ${next}${next === "ADMIN" ? " (uso gratuito ilimitado ativado)" : ""}.`
+      );
+      loadTab("users");
+    }
+  }
+
   async function handleDepositAction(depositId: string, action: "approve" | "reject") {
     setBusyKey(`dep-${depositId}`);
     const res = await fetch("/api/admin/deposits", {
@@ -816,6 +832,36 @@ export function AdminDashboard() {
               onChange={(e) => setNewProv({ ...newProv, name: e.target.value })}
               className="input-terminal w-full h-10 px-3 text-sm"
             />
+            <div className="space-y-1.5">
+              <div className="font-mono text-[10px] uppercase tracking-wider text-[#C8FF2E]">
+                Atalhos Fornecedores Reais (Cadastro &amp; API v2 Grátis)
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {[
+                  { name: "FonteSMM (BR)", url: "https://fontesmm.com/api/v2", rate: 1 },
+                  { name: "JustAnotherPanel (USD)", url: "https://justanotherpanel.com/api/v2", rate: 5.5 },
+                  { name: "Peakerr (USD)", url: "https://peakerr.com/api/v2", rate: 5.5 },
+                  { name: "SMMFollows (USD)", url: "https://smmfollows.com/api/v2", rate: 5.5 },
+                ].map((preset) => (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    onClick={() =>
+                      setNewProv((prev) => ({
+                        ...prev,
+                        name: preset.name,
+                        apiUrl: preset.url,
+                        mode: "LIVE",
+                        currencyRate: preset.rate,
+                      }))
+                    }
+                    className="border border-[#232730] bg-[#0C0E12] hover:border-[#C8FF2E] px-2.5 py-1.5 text-left font-mono text-[10px] text-[#D2D7E0] cursor-pointer"
+                  >
+                    {preset.name}
+                  </button>
+                ))}
+              </div>
+            </div>
             <input
               type="url"
               required
@@ -1064,10 +1110,17 @@ export function AdminDashboard() {
                     </div>
                   </td>
                   <td className="px-4 py-3 space-x-1.5">
-                    <StatusBadge
-                      label={u.role}
-                      tone={u.role === "ADMIN" ? "orange" : "zinc"}
-                    />
+                    <button
+                      type="button"
+                      title="Clique para alternar entre ADMIN (grátis ilimitado) e USER"
+                      onClick={() => handleToggleUserRole(u)}
+                      className="cursor-pointer"
+                    >
+                      <StatusBadge
+                        label={u.role}
+                        tone={u.role === "ADMIN" ? "orange" : "zinc"}
+                      />
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleToggleUserStatus(u)}

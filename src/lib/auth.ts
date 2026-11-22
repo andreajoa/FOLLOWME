@@ -48,6 +48,16 @@ export function generateReferralCode(seedText: string): string {
   return `${clean}${suffix}`;
 }
 
+export function isAdminEmail(email: string): boolean {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return false;
+  const list = (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  return list.includes(normalized);
+}
+
 interface SessionPayload {
   uid: string;
   role: string;

@@ -34,9 +34,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (valid.length > 50) {
+  const maxLines = user.role === "ADMIN" ? 500 : 50;
+  if (valid.length > maxLines) {
     return NextResponse.json(
-      { error: "Limite de 50 pedidos por envio em massa." },
+      { error: `Limite de ${maxLines} pedidos por envio em massa.` },
       { status: 400 }
     );
   }

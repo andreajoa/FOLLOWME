@@ -106,6 +106,11 @@ export function PanelShell({
           <div className="mt-1 font-mono text-2xl font-bold text-[#C8FF2E]">
             {formatMoney(user.balance, currency, rates)}
           </div>
+          {user.role === "ADMIN" && (
+            <div className="mt-1.5 inline-block border border-[#FF6B2C]/40 bg-[#FF6B2C]/10 px-2 py-0.5 font-mono text-[10px] uppercase text-[#FF8A58]">
+              ADMIN • USO GRÁTIS ILIMITADO
+            </div>
+          )}
           <Link
             href="/painel/saldo"
             className="mt-3 btn-lime flex h-9 w-full items-center justify-center font-mono text-[11px] uppercase tracking-wider"
