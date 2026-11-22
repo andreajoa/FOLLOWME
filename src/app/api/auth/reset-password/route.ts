@@ -21,9 +21,11 @@ function hashToken(raw: string): string {
 async function sendResetEmail(to: string, brandName: string, resetUrl: string): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   if (!apiKey) return false;
+  const rawFrom = process.env.RESEND_FROM_EMAIL?.trim();
   const from =
-    process.env.RESEND_FROM_EMAIL?.trim() ||
-    `${brandName} <onboarding@resend.dev>`;
+    rawFrom && !rawFrom.includes("onboarding@resend.dev")
+      ? rawFrom
+      : `${brandName} <followme@nexaclouds.online>`;
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",

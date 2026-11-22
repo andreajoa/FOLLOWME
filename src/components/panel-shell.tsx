@@ -92,22 +92,22 @@ export function PanelShell({
   }
 
   return (
-    <div className="min-h-screen flex bg-[#090A0C] text-[#F4F5F6]">
+    <div className="panel-dark min-h-screen flex bg-[#110c21] text-[#f7f3ff]">
       {/* Sidebar Desktop */}
-      <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-[#232730] bg-[#0D0F13]">
-        <div className="h-16 flex items-center px-5 border-b border-[#232730]">
-          <BrandLogo name={brandName} href="/painel" />
+      <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-[#2e244d] bg-[#130d26]">
+        <div className="h-16 flex items-center px-5 border-b border-[#2e244d]">
+          <BrandLogo name={brandName} href="/painel" inverted />
         </div>
 
-        <div className="p-4 border-b border-[#232730] bg-[#111317]">
-          <div className="font-mono text-[10px] uppercase tracking-widest text-[#98A0AD]">
+        <div className="p-4 border-b border-[#2e244d] bg-[#18122d]">
+          <div className="font-mono text-[10px] uppercase tracking-widest text-[#b7afc9]">
             {t.sidebar.availableBalance}
           </div>
-          <div className="mt-1 font-mono text-2xl font-bold text-[#C8FF2E]">
+          <div className="mt-1 font-mono text-2xl font-bold text-[#b889ff]">
             {formatMoney(user.balance, currency, rates)}
           </div>
           {user.role === "ADMIN" && (
-            <div className="mt-1.5 inline-block border border-[#FF6B2C]/40 bg-[#FF6B2C]/10 px-2 py-0.5 font-mono text-[10px] uppercase text-[#FF8A58]">
+            <div className="mt-1.5 inline-block rounded-full border border-[#fc8ad4]/40 bg-[#fc8ad4]/12 px-2.5 py-0.5 font-mono text-[10px] uppercase text-[#fc8ad4]">
               ADMIN • USO GRÁTIS ILIMITADO
             </div>
           )}
@@ -129,10 +129,10 @@ export function PanelShell({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 text-sm font-medium border transition-colors ${
+                className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium border transition-colors ${
                   active
-                    ? "border-[#C8FF2E] bg-[#C8FF2E]/10 text-[#C8FF2E]"
-                    : "border-transparent text-[#98A0AD] hover:bg-[#171A20] hover:text-[#F4F5F6]"
+                    ? "border-[#8c42ed] bg-[#7c3ee9]/20 text-white"
+                    : "border-transparent text-[#b7afc9] hover:bg-[#1f1738] hover:text-white"
                 }`}
               >
                 <item.icon className="h-4 w-4 shrink-0" />
@@ -142,13 +142,13 @@ export function PanelShell({
           })}
 
           {user.role === "ADMIN" && (
-            <div className="pt-3 mt-3 border-t border-[#232730]">
+            <div className="pt-3 mt-3 border-t border-[#2e244d]">
               <Link
                 href="/admin"
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm font-mono uppercase tracking-wider border ${
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-mono uppercase tracking-wider border ${
                   pathname.startsWith("/admin")
-                    ? "border-[#FF6B2C] bg-[#FF6B2C]/15 text-[#FF8A58]"
-                    : "border-[#FF6B2C]/40 text-[#FF8A58] hover:bg-[#FF6B2C]/10"
+                    ? "border-[#fc8ad4] bg-[#fc8ad4]/15 text-[#fc8ad4]"
+                    : "border-[#fc8ad4]/40 text-[#fc8ad4] hover:bg-[#fc8ad4]/10"
                 }`}
               >
                 <ShieldCheck className="h-4 w-4 shrink-0" />
@@ -158,12 +158,12 @@ export function PanelShell({
           )}
         </nav>
 
-        <div className="p-4 border-t border-[#232730] flex items-center justify-between gap-2">
+        <div className="p-4 border-t border-[#2e244d] flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <div className="truncate text-xs font-semibold text-[#F4F5F6]">
+            <div className="truncate text-xs font-semibold text-[#f7f3ff]">
               @{user.username}
             </div>
-            <div className="truncate font-mono text-[10px] text-[#68707E]">
+            <div className="truncate font-mono text-[10px] text-[#8b80a6]">
               {t.sidebar.spent}: {formatMoney(user.totalSpent, currency, rates)}
             </div>
           </div>
@@ -172,7 +172,7 @@ export function PanelShell({
             onClick={handleLogout}
             title={t.sidebar.logout}
             aria-label={t.sidebar.logout}
-            className="p-2 border border-[#232730] text-[#98A0AD] hover:border-[#EF4444] hover:text-[#F87171] cursor-pointer"
+            className="rounded-lg p-2 border border-[#2e244d] text-[#b7afc9] hover:border-[#EF4444] hover:text-[#F87171] cursor-pointer"
           >
             <LogOut className="h-4 w-4" />
           </button>
@@ -182,13 +182,13 @@ export function PanelShell({
       {/* Drawer Mobile */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
-          <div className="w-72 max-w-[85vw] bg-[#0D0F13] border-r border-[#232730] flex flex-col">
-            <div className="h-16 px-4 flex items-center justify-between border-b border-[#232730]">
-              <BrandLogo name={brandName} href="/painel" />
+          <div className="w-72 max-w-[85vw] bg-[#130d26] border-r border-[#2e244d] flex flex-col">
+            <div className="h-16 px-4 flex items-center justify-between border-b border-[#2e244d]">
+              <BrandLogo name={brandName} href="/painel" inverted />
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="p-2 text-[#98A0AD] cursor-pointer"
+                className="p-2 text-[#b7afc9] cursor-pointer"
                 aria-label="Fechar menu"
               >
                 <X className="h-5 w-5" />
@@ -205,10 +205,10 @@ export function PanelShell({
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2 text-sm font-medium border ${
+                    className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium border ${
                       active
-                        ? "border-[#C8FF2E] bg-[#C8FF2E]/10 text-[#C8FF2E]"
-                        : "border-transparent text-[#98A0AD]"
+                        ? "border-[#8c42ed] bg-[#7c3ee9]/20 text-white"
+                        : "border-transparent text-[#b7afc9]"
                     }`}
                   >
                     <item.icon className="h-4 w-4" />
@@ -220,15 +220,15 @@ export function PanelShell({
                 <Link
                   href="/admin"
                   onClick={() => setMobileOpen(false)}
-                  className="mt-3 flex items-center gap-3 px-3 py-2.5 text-sm font-mono uppercase border border-[#FF6B2C]/40 text-[#FF8A58]"
+                  className="mt-3 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-mono uppercase border border-[#fc8ad4]/40 text-[#fc8ad4]"
                 >
                   <ShieldCheck className="h-4 w-4" />
                   {t.sidebar.adminPanel}
                 </Link>
               )}
             </nav>
-            <div className="p-4 border-t border-[#232730] space-y-3">
-              <LocaleSwitcher locale={locale} currency={currency} compact />
+            <div className="p-4 border-t border-[#2e244d] space-y-3">
+              <LocaleSwitcher locale={locale} currency={currency} compact dark />
               <button
                 type="button"
                 onClick={handleLogout}
@@ -248,31 +248,31 @@ export function PanelShell({
 
       {/* Área Principal */}
       <div className="flex-1 min-w-0 flex flex-col">
-        <header className="h-16 border-b border-[#232730] bg-[#0D0F13] px-4 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-30">
+        <header className="h-16 border-b border-[#2e244d] bg-[#130d26] px-4 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
-              className="lg:hidden p-2 border border-[#232730] text-[#F4F5F6] cursor-pointer"
+              className="lg:hidden rounded-lg p-2 border border-[#2e244d] text-[#f7f3ff] cursor-pointer"
               aria-label="Abrir menu"
             >
               <Menu className="h-5 w-5" />
             </button>
             <div className="lg:hidden">
-              <BrandLogo name={brandName} href="/painel" compact />
+              <BrandLogo name={brandName} href="/painel" compact inverted />
             </div>
-            <span className="hidden md:inline font-mono text-xs uppercase tracking-widest text-[#98A0AD]">
+            <span className="hidden md:inline font-mono text-xs uppercase tracking-widest text-[#b7afc9]">
               {t.sidebar.operationalPanel} • {user.name}
             </span>
           </div>
 
           <div className="flex items-center gap-2.5">
             <div className="hidden sm:block">
-              <LocaleSwitcher locale={locale} currency={currency} compact />
+              <LocaleSwitcher locale={locale} currency={currency} compact dark />
             </div>
             <Link
               href="/painel/saldo"
-              className="border border-[#C8FF2E]/40 bg-[#C8FF2E]/10 px-3 py-1.5 font-mono text-xs text-[#C8FF2E] font-bold whitespace-nowrap"
+              className="rounded-lg border border-[#8c42ed]/50 bg-[#7c3ee9]/20 px-3 py-1.5 font-mono text-xs text-[#e3d1ff] font-bold whitespace-nowrap"
             >
               {formatMoney(user.balance, currency, rates)}
             </Link>
@@ -286,12 +286,12 @@ export function PanelShell({
         </header>
 
         {showBanner && announcement && (
-          <div className="border-b border-[#FF6B2C]/30 bg-[#FF6B2C]/10 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
-            <p className="font-mono text-xs text-[#FFB393]">{announcement}</p>
+          <div className="border-b border-[#8c42ed]/35 bg-[#7c3ee9]/15 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
+            <p className="font-mono text-xs text-[#e5d4ff]">{announcement}</p>
             <button
               type="button"
               onClick={() => setShowBanner(false)}
-              className="text-[#FF8A58] hover:text-[#F4F5F6] cursor-pointer shrink-0"
+              className="text-[#c8a8ff] hover:text-white cursor-pointer shrink-0"
               aria-label="Ocultar aviso"
             >
               <X className="h-4 w-4" />

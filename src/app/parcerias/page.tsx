@@ -14,7 +14,7 @@ export default async function PublicCooperationPage() {
   ]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090A0C]">
+    <div className="min-h-screen flex flex-col fn-hero-canvas text-[#111015]">
       <PublicHeader
         brandName={settings.brandName}
         user={user ? { username: user.username, role: user.role } : null}
@@ -33,6 +33,7 @@ export default async function PublicCooperationPage() {
         brandName={settings.brandName}
         supportEmail={settings.supportEmail}
         supportWhatsapp={settings.supportWhatsapp}
+        locale={prefs.locale}
       />
     </div>
   );

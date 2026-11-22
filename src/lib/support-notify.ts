@@ -123,7 +123,7 @@ export async function sendWhatsAppSupportAlert(
             },
           },
         }),
-        signal: AbortSignal.timeout(12_000),
+        signal: AbortSignal.timeout(25_000),
       });
 
       const raw = await res.text();
@@ -164,7 +164,7 @@ export async function sendWhatsAppSupportAlert(
           chatId: `${targetPhone}@c.us`,
           text,
         }),
-        signal: AbortSignal.timeout(12_000),
+        signal: AbortSignal.timeout(25_000),
       });
       const data = (await res.json().catch(() => ({}))) as { id?: string; error?: string };
       if (res.ok) {

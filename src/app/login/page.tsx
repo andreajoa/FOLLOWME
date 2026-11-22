@@ -30,7 +30,7 @@ export default async function LoginPage({
   const isPt = prefs.locale === "pt";
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090A0C]">
+    <div className="min-h-screen flex flex-col fn-hero-canvas text-[#111015]">
       <PublicHeader
         brandName={settings.brandName}
         user={null}
@@ -38,16 +38,17 @@ export default async function LoginPage({
         currency={prefs.currency}
       />
 
-      <main className="bg-tech-grid flex-1 flex items-center justify-center px-4 py-14">
+      <main className="flex-1 flex items-center justify-center px-4 py-14">
         <div className="w-full max-w-md space-y-6">
-          <div className="text-center space-y-2">
-            <span className="font-mono text-xs uppercase tracking-widest text-[#C8FF2E]">
+          <div className="text-center space-y-2.5">
+            <span className="fn-eyebrow-pill inline-flex items-center gap-2 px-3.5 py-1 text-xs font-extrabold uppercase tracking-wider text-[#18141d]">
+              <span className="h-2 w-2 rounded-full bg-[#8c42ed]" />
               {isPt ? `Acesso Seguro · ${settings.brandName}` : `Secure Access · ${settings.brandName}`}
             </span>
-            <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight">
+            <h1 className="font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-black tracking-[-0.045em] text-[#111015]">
               {isPt ? "Entre ou crie sua conta" : "Sign in or create your account"}
             </h1>
-            <p className="text-sm text-[#98A0AD]">
+            <p className="text-sm font-medium text-[#66616d]">
               {isPt
                 ? "Recarga automática 24h via Stripe (Pix e Cartão), pedidos rápidos e API v2 liberada no cadastro."
                 : "Instant Stripe checkout in USD, live order tracking, 30-day refill protection, and API v2 included."}

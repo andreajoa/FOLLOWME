@@ -20,7 +20,7 @@ const ENDPOINTS = [
     "name": "Seguidores Instagram Brasileiros | Perfis Reais | Reposição 30 Dias",
     "type": "Default",
     "category": "Instagram — Seguidores Brasileiros & Reais",
-    "rate": "24.90",
+    "rate": "26.90",
     "min": "50",
     "max": "50000",
     "refill": true,
@@ -75,7 +75,7 @@ const ENDPOINTS = [
       { name: "order", desc: "ID de um pedido único (ou use 'orders=1,2,3' até 100 IDs)" },
     ],
     response: `{
-  "charge": "24.9000",
+  "charge": "26.9000",
   "start_count": "14200",
   "status": "In progress",
   "remains": "350",
@@ -146,70 +146,73 @@ export default async function ApiDocsPage() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090A0C]">
-      <PublicHeader
-        brandName={settings.brandName}
-        user={user ? { username: user.username, role: user.role } : null}
-        locale={prefs.locale}
-        currency={prefs.currency}
-      />
+    <div className="min-h-screen flex flex-col bg-[#faf8fd] text-[#111015]">
+      <div className="fn-hero-canvas border-b border-[#ece5f2]">
+        <PublicHeader
+          brandName={settings.brandName}
+          user={user ? { username: user.username, role: user.role } : null}
+          locale={prefs.locale}
+          currency={prefs.currency}
+        />
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-12 sm:px-6 lg:px-8 space-y-8">
-        <div>
-          <span className="font-mono text-xs uppercase tracking-widest text-[#C8FF2E]">
+        <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+          <span className="fn-eyebrow-pill inline-flex items-center gap-2 px-3.5 py-1 text-xs font-extrabold uppercase tracking-wider text-[#18141d]">
+            <span className="h-2 w-2 rounded-full bg-[#8c42ed]" />
             Integração para Revendedores, Painéis Filhos &amp; Lojas
           </span>
-          <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold tracking-tight">
+          <h1 className="mt-4 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-black tracking-[-0.045em] text-[#111015]">
             Documentação API v2
           </h1>
-          <p className="mt-2 text-sm text-[#98A0AD]">
+          <p className="mt-2 text-sm sm:text-base font-medium text-[#66616d]">
             100% compatível com o padrão mundial SMM Panel v2 (Perfect Panel,
             WooCommerce, Shopify, N8N ou sistemas próprios).
           </p>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 border border-[#232730] bg-[#111317] font-mono text-xs">
-          <div className="p-4 border-b sm:border-b-0 sm:border-r border-[#232730]">
-            <div className="text-[#68707E]">MÉTODO HTTP</div>
-            <div className="mt-1 text-sm font-bold text-[#C8FF2E]">POST</div>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6 lg:px-8 space-y-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 rounded-[18px] border border-[#ece5f2] bg-white shadow-[0_12px_32px_rgba(52,27,76,0.06)] font-mono text-xs overflow-hidden">
+          <div className="p-4 border-b sm:border-b-0 sm:border-r border-[#ece5f2]">
+            <div className="text-[#796b89]">MÉTODO HTTP</div>
+            <div className="mt-1 text-sm font-extrabold text-[#7c3ee9]">POST</div>
           </div>
-          <div className="p-4 border-b sm:border-b-0 sm:border-r border-[#232730]">
-            <div className="text-[#68707E]">URL DA API</div>
-            <div className="mt-1 text-sm font-bold text-[#F4F5F6] break-all">
+          <div className="p-4 border-b sm:border-b-0 sm:border-r border-[#ece5f2]">
+            <div className="text-[#796b89]">URL DA API</div>
+            <div className="mt-1 text-sm font-bold text-[#111015] break-all">
               {baseUrl}/api/v2
             </div>
           </div>
           <div className="p-4">
-            <div className="text-[#68707E]">FORMATO DE RESPOSTA</div>
-            <div className="mt-1 text-sm font-bold text-[#F4F5F6]">JSON (UTF-8)</div>
+            <div className="text-[#796b89]">FORMATO DE RESPOSTA</div>
+            <div className="mt-1 text-sm font-bold text-[#111015]">JSON (UTF-8)</div>
           </div>
         </div>
 
         {user ? (
-          <div className="border border-[#C8FF2E]/40 bg-[#C8FF2E]/5 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="rounded-[18px] border-2 border-[#7c3ee9] bg-[#f6f1ff] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <div className="font-mono text-xs uppercase text-[#C8FF2E]">
+              <div className="font-mono text-xs font-bold uppercase text-[#7c3ee9]">
                 Sua Chave de API Ativa
               </div>
-              <div className="mt-1 font-mono text-sm text-[#F4F5F6] break-all">
+              <div className="mt-1 font-mono text-sm font-semibold text-[#111015] break-all">
                 {user.apiKey}
               </div>
             </div>
             <Link
               href="/painel/conta"
-              className="btn-outline inline-flex h-9 items-center px-3 font-mono text-xs uppercase shrink-0"
+              className="btn-outline inline-flex h-9 items-center px-3 text-xs font-bold uppercase shrink-0"
             >
               Gerenciar Chave
             </Link>
           </div>
         ) : (
-          <div className="surface-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <p className="text-sm text-[#98A0AD]">
+          <div className="surface-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <p className="text-sm font-medium text-[#5e5868]">
               Crie sua conta gratuitamente para gerar sua chave de API exclusiva.
             </p>
             <Link
               href="/login?tab=register"
-              className="btn-lime inline-flex h-10 items-center px-4 font-mono text-xs uppercase shrink-0"
+              className="btn-lime inline-flex h-10 items-center px-4 text-xs font-bold uppercase shrink-0"
             >
               Gerar API Key Grátis
             </Link>
@@ -220,39 +223,39 @@ export default async function ApiDocsPage() {
           {ENDPOINTS.map((ep) => (
             <section
               key={ep.title}
-              className="border border-[#232730] bg-[#111317]"
+              className="overflow-hidden rounded-[18px] border border-[#ece5f2] bg-white shadow-[0_10px_28px_rgba(52,27,76,0.05)]"
             >
-              <div className="flex items-center justify-between border-b border-[#232730] bg-[#171A20] px-5 py-3.5">
-                <h2 className="font-[family-name:var(--font-display)] text-base font-bold text-[#F4F5F6]">
+              <div className="flex items-center justify-between border-b border-[#ece5f2] bg-[#faf8fd] px-5 py-3.5">
+                <h2 className="font-[family-name:var(--font-display)] text-base font-extrabold text-[#111015]">
                   {ep.title}
                 </h2>
-                <span className="font-mono text-xs text-[#C8FF2E]">
+                <span className="rounded-full bg-[#f3ebff] px-2.5 py-0.5 font-mono text-xs font-bold text-[#7c3ee9]">
                   action={ep.action}
                 </span>
               </div>
 
               <div className="p-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <div>
-                  <div className="font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-2">
+                  <div className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#796b89] mb-2">
                     Parâmetros
                   </div>
-                  <div className="divide-y divide-[#232730] border border-[#232730] bg-[#0C0E12]">
+                  <div className="divide-y divide-[#ece5f2] rounded-xl border border-[#ece5f2] bg-[#faf8fd]">
                     {ep.params.map((p) => (
-                      <div key={p.name} className="px-3 py-2 text-xs">
-                        <span className="font-mono font-bold text-[#FF6B2C]">
+                      <div key={p.name} className="px-3.5 py-2.5 text-xs">
+                        <span className="font-mono font-bold text-[#7c3ee9]">
                           {p.name}
                         </span>
-                        <span className="ml-2 text-[#98A0AD]">{p.desc}</span>
+                        <span className="ml-2 text-[#5e5868]">{p.desc}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <div className="font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-2">
+                  <div className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#796b89] mb-2">
                     Exemplo de Retorno
                   </div>
-                  <pre className="overflow-x-auto border border-[#232730] bg-[#0C0E12] p-3.5 font-mono text-xs text-[#34D399] leading-5">
+                  <pre className="overflow-x-auto rounded-xl border border-[#2e244d] bg-[#130d26] p-4 font-mono text-xs text-[#64d893] leading-5">
                     {ep.response}
                   </pre>
                 </div>
@@ -266,6 +269,7 @@ export default async function ApiDocsPage() {
         brandName={settings.brandName}
         supportEmail={settings.supportEmail}
         supportWhatsapp={settings.supportWhatsapp}
+        locale={prefs.locale}
       />
     </div>
   );

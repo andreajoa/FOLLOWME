@@ -13,7 +13,7 @@ export default async function TermsPage() {
   ]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090A0C]">
+    <div className="min-h-screen flex flex-col fn-hero-canvas text-[#111015]">
       <PublicHeader
         brandName={settings.brandName}
         user={user ? { username: user.username, role: user.role } : null}
@@ -23,29 +23,30 @@ export default async function TermsPage() {
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12 sm:px-6 lg:px-8 space-y-6">
         <div>
-          <span className="font-mono text-xs uppercase tracking-widest text-[#FF6B2C]">
+          <span className="fn-eyebrow-pill inline-flex items-center gap-2 px-3.5 py-1 text-xs font-extrabold uppercase tracking-wider text-[#18141d]">
+            <span className="h-2 w-2 rounded-full bg-[#8c42ed]" />
             Regulamento Oficial
           </span>
-          <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold tracking-tight">
+          <h1 className="mt-4 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-black tracking-[-0.045em] text-[#111015]">
             Termos de Uso e Política de Reembolso
           </h1>
         </div>
 
-        <div className="surface-card p-6 sm:p-8 space-y-6 text-sm text-[#98A0AD] leading-relaxed">
+        <div className="surface-card p-6 sm:p-8 space-y-6 text-sm text-[#5e5868] leading-relaxed">
           <section className="space-y-2">
-            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[#F4F5F6]">
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-extrabold text-[#111015]">
               1. Aceitação dos Termos
             </h2>
             <p>
               Ao criar uma conta ou enviar um pedido na plataforma{" "}
-              <strong className="text-[#F4F5F6]">{settings.brandName}</strong>,
+              <strong className="text-[#111015]">{settings.brandName}</strong>,
               você declara concordar integralmente com as regras operacionais
               descritas nesta página.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[#F4F5F6]">
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-extrabold text-[#111015]">
               2. Responsabilidade sobre Links e Perfis
             </h2>
             <p>
@@ -58,7 +59,7 @@ export default async function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[#F4F5F6]">
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-extrabold text-[#111015]">
               3. Créditos, Cancelamentos e Reembolso
             </h2>
             <p>
@@ -71,7 +72,7 @@ export default async function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[#F4F5F6]">
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-extrabold text-[#111015]">
               4. Uso da API e Revenda
             </h2>
             <p>
@@ -84,13 +85,13 @@ export default async function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[#F4F5F6]">
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-extrabold text-[#111015]">
               5. Privacidade e Contato
             </h2>
             <p>
               Nunca solicitamos a senha das suas redes sociais. Para dúvidas
               formais, entre em contato pelo e-mail{" "}
-              <span className="font-mono text-[#C8FF2E]">
+              <span className="font-mono font-bold text-[#7c3ee9]">
                 {settings.supportEmail}
               </span>
               .
@@ -103,6 +104,7 @@ export default async function TermsPage() {
         brandName={settings.brandName}
         supportEmail={settings.supportEmail}
         supportWhatsapp={settings.supportWhatsapp}
+        locale={prefs.locale}
       />
     </div>
   );

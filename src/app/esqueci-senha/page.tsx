@@ -15,7 +15,7 @@ export default async function ResetPasswordPage() {
   ]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090A0C]">
+    <div className="min-h-screen flex flex-col fn-hero-canvas text-[#111015]">
       <PublicHeader
         brandName={settings.brandName}
         user={user ? { username: user.username, role: user.role } : null}
@@ -23,7 +23,7 @@ export default async function ResetPasswordPage() {
         currency={prefs.currency}
       />
       <main className="flex-1 flex items-center justify-center px-4 py-14">
-        <Suspense fallback={<div className="font-mono text-xs text-[#98A0AD]">Carregando...</div>}>
+        <Suspense fallback={<div className="font-mono text-xs text-[#66616d]">Carregando...</div>}>
           <ResetPasswordClient />
         </Suspense>
       </main>
@@ -31,6 +31,7 @@ export default async function ResetPasswordPage() {
         brandName={settings.brandName}
         supportEmail={settings.supportEmail}
         supportWhatsapp={settings.supportWhatsapp}
+        locale={prefs.locale}
       />
     </div>
   );

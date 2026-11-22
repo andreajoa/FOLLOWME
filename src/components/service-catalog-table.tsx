@@ -115,20 +115,24 @@ export function ServiceCatalogTable({
     return Array.from(map.entries());
   }, [filtered]);
 
+  const dark = inPanel;
+
   return (
     <div className="space-y-5">
       {/* Barra de filtros */}
-      <div className="surface-card p-4 space-y-4">
+      <div className="surface-card p-4 sm:p-5 space-y-4">
         <div className="flex flex-wrap gap-2">
           {NETWORK_TABS.map((tab) => (
             <button
               key={tab.key}
               type="button"
               onClick={() => setNetwork(tab.key)}
-              className={`h-9 px-3.5 font-mono text-xs uppercase tracking-wider border transition-colors cursor-pointer ${
+              className={`h-9 rounded-full px-4 text-xs font-bold border transition-colors cursor-pointer ${
                 network === tab.key
-                  ? "bg-[#C8FF2E] text-[#090A0C] border-[#C8FF2E] font-bold"
-                  : "bg-[#0C0E12] text-[#98A0AD] border-[#232730] hover:border-[#323845] hover:text-[#F4F5F6]"
+                  ? "bg-[#7c3ee9] text-white border-[#7c3ee9]"
+                  : dark
+                    ? "bg-[#120d23] text-[#b7afc9] border-[#2e244d] hover:border-[#8c42ed] hover:text-white"
+                    : "bg-[#faf8fd] text-[#5e5868] border-[#ece5f2] hover:border-[#cbb6f0] hover:text-[#111015]"
               }`}
             >
               {tab.label}
@@ -138,7 +142,7 @@ export function ServiceCatalogTable({
 
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
           <div className="relative flex-1">
-            <Search className="h-4 w-4 text-[#68707E] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="h-4 w-4 text-[#796b89] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={query}
@@ -156,10 +160,12 @@ export function ServiceCatalogTable({
             <button
               type="button"
               onClick={() => setOnlyRefill((v) => !v)}
-              className={`h-10 px-3 border font-mono text-xs uppercase cursor-pointer inline-flex items-center gap-1.5 ${
+              className={`h-10 rounded-xl px-3.5 border text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 ${
                 onlyRefill
-                  ? "border-[#10B981] bg-[#10B981]/15 text-[#34D399]"
-                  : "border-[#232730] bg-[#0C0E12] text-[#98A0AD]"
+                  ? "border-[#10B981] bg-[#10B981]/15 text-[#0f8c5f]"
+                  : dark
+                    ? "border-[#2e244d] bg-[#120d23] text-[#b7afc9]"
+                    : "border-[#ece5f2] bg-[#faf8fd] text-[#5e5868]"
               }`}
             >
               <RefreshCw className="h-3.5 w-3.5" />
@@ -170,10 +176,12 @@ export function ServiceCatalogTable({
               <button
                 type="button"
                 onClick={() => setOnlyFavorites((v) => !v)}
-                className={`h-10 px-3 border font-mono text-xs uppercase cursor-pointer inline-flex items-center gap-1.5 ${
+                className={`h-10 rounded-xl px-3.5 border text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 ${
                   onlyFavorites
-                    ? "border-[#FF6B2C] bg-[#FF6B2C]/15 text-[#FF8A58]"
-                    : "border-[#232730] bg-[#0C0E12] text-[#98A0AD]"
+                    ? "border-[#7c3ee9] bg-[#f3ebff] text-[#7c3ee9]"
+                    : dark
+                      ? "border-[#2e244d] bg-[#120d23] text-[#b7afc9]"
+                      : "border-[#ece5f2] bg-[#faf8fd] text-[#5e5868]"
                 }`}
               >
                 <Star className="h-3.5 w-3.5" />
@@ -186,26 +194,51 @@ export function ServiceCatalogTable({
 
       {/* Grupos de serviços */}
       {grouped.length === 0 ? (
-        <div className="surface-card p-10 text-center font-mono text-sm text-[#98A0AD]">
-          Nenhum serviço encontrado com esses filtros.
+        <div className="surface-card p-10 text-center text-sm text-[#796b89]">
+          {isPt
+            ? "Nenhum serviço encontrado com esses filtros."
+            : "No services match your filters."}
         </div>
       ) : (
         <div className="space-y-6">
           {grouped.map(([categoryName, items]) => (
-            <div key={categoryName} className="border border-[#232730] bg-[#111317]">
-              <div className="flex items-center justify-between border-b border-[#232730] bg-[#171A20] px-4 py-3">
-                <h2 className="font-[family-name:var(--font-display)] text-sm sm:text-base font-bold text-[#F4F5F6]">
+            <div
+              key={categoryName}
+              className={`overflow-hidden rounded-[18px] border ${
+                dark
+                  ? "border-[#2e244d] bg-[#18122d]"
+                  : "border-[#ece5f2] bg-white shadow-[0_12px_32px_rgba(52,27,76,0.06)]"
+              }`}
+            >
+              <div
+                className={`flex items-center justify-between border-b px-5 py-3.5 ${
+                  dark
+                    ? "border-[#2e244d] bg-[#21193b]"
+                    : "border-[#ece5f2] bg-[#faf8fd]"
+                }`}
+              >
+                <h2
+                  className={`font-[family-name:var(--font-display)] text-sm sm:text-base font-extrabold ${
+                    dark ? "text-[#f7f3ff]" : "text-[#111015]"
+                  }`}
+                >
                   {categoryName}
                 </h2>
-                <span className="font-mono text-[11px] text-[#C8FF2E]">
-                  {items.length} serviço(s)
+                <span className="rounded-full bg-[#f3ebff] px-2.5 py-0.5 font-mono text-[11px] font-bold text-[#7c3ee9]">
+                  {items.length} {isPt ? "serviço(s)" : "service(s)"}
                 </span>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-[#232730] bg-[#0C0E12] font-mono text-[11px] uppercase tracking-wider text-[#98A0AD]">
+                    <tr
+                      className={`border-b font-mono text-[11px] uppercase tracking-wider ${
+                        dark
+                          ? "border-[#2e244d] bg-[#120d23] text-[#b7afc9]"
+                          : "border-[#ece5f2] bg-[#fcfbfe] text-[#796b89]"
+                      }`}
+                    >
                       {isLoggedIn && <th className="px-3 py-2.5 w-10">★</th>}
                       <th className="px-3 py-2.5 w-16">ID</th>
                       <th className="px-3 py-2.5">{isPt ? "Serviço" : "Service"}</th>
@@ -215,65 +248,96 @@ export function ServiceCatalogTable({
                       <th className="px-3 py-2.5 text-right">{isPt ? "Ação" : "Action"}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#232730] text-sm">
+                  <tbody
+                    className={`divide-y text-sm ${
+                      dark ? "divide-[#2e244d]" : "divide-[#f1ebf8]"
+                    }`}
+                  >
                     {items.map((s) => {
                       const isFav = favorites.includes(s.id);
                       const marketRate = getServiceMarketRate(s, currency);
                       return (
-                        <tr key={s.id} className="hover:bg-[#171A20] transition-colors">
+                        <tr
+                          key={s.id}
+                          className={
+                            dark
+                              ? "hover:bg-[#21193b] transition-colors"
+                              : "hover:bg-[#faf7ff] transition-colors"
+                          }
+                        >
                           {isLoggedIn && (
                             <td className="px-3 py-3">
                               <button
                                 type="button"
                                 aria-label="Favorite service"
                                 onClick={() => toggleFavorite(s.id)}
-                                className="cursor-pointer text-[#68707E] hover:text-[#FF6B2C]"
+                                className="cursor-pointer text-[#8b80a6] hover:text-[#7c3ee9]"
                               >
                                 <Star
                                   className={`h-4 w-4 ${
-                                    isFav ? "fill-[#FF6B2C] text-[#FF6B2C]" : ""
+                                    isFav ? "fill-[#7c3ee9] text-[#7c3ee9]" : ""
                                   }`}
                                 />
                               </button>
                             </td>
                           )}
-                          <td className="px-3 py-3 font-mono text-xs text-[#C8FF2E]">
+                          <td className="px-3 py-3 font-mono text-xs font-bold text-[#7c3ee9]">
                             #{s.id}
                           </td>
                           <td className="px-3 py-3">
-                            <div className="font-medium text-[#F4F5F6]">
+                            <div
+                              className={`font-semibold ${
+                                dark ? "text-[#f7f3ff]" : "text-[#111015]"
+                              }`}
+                            >
                               {getLocalizedServiceName(s, locale)}
                             </div>
-                            <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase">
-                              <span className="border border-[#232730] bg-[#0C0E12] px-1.5 py-0.5 text-[#98A0AD]">
+                            <div className="mt-1 flex flex-wrap items-center gap-1.5 font-mono text-[10px] uppercase">
+                              <span
+                                className={`rounded-full px-2 py-0.5 border ${
+                                  dark
+                                    ? "border-[#2e244d] bg-[#120d23] text-[#b7afc9]"
+                                    : "border-[#ece5f2] bg-[#faf8fd] text-[#66616d]"
+                                }`}
+                              >
                                 {NETWORK_LABELS[s.network] || s.network}
                               </span>
                               {s.refill && (
-                                <span className="border border-[#10B981]/40 bg-[#10B981]/10 px-1.5 py-0.5 text-[#34D399]">
+                                <span className="rounded-full bg-[#eafbf1] px-2 py-0.5 text-[#137a43] font-bold">
                                   {isPt ? `Reposição ${s.refillDays}D` : `Refill ${s.refillDays}D`}
                                 </span>
                               )}
                               {s.dripfeed && (
-                                <span className="border border-[#FF6B2C]/40 bg-[#FF6B2C]/10 px-1.5 py-0.5 text-[#FF8A58]">
+                                <span className="rounded-full bg-[#f3ebff] px-2 py-0.5 text-[#7c3ee9] font-bold">
                                   Drip-Feed
                                 </span>
                               )}
                               {s.cancel && (
-                                <span className="border border-[#323845] px-1.5 py-0.5 text-[#98A0AD]">
+                                <span
+                                  className={`rounded-full px-2 py-0.5 border ${
+                                    dark
+                                      ? "border-[#3c2f63] text-[#b7afc9]"
+                                      : "border-[#ece5f2] text-[#66616d]"
+                                  }`}
+                                >
                                   {isPt ? "Cancelável" : "Cancelable"}
                                 </span>
                               )}
                             </div>
                           </td>
-                          <td className="px-3 py-3 text-right font-mono font-bold text-[#F4F5F6] whitespace-nowrap">
+                          <td
+                            className={`px-3 py-3 text-right font-mono font-extrabold whitespace-nowrap ${
+                              dark ? "text-[#b889ff]" : "text-[#7c3ee9]"
+                            }`}
+                          >
                             {formatCurrencyAmount(marketRate, currency)}
                           </td>
-                          <td className="px-3 py-3 text-right font-mono text-xs text-[#98A0AD] whitespace-nowrap">
+                          <td className="px-3 py-3 text-right font-mono text-xs text-[#796b89] whitespace-nowrap">
                             {formatInt(s.min)} / {formatInt(s.max)}
                           </td>
-                          <td className="px-3 py-3 font-mono text-xs text-[#98A0AD] whitespace-nowrap">
+                          <td className="px-3 py-3 font-mono text-xs text-[#796b89] whitespace-nowrap">
                             <span className="inline-flex items-center gap-1">
-                              <Clock className="h-3 w-3 text-[#68707E]" />
+                              <Clock className="h-3 w-3" />
                               {s.averageTime}
                             </span>
                           </td>
@@ -282,7 +346,11 @@ export function ServiceCatalogTable({
                               <button
                                 type="button"
                                 onClick={() => setInspectService(s)}
-                                className="inline-flex h-8 items-center gap-1 border border-[#323845] px-2.5 font-mono text-[11px] uppercase text-[#98A0AD] hover:border-[#F4F5F6] hover:text-[#F4F5F6] cursor-pointer"
+                                className={`inline-flex h-8 items-center gap-1 rounded-lg border px-2.5 text-[11px] font-bold cursor-pointer ${
+                                  dark
+                                    ? "border-[#3c2f63] text-[#b7afc9] hover:text-white"
+                                    : "border-[#ece5f2] text-[#5e5868] hover:border-[#7c3ee9] hover:text-[#7c3ee9]"
+                                }`}
                               >
                                 <Info className="h-3.5 w-3.5" />
                                 {isPt ? "Ver" : "Info"}
@@ -293,7 +361,7 @@ export function ServiceCatalogTable({
                                     ? `/painel?service=${s.id}`
                                     : `/login?tab=register&service=${s.id}`
                                 }
-                                className="btn-lime inline-flex h-8 items-center px-2.5 font-mono text-[11px] uppercase"
+                                className="btn-lime inline-flex h-8 items-center px-3 text-[11px] font-bold uppercase"
                               >
                                 {isPt ? "Pedir" : "Order"}
                               </Link>
@@ -313,24 +381,24 @@ export function ServiceCatalogTable({
       {/* Modal de descrição detalhada */}
       {inspectService && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#130d26]/75 backdrop-blur-xs p-4"
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-lg border border-[#323845] bg-[#111317] p-6 space-y-4">
-            <div className="flex items-start justify-between gap-4 border-b border-[#232730] pb-4">
+          <div className="w-full max-w-lg rounded-[22px] border border-[#ece5f2] bg-white p-6 space-y-4 text-[#111015] shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-[#ece5f2] pb-4">
               <div>
-                <span className="font-mono text-xs text-[#C8FF2E]">
+                <span className="font-mono text-xs font-bold text-[#7c3ee9]">
                   SERVIÇO #{inspectService.id}
                 </span>
-                <h3 className="mt-1 font-[family-name:var(--font-display)] text-lg font-bold text-[#F4F5F6]">
+                <h3 className="mt-1 font-[family-name:var(--font-display)] text-lg font-extrabold text-[#111015]">
                   {getLocalizedServiceName(inspectService, locale)}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setInspectService(null)}
-                className="p-1 text-[#98A0AD] hover:text-[#F4F5F6] cursor-pointer"
+                className="p-1 text-[#796b89] hover:text-[#111015] cursor-pointer"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
@@ -338,41 +406,41 @@ export function ServiceCatalogTable({
             </div>
 
             <div className="grid grid-cols-3 gap-2 font-mono text-xs">
-              <div className="bg-[#0C0E12] border border-[#232730] p-3">
-                <div className="text-[#68707E]">{isPt ? "PREÇO / 1.000" : "RATE / 1,000"}</div>
-                <div className="mt-1 text-base font-bold text-[#C8FF2E]">
+              <div className="rounded-xl bg-[#faf8fd] border border-[#ece5f2] p-3">
+                <div className="text-[#796b89]">{isPt ? "PREÇO / 1.000" : "RATE / 1,000"}</div>
+                <div className="mt-1 text-base font-extrabold text-[#7c3ee9]">
                   {formatCurrencyAmount(
                     getServiceMarketRate(inspectService, currency),
                     currency
                   )}
                 </div>
               </div>
-              <div className="bg-[#0C0E12] border border-[#232730] p-3">
-                <div className="text-[#68707E]">MIN</div>
-                <div className="mt-1 text-base font-bold text-[#F4F5F6]">
+              <div className="rounded-xl bg-[#faf8fd] border border-[#ece5f2] p-3">
+                <div className="text-[#796b89]">MIN</div>
+                <div className="mt-1 text-base font-extrabold text-[#111015]">
                   {formatInt(inspectService.min)}
                 </div>
               </div>
-              <div className="bg-[#0C0E12] border border-[#232730] p-3">
-                <div className="text-[#68707E]">MAX</div>
-                <div className="mt-1 text-base font-bold text-[#F4F5F6]">
+              <div className="rounded-xl bg-[#faf8fd] border border-[#ece5f2] p-3">
+                <div className="text-[#796b89]">MAX</div>
+                <div className="mt-1 text-base font-extrabold text-[#111015]">
                   {formatInt(inspectService.max)}
                 </div>
               </div>
             </div>
 
-            <div className="bg-[#0C0E12] border border-[#232730] p-4">
-              <div className="font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-2">
+            <div className="rounded-xl bg-[#faf8fd] border border-[#ece5f2] p-4">
+              <div className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#796b89] mb-2">
                 {isPt ? "Descrição e Regras de Entrega" : "Delivery Details"}
               </div>
-              <p className="whitespace-pre-line text-sm text-[#D2D7E0] leading-relaxed">
+              <p className="whitespace-pre-line text-sm text-[#4a4354] leading-relaxed">
                 {getLocalizedServiceDescription(inspectService, locale)}
               </p>
             </div>
 
             <div className="flex items-center justify-between pt-2">
-              <span className="inline-flex items-center gap-1.5 font-mono text-xs text-[#98A0AD]">
-                <Zap className="h-3.5 w-3.5 text-[#FF6B2C]" />
+              <span className="inline-flex items-center gap-1.5 font-mono text-xs text-[#66616d]">
+                <Zap className="h-3.5 w-3.5 text-[#7c3ee9]" />
                 {isPt ? "Tempo médio:" : "Avg. start:"} {inspectService.averageTime}
               </span>
               <Link
@@ -381,7 +449,7 @@ export function ServiceCatalogTable({
                     ? `/painel?service=${inspectService.id}`
                     : `/login?tab=register&service=${inspectService.id}`
                 }
-                className="btn-lime inline-flex h-10 items-center px-5 font-mono text-xs uppercase"
+                className="btn-lime inline-flex h-10 items-center px-5 text-xs font-bold uppercase"
               >
                 {isPt ? "Fazer Pedido Agora" : "Order Now"}
               </Link>

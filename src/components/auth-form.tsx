@@ -102,18 +102,18 @@ export function AuthForm({
   }
 
   return (
-    <div className="w-full max-w-md border border-[#323845] bg-[#111317]">
-      <div className="grid grid-cols-2 border-b border-[#232730]">
+    <div className="w-full max-w-md overflow-hidden rounded-[22px] border-2 border-[#18141d] bg-white shadow-[8px_8px_0_#e2d2fb]">
+      <div className="grid grid-cols-2 border-b border-[#ece5f2] bg-[#faf8fd] p-1.5 gap-1.5">
         <button
           type="button"
           onClick={() => {
             setTab("login");
             setError("");
           }}
-          className={`flex h-12 items-center justify-center gap-2 font-mono text-xs uppercase tracking-wider cursor-pointer transition-colors ${
+          className={`flex h-11 items-center justify-center gap-2 rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors ${
             tab === "login"
-              ? "bg-[#C8FF2E] text-[#090A0C] font-bold"
-              : "bg-[#0C0E12] text-[#98A0AD] hover:text-[#F4F5F6]"
+              ? "bg-[#7c3ee9] text-white shadow-sm"
+              : "text-[#66616d] hover:text-[#111015]"
           }`}
         >
           <KeyRound className="h-3.5 w-3.5" />
@@ -125,10 +125,10 @@ export function AuthForm({
             setTab("register");
             setError("");
           }}
-          className={`flex h-12 items-center justify-center gap-2 font-mono text-xs uppercase tracking-wider cursor-pointer transition-colors ${
+          className={`flex h-11 items-center justify-center gap-2 rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors ${
             tab === "register"
-              ? "bg-[#C8FF2E] text-[#090A0C] font-bold"
-              : "bg-[#0C0E12] text-[#98A0AD] hover:text-[#F4F5F6]"
+              ? "bg-[#7c3ee9] text-white shadow-sm"
+              : "text-[#66616d] hover:text-[#111015]"
           }`}
         >
           <UserPlus className="h-3.5 w-3.5" />
@@ -140,7 +140,7 @@ export function AuthForm({
         {tab === "login" ? (
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1.5">
+              <label className="block font-mono text-[11px] font-bold uppercase tracking-wider text-[#66616d] mb-1.5">
                 {isPt ? "E-mail ou Usuário" : "Email or Username"}
               </label>
               <input
@@ -155,12 +155,12 @@ export function AuthForm({
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD]">
+                <label className="block font-mono text-[11px] font-bold uppercase tracking-wider text-[#66616d]">
                   {isPt ? "Senha" : "Password"}
                 </label>
                 <Link
                   href="/esqueci-senha"
-                  className="font-mono text-[11px] text-[#C8FF2E] hover:underline"
+                  className="font-mono text-[11px] font-bold text-[#7c3ee9] hover:underline"
                 >
                   {isPt ? "Esqueceu sua senha?" : "Forgot password?"}
                 </Link>
@@ -176,7 +176,7 @@ export function AuthForm({
             </div>
 
             {error && (
-              <p className="border border-[#EF4444]/40 bg-[#EF4444]/10 px-3 py-2 text-xs text-[#F87171]">
+              <p className="rounded-xl border border-[#EF4444]/35 bg-[#FEF2F2] px-3 py-2 text-xs font-medium text-[#B91C1C]">
                 {error}
               </p>
             )}
@@ -184,7 +184,7 @@ export function AuthForm({
             <button
               type="submit"
               disabled={loading}
-              className="btn-lime h-12 w-full inline-flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-wider cursor-pointer"
+              className="btn-lime h-12 w-full inline-flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider cursor-pointer"
             >
               {loading
                 ? isPt
@@ -199,7 +199,7 @@ export function AuthForm({
         ) : (
           <form onSubmit={handleRegister} className="space-y-3.5">
             <div>
-              <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1">
+              <label className="block font-mono text-[11px] font-bold uppercase tracking-wider text-[#66616d] mb-1">
                 {isPt ? "Nome Completo" : "Full Name"}
               </label>
               <input
@@ -214,7 +214,7 @@ export function AuthForm({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1">
+                <label className="block font-mono text-[11px] font-bold uppercase tracking-wider text-[#66616d] mb-1">
                   {isPt ? "Usuário" : "Username"}
                 </label>
                 <input
@@ -227,7 +227,7 @@ export function AuthForm({
                 />
               </div>
               <div>
-                <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1">
+                <label className="block font-mono text-[11px] font-bold uppercase tracking-wider text-[#66616d] mb-1">
                   {isPt ? "WhatsApp (opcional)" : "Phone / WhatsApp (optional)"}
                 </label>
                 <input
@@ -241,7 +241,7 @@ export function AuthForm({
             </div>
 
             <div>
-              <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1">
+              <label className="block font-mono text-[11px] font-bold uppercase tracking-wider text-[#66616d] mb-1">
                 {isPt ? "E-mail" : "Email"}
               </label>
               <input
@@ -256,7 +256,7 @@ export function AuthForm({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1">
+                <label className="block font-mono text-[11px] font-bold uppercase tracking-wider text-[#66616d] mb-1">
                   {isPt ? "Senha (mín. 6)" : "Password (min 6)"}
                 </label>
                 <input
@@ -270,7 +270,7 @@ export function AuthForm({
                 />
               </div>
               <div>
-                <label className="block font-mono text-[11px] uppercase tracking-wider text-[#98A0AD] mb-1">
+                <label className="block font-mono text-[11px] font-bold uppercase tracking-wider text-[#66616d] mb-1">
                   {isPt ? "Código Indicação" : "Referral Code"}
                 </label>
                 <input
@@ -284,7 +284,7 @@ export function AuthForm({
             </div>
 
             {error && (
-              <p className="border border-[#EF4444]/40 bg-[#EF4444]/10 px-3 py-2 text-xs text-[#F87171]">
+              <p className="rounded-xl border border-[#EF4444]/35 bg-[#FEF2F2] px-3 py-2 text-xs font-medium text-[#B91C1C]">
                 {error}
               </p>
             )}
@@ -292,7 +292,7 @@ export function AuthForm({
             <button
               type="submit"
               disabled={loading}
-              className="btn-lime h-12 w-full inline-flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-wider cursor-pointer"
+              className="btn-lime h-12 w-full inline-flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider cursor-pointer"
             >
               {loading
                 ? isPt

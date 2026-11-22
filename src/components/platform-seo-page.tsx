@@ -51,7 +51,7 @@ const PLATFORM_COPY: Record<PlatformSlug, Record<"en" | "pt", PlatformCopyBundle
       faq: [
         {
           q: "How much do 1,000 Instagram followers cost in the US?",
-          a: "High-retention Instagram followers on FollowMe start at $12.99 per 1,000 for global 365-day refill tiers and $14.99 to $24.99 per 1,000 for premium active-look tiers.",
+          a: "High-retention Instagram followers on FollowMe start at $11.99 per 1,000 for global 90-day refill tiers and $14.99 to $24.99 per 1,000 for premium active-look tiers.",
         },
         {
           q: "Is buying Instagram followers safe without my password?",
@@ -80,7 +80,7 @@ const PLATFORM_COPY: Record<PlatformSlug, Record<"en" | "pt", PlatformCopyBundle
       faq: [
         {
           q: "Quanto custam 1.000 seguidores no Instagram na FollowMe?",
-          a: "No Brasil, 1.000 seguidores mundiais estáveis com reposição saem a partir de R$ 9,90 e seguidores brasileiros a partir de R$ 16,50 a R$ 24,90 por milheiro.",
+          a: "No Brasil, 1.000 seguidores mundiais estáveis com reposição saem a partir de R$ 12,90 e seguidores brasileiros a partir de R$ 26,90 por milheiro.",
         },
         {
           q: "Preciso deixar meu Instagram aberto ou passar senha?",
@@ -130,7 +130,7 @@ const PLATFORM_COPY: Record<PlatformSlug, Record<"en" | "pt", PlatformCopyBundle
         "Pacotes claros de seguidores, visualizações rápidas e curtidas para TikTok em Reais com Pix automático via Stripe e garantia de reposição.",
       benefits: [
         "Ajuda a bater os 1.000 seguidores para liberar TikTok Live",
-        "Visualizações rápidas a partir de R$ 0,65 por 1.000",
+        "Visualizações rápidas a partir de R$ 0,79 por 1.000",
         "Sem senha: informe apenas o link público do perfil ou vídeo",
       ],
       faq: [
@@ -300,39 +300,40 @@ export async function PlatformSeoPage({
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090A0C] text-[#F4F5F6]">
+    <div className="min-h-screen flex flex-col bg-[#faf8fd] text-[#111015]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <PublicHeader
-        brandName={settings.brandName}
-        user={user ? { username: user.username, role: user.role } : null}
-        locale={locale}
-        currency={currency}
-        routePrefix={routePrefix}
-      />
+      <div className="fn-hero-canvas border-b border-[#ece5f2]">
+        <PublicHeader
+          brandName={settings.brandName}
+          user={user ? { username: user.username, role: user.role } : null}
+          locale={locale}
+          currency={currency}
+          routePrefix={routePrefix}
+        />
 
-      <main className="flex-1">
-        <section className="border-b border-[#232730] bg-tech-grid">
-          <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+        <section>
+          <div className="mx-auto max-w-7xl px-4 py-12 sm:py-16 sm:px-6 lg:px-8">
             <div className="max-w-3xl">
-              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#C8FF2E]">
-                {bundle.eyebrow}
-              </p>
-              <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl sm:text-5xl font-bold tracking-tight leading-[1.06]">
+              <div className="fn-eyebrow-pill inline-flex items-center gap-2 px-4 py-1.5 text-xs font-extrabold uppercase tracking-wider text-[#18141d]">
+                <span className="h-2 w-2 rounded-full bg-[#8c42ed]" />
+                <span>{bundle.eyebrow}</span>
+              </div>
+              <h1 className="mt-5 font-[family-name:var(--font-display)] text-4xl sm:text-5xl font-black tracking-[-0.05em] leading-[1.05] text-[#111015]">
                 {bundle.headline}
-                <span className="text-[#C8FF2E]">{bundle.accent}</span>
+                <span className="fn-sticker mt-1">{bundle.accent}</span>
               </h1>
-              <p className="mt-5 text-base sm:text-lg text-[#98A0AD] leading-relaxed max-w-[60ch]">
+              <p className="mt-5 text-base sm:text-lg font-medium text-[#66616d] leading-relaxed max-w-[60ch]">
                 {bundle.subtext}
               </p>
 
-              <ul className="mt-6 flex flex-col sm:flex-row flex-wrap gap-x-6 gap-y-2.5 text-sm text-[#D2D7E0]">
+              <ul className="mt-6 flex flex-col sm:flex-row flex-wrap gap-x-6 gap-y-2.5 text-sm font-semibold text-[#3f3947]">
                 {bundle.benefits.map((b) => (
                   <li key={b} className="inline-flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-[#C8FF2E] shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 text-[#7c3ee9] shrink-0" />
                     <span>{b}</span>
                   </li>
                 ))}
@@ -350,45 +351,47 @@ export async function PlatformSeoPage({
             </div>
           </div>
         </section>
+      </div>
 
+      <main className="flex-1">
         {/* Transparent full list for this platform */}
         <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <ScrollReveal>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold mb-6">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-black tracking-[-0.04em] text-[#111015] mb-6">
               {locale === "pt"
                 ? `Todos os pacotes disponíveis para ${platform.charAt(0).toUpperCase() + platform.slice(1)}`
                 : `All ${platform.charAt(0).toUpperCase() + platform.slice(1)} packages`}
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {platformOnly.map((s) => {
                 const rate = getServiceMarketRate(s, currency);
                 return (
                   <div
                     key={s.id}
-                    className="border border-[#232730] bg-[#111317] p-6 flex flex-col justify-between gap-5"
+                    className="surface-card p-6 flex flex-col justify-between gap-5 hover:border-[#cbb6f0] transition-colors"
                   >
                     <div>
-                      <div className="flex items-center justify-between gap-2 font-mono text-xs text-[#98A0AD]">
+                      <div className="flex items-center justify-between gap-2 font-mono text-xs text-[#796b89]">
                         <span>#{s.id}</span>
                         {s.refill && (
-                          <span className="text-[#C8FF2E] inline-flex items-center gap-1">
+                          <span className="rounded-full bg-[#eafbf1] px-2.5 py-0.5 text-[#137a43] font-bold inline-flex items-center gap-1">
                             <ShieldCheck className="h-3.5 w-3.5" />
                             {s.refillDays}d refill
                           </span>
                         )}
                       </div>
-                      <h3 className="mt-2 font-[family-name:var(--font-display)] text-lg font-bold text-[#F4F5F6]">
+                      <h3 className="mt-2 font-[family-name:var(--font-display)] text-lg font-extrabold text-[#111015]">
                         {getLocalizedServiceName(s, locale)}
                       </h3>
                     </div>
 
-                    <div className="flex items-end justify-between border-t border-[#232730] pt-4">
+                    <div className="flex items-end justify-between border-t border-[#ece5f2] pt-4">
                       <div>
-                        <div className="font-mono text-2xl font-bold text-[#C8FF2E]">
+                        <div className="font-mono text-2xl font-extrabold text-[#7c3ee9]">
                           {formatCurrencyAmount(rate, currency)}
                         </div>
-                        <div className="font-mono text-[11px] text-[#68707E]">
+                        <div className="font-mono text-[11px] text-[#796b89]">
                           {s.type === "PACKAGE"
                             ? locale === "pt"
                               ? "pacote fechado"
@@ -404,7 +407,7 @@ export async function PlatformSeoPage({
                             ? `/painel?service=${s.id}&qty=1000`
                             : `/login?tab=register&service=${s.id}&qty=1000`
                         }
-                        className="btn-lime inline-flex h-10 items-center gap-1.5 px-4 text-xs font-mono uppercase tracking-wider"
+                        className="btn-lime inline-flex h-10 items-center gap-1.5 px-4 text-xs font-bold uppercase tracking-wider"
                       >
                         {locale === "pt" ? "Pedir" : "Order"}
                         <ArrowRight className="h-3.5 w-3.5" />
@@ -417,13 +420,15 @@ export async function PlatformSeoPage({
           </ScrollReveal>
         </section>
 
-        {/* Platform FAQ */}
-        <section className="border-t border-[#232730] bg-[#0C0E12] py-16">
+        {/* Platform FAQ inside FlowNexa Violet Band */}
+        <section className="fn-violet-band py-16">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-            <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold mb-6">
-              {locale === "pt" ? "Dúvidas frequentes" : "Frequently asked questions"}
-            </h2>
-            <FaqAccordion items={bundle.faq} />
+            <div className="rounded-[26px] bg-white p-7 sm:p-10 text-[#111015] shadow-[0_20px_50px_rgba(32,12,72,0.22)]">
+              <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-black tracking-[-0.04em] mb-6">
+                {locale === "pt" ? "Dúvidas frequentes" : "Frequently asked questions"}
+              </h2>
+              <FaqAccordion items={bundle.faq} />
+            </div>
           </div>
         </section>
       </main>

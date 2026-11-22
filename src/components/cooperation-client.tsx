@@ -93,25 +93,25 @@ export function CooperationClient({
   return (
     <div className="space-y-6">
       <div>
-        <span className="font-mono text-xs uppercase tracking-widest text-[#C8FF2E]">
+        <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#7c3ee9]">
           Cooperation • Revenda VIP &amp; Fornecedores
         </span>
-        <h1 className="mt-1 font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold">
+        <h1 className="mt-1 font-[family-name:var(--font-display)] text-2xl sm:text-4xl font-black tracking-[-0.04em]">
           Programa de Parcerias {brandName}
         </h1>
-        <p className="mt-1 text-sm text-[#98A0AD]">
+        <p className="mt-1.5 text-sm text-[var(--ink-secondary)]">
           Tem alto volume mensal, opera uma agência, é fornecedor direto de redes sociais ou quer tarifas personalizadas na API v2? Fale com nosso time comercial.
         </p>
       </div>
 
       {success && (
-        <div className="flex items-center gap-2 border border-[#10B981]/40 bg-[#10B981]/10 px-4 py-3 font-mono text-xs text-[#34D399]">
+        <div className="flex items-center gap-2 rounded-xl border border-[#10B981]/40 bg-[#10B981]/10 px-4 py-3 font-mono text-xs text-[#10B981]">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           {success}
         </div>
       )}
       {error && (
-        <div className="flex items-center gap-2 border border-[#EF4444]/40 bg-[#EF4444]/10 px-4 py-3 font-mono text-xs text-[#F87171]">
+        <div className="flex items-center gap-2 rounded-xl border border-[#EF4444]/40 bg-[#EF4444]/10 px-4 py-3 font-mono text-xs text-[#EF4444]">
           <ShieldAlert className="h-4 w-4 shrink-0" />
           {error}
         </div>
@@ -122,14 +122,14 @@ export function CooperationClient({
           onSubmit={handleSubmit}
           className="lg:col-span-7 surface-card p-5 sm:p-6 space-y-4"
         >
-          <h2 className="font-[family-name:var(--font-display)] text-lg font-bold border-b border-[#232730] pb-3 flex items-center gap-2">
-            <Handshake className="h-5 w-5 text-[#C8FF2E]" />
+          <h2 className="font-[family-name:var(--font-display)] text-lg font-extrabold border-b border-[var(--border-subtle)] pb-3 flex items-center gap-2">
+            <Handshake className="h-5 w-5 text-[#7c3ee9]" />
             Enviar Proposta de Parceria
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-mono text-[11px] uppercase text-[#98A0AD] mb-1">
+              <label className="block font-mono text-[11px] font-bold uppercase text-[var(--ink-secondary)] mb-1">
                 Nome / Empresa
               </label>
               <input
@@ -142,7 +142,7 @@ export function CooperationClient({
             </div>
 
             <div>
-              <label className="block font-mono text-[11px] uppercase text-[#98A0AD] mb-1">
+              <label className="block font-mono text-[11px] font-bold uppercase text-[var(--ink-secondary)] mb-1">
                 E-mail Comercial
               </label>
               <input
@@ -155,7 +155,7 @@ export function CooperationClient({
             </div>
 
             <div>
-              <label className="block font-mono text-[11px] uppercase text-[#98A0AD] mb-1">
+              <label className="block font-mono text-[11px] font-bold uppercase text-[var(--ink-secondary)] mb-1">
                 WhatsApp / Telegram
               </label>
               <input
@@ -168,7 +168,7 @@ export function CooperationClient({
             </div>
 
             <div>
-              <label className="block font-mono text-[11px] uppercase text-[#98A0AD] mb-1">
+              <label className="block font-mono text-[11px] font-bold uppercase text-[var(--ink-secondary)] mb-1">
                 Tipo de Parceria
               </label>
               <select
@@ -177,7 +177,7 @@ export function CooperationClient({
                 className="input-terminal w-full h-10 px-3 text-sm"
               >
                 {TYPES.map((t) => (
-                  <option key={t.value} value={t.value} className="bg-[#111317]">
+                  <option key={t.value} value={t.value}>
                     {t.label}
                   </option>
                 ))}
@@ -185,7 +185,7 @@ export function CooperationClient({
             </div>
 
             <div>
-              <label className="block font-mono text-[11px] uppercase text-[#98A0AD] mb-1">
+              <label className="block font-mono text-[11px] font-bold uppercase text-[var(--ink-secondary)] mb-1">
                 Volume Mensal Estimado
               </label>
               <input
@@ -198,7 +198,7 @@ export function CooperationClient({
             </div>
 
             <div>
-              <label className="block font-mono text-[11px] uppercase text-[#98A0AD] mb-1">
+              <label className="block font-mono text-[11px] font-bold uppercase text-[var(--ink-secondary)] mb-1">
                 Site / Painel / @Perfil (opcional)
               </label>
               <input
@@ -212,7 +212,7 @@ export function CooperationClient({
           </div>
 
           <div>
-            <label className="block font-mono text-[11px] uppercase text-[#98A0AD] mb-1">
+            <label className="block font-mono text-[11px] font-bold uppercase text-[var(--ink-secondary)] mb-1">
               Detalhes da Proposta
             </label>
             <textarea
@@ -229,7 +229,7 @@ export function CooperationClient({
           <button
             type="submit"
             disabled={submitting}
-            className="btn-lime h-11 px-6 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider cursor-pointer"
+            className="btn-lime h-11 px-6 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider cursor-pointer"
           >
             <Send className="h-4 w-4" />
             {submitting ? "Enviando..." : "Enviar Solicitação"}
@@ -237,10 +237,10 @@ export function CooperationClient({
         </form>
 
         <div className="lg:col-span-5 surface-card p-5 sm:p-6 space-y-4">
-          <h2 className="font-[family-name:var(--font-display)] text-lg font-bold border-b border-[#232730] pb-3">
+          <h2 className="font-[family-name:var(--font-display)] text-lg font-extrabold border-b border-[var(--border-subtle)] pb-3">
             Vantagens para Parceiros
           </h2>
-          <ul className="space-y-2.5 text-sm text-[#98A0AD]">
+          <ul className="space-y-2.5 text-sm text-[var(--ink-secondary)]">
             <li>• Tabela de preços diferenciada para grandes volumes via API v2.</li>
             <li>• Integração prioritária para fornecedores diretos de serviços BR e mundiais.</li>
             <li>• Suporte dedicado para agências e donos de Painel Filho.</li>
@@ -251,12 +251,12 @@ export function CooperationClient({
 
       {showHistory && requests.length > 0 && (
         <div className="surface-card overflow-hidden">
-          <div className="border-b border-[#232730] bg-[#171A20] px-5 py-3.5">
+          <div className="border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-5 py-3.5">
             <h2 className="font-[family-name:var(--font-display)] text-base font-bold">
               Minhas Solicitações
             </h2>
           </div>
-          <div className="divide-y divide-[#232730]">
+          <div className="divide-y divide-[var(--border-subtle)]">
             {requests.map((r) => {
               const meta = COOPERATION_STATUS_META[r.status] ?? {
                 label: r.status,
@@ -265,10 +265,10 @@ export function CooperationClient({
               return (
                 <div key={r.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <div className="font-mono text-xs text-[#F4F5F6]">
+                    <div className="font-mono text-xs font-semibold">
                       #{r.id} • {r.type} {r.monthlyVolume ? `(${r.monthlyVolume})` : ""}
                     </div>
-                    <div className="text-xs text-[#68707E]">
+                    <div className="text-xs text-[var(--ink-muted)]">
                       {formatDateBR(r.createdAt)}
                       {r.adminNote ? ` — Retorno: ${r.adminNote}` : ""}
                     </div>

@@ -99,7 +99,10 @@ export function PackageSelector({
   );
 
   const networkServices = useMemo(
-    () => enriched.filter((s) => s.network === network && s.type !== "PACKAGE" && s.type !== "SUBSCRIPTIONS"),
+    () =>
+      enriched.filter(
+        (s) => s.network === network && s.type !== "PACKAGE" && s.type !== "SUBSCRIPTIONS"
+      ),
     [enriched, network]
   );
 
@@ -132,7 +135,9 @@ export function PackageSelector({
     const base = QUANTITIES_BY_METRIC[activeMetric] || QUANTITIES_BY_METRIC.followers;
     if (!activeService) return base;
     const valid = base.filter((q) => q >= activeService.min && q <= activeService.max);
-    return valid.length > 0 ? valid : [activeService.min, Math.min(activeService.max, activeService.min * 5)];
+    return valid.length > 0
+      ? valid
+      : [activeService.min, Math.min(activeService.max, activeService.min * 5)];
   }, [activeMetric, activeService]);
 
   const effectiveQty = quantityOptions.includes(selectedQty)
@@ -181,15 +186,15 @@ export function PackageSelector({
     : "/servicos";
 
   return (
-    <SpotlightSurface className="border border-[#232730] bg-[#111317] p-6 sm:p-8 lg:p-10">
+    <SpotlightSurface className="rounded-[24px] border-2 border-[#e5ddf3] bg-white p-6 sm:p-8 lg:p-10 shadow-[0_20px_54px_rgba(61,27,108,0.09)]">
       <div className="space-y-8">
         {/* Step 1 + Step 2 Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end border-b border-[#232730] pb-7">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end border-b border-[#ece5f2] pb-7">
           <div className="lg:col-span-5">
-            <div className="font-mono text-[11px] text-[#98A0AD] mb-2.5">
+            <div className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#796b89] mb-2.5">
               {copy.stepNetwork}
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2 rounded-[16px] bg-[#f4f0fb] p-1.5 border border-[#e6dcf5]">
               {NETWORKS.map((net) => {
                 const active = network === net.id;
                 return (
@@ -197,10 +202,10 @@ export function PackageSelector({
                     key={net.id}
                     type="button"
                     onClick={() => handleNetworkChange(net.id)}
-                    className={`h-12 px-3 font-[family-name:var(--font-display)] text-sm font-bold border transition-all cursor-pointer active:scale-[0.98] ${
+                    className={`h-11 rounded-[11px] px-3 text-sm font-bold transition-all cursor-pointer active:scale-[0.98] ${
                       active
-                        ? "border-[#C8FF2E] bg-[#C8FF2E] text-[#090A0C]"
-                        : "border-[#2A2F3A] bg-[#0B0D11] text-[#D2D7E0] hover:border-[#C8FF2E]/60 hover:text-[#F4F5F6]"
+                        ? "bg-[#161b30] text-white shadow-[0_6px_16px_rgba(22,27,48,0.2)]"
+                        : "bg-transparent text-[#574f63] hover:text-[#111015] hover:bg-white/70"
                     }`}
                   >
                     {net.label}
@@ -211,7 +216,7 @@ export function PackageSelector({
           </div>
 
           <div className="lg:col-span-7">
-            <div className="font-mono text-[11px] text-[#98A0AD] mb-2.5">
+            <div className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#796b89] mb-2.5">
               {copy.stepGoal}
             </div>
             <div className="flex flex-wrap gap-2">
@@ -223,10 +228,10 @@ export function PackageSelector({
                     key={m}
                     type="button"
                     onClick={() => handleMetricChange(m)}
-                    className={`h-12 px-4 inline-flex items-center gap-2 border text-sm font-semibold transition-all cursor-pointer active:scale-[0.98] ${
+                    className={`h-12 rounded-full px-4 inline-flex items-center gap-2 border-2 text-sm font-bold transition-all cursor-pointer active:scale-[0.98] ${
                       active
-                        ? "border-[#C8FF2E] bg-[#C8FF2E]/12 text-[#C8FF2E]"
-                        : "border-[#2A2F3A] bg-[#0B0D11] text-[#98A0AD] hover:border-[#3A4150] hover:text-[#F4F5F6]"
+                        ? "border-[#7c3ee9] bg-[#f3ebff] text-[#6730cf] shadow-[0_4px_12px_rgba(124,62,233,0.14)]"
+                        : "border-[#ece5f2] bg-[#faf8fd] text-[#5c5468] hover:border-[#c8b2ef] hover:text-[#111015]"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -238,10 +243,10 @@ export function PackageSelector({
           </div>
         </div>
 
-        {/* Step 3: Tier Selector (when multiple tiers exist for this network + metric) */}
+        {/* Step 3: Tier Selector */}
         {tierServices.length > 1 && (
           <div>
-            <div className="font-mono text-[11px] text-[#98A0AD] mb-2.5">
+            <div className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#796b89] mb-2.5">
               {copy.stepTier}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -252,28 +257,28 @@ export function PackageSelector({
                     key={srv.id}
                     type="button"
                     onClick={() => setSelectedServiceId(srv.id)}
-                    className={`p-4 border text-left transition-all cursor-pointer active:scale-[0.99] ${
+                    className={`rounded-[16px] p-4 border-2 text-left transition-all cursor-pointer active:scale-[0.99] ${
                       isSelected
-                        ? "border-[#C8FF2E] bg-[#161A1E]"
-                        : "border-[#232730] bg-[#0B0D11] hover:border-[#38404F]"
+                        ? "border-[#7c3ee9] bg-[#f7f2ff] shadow-[0_8px_22px_rgba(124,62,233,0.12)]"
+                        : "border-[#ece5f2] bg-[#fcfbfe] hover:border-[#cbb6f0]"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className="text-sm font-semibold text-[#F4F5F6] leading-snug">
+                      <span className="text-sm font-bold text-[#111015] leading-snug">
                         {srv.displayName}
                       </span>
                       {isSelected && (
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center bg-[#C8FF2E] text-[#090A0C]">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#7c3ee9] text-white">
                           <Check className="h-3.5 w-3.5" />
                         </span>
                       )}
                     </div>
                     <div className="mt-3 flex items-center justify-between font-mono text-xs">
-                      <span className="text-[#C8FF2E] font-bold">
+                      <span className="text-[#7c3ee9] font-extrabold">
                         {formatCurrencyAmount(srv.marketRate, currency)} {copy.per1kLabel}
                       </span>
                       {srv.refill && (
-                        <span className="text-[#98A0AD]">
+                        <span className="rounded-full bg-[#eafbf1] px-2 py-0.5 text-[11px] font-semibold text-[#137a43]">
                           {srv.refillDays}d {copy.refillLabel}
                         </span>
                       )}
@@ -285,14 +290,14 @@ export function PackageSelector({
           </div>
         )}
 
-        {/* Step 4: Crystal-Clear Quantity Package Cards */}
+        {/* Step 4: Quantity Package Cards */}
         {activeService ? (
           <div>
-            <div className="flex items-center justify-between gap-3 mb-3">
-              <div className="font-mono text-[11px] text-[#98A0AD]">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <div className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#796b89]">
                 {copy.stepQuantity}
               </div>
-              <div className="font-mono text-xs text-[#98A0AD]">
+              <div className="rounded-full bg-[#f3ebff] px-3 py-1 font-mono text-xs font-semibold text-[#6730cf]">
                 {activeService.displayName}
               </div>
             </div>
@@ -312,27 +317,27 @@ export function PackageSelector({
                     key={qty}
                     type="button"
                     onClick={() => setSelectedQty(qty)}
-                    className={`relative flex flex-col justify-between p-4 sm:p-5 border text-left transition-all cursor-pointer active:scale-[0.98] ${
+                    className={`relative flex flex-col justify-between rounded-[18px] p-4 sm:p-5 border-2 text-left transition-all cursor-pointer active:scale-[0.98] ${
                       isSelected
-                        ? "border-[#C8FF2E] bg-[#C8FF2E]/10"
-                        : "border-[#232730] bg-[#0B0D11] hover:border-[#3D4555]"
+                        ? "border-[#7c3ee9] bg-[#f4ecff] shadow-[0_10px_24px_rgba(124,62,233,0.16)]"
+                        : "border-[#ece5f2] bg-[#faf8fd] hover:border-[#cbb6f0] hover:bg-white"
                     }`}
                   >
                     {isPopular && (
-                      <span className="mb-2 inline-block self-start bg-[#C8FF2E] px-2 py-0.5 font-mono text-[10px] font-bold text-[#090A0C]">
+                      <span className="mb-2 inline-block self-start rounded-full bg-[#7c3ee9] px-2.5 py-0.5 font-mono text-[10px] font-bold text-white">
                         {copy.popularBadge}
                       </span>
                     )}
                     <div>
-                      <div className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold text-[#F4F5F6] tabular-nums">
+                      <div className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-black tracking-[-0.04em] text-[#111015] tabular-nums">
                         {formatNumberForLocale(qty, locale)}
                       </div>
-                      <div className="mt-0.5 text-xs text-[#98A0AD]">
+                      <div className="mt-0.5 text-xs font-medium text-[#66616d]">
                         {metricLabel(activeMetric)}
                       </div>
                     </div>
-                    <div className="mt-5 pt-3 border-t border-[#232730] flex items-baseline justify-between">
-                      <span className="font-mono text-lg sm:text-xl font-bold text-[#C8FF2E] tabular-nums">
+                    <div className="mt-5 pt-3 border-t border-[#e5ddf2] flex items-baseline justify-between">
+                      <span className="font-mono text-lg sm:text-xl font-extrabold text-[#7c3ee9] tabular-nums">
                         {formatCurrencyAmount(price, currency)}
                       </span>
                     </div>
@@ -342,19 +347,19 @@ export function PackageSelector({
             </div>
 
             {/* Instant Summary & Action Bar */}
-            <div className="mt-7 flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-t border-[#232730] pt-6">
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-[#98A0AD]">
+            <div className="mt-7 flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-t border-[#ece5f2] pt-6">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-medium text-[#5e5868]">
                 <span className="inline-flex items-center gap-1.5">
-                  <ShieldCheck className="h-4 w-4 text-[#C8FF2E]" />
+                  <ShieldCheck className="h-4 w-4 text-[#7c3ee9]" />
                   {copy.noPasswordNote}
                 </span>
                 <span className="inline-flex items-center gap-1.5 font-mono">
-                  <Clock className="h-3.5 w-3.5 text-[#C8FF2E]" />
+                  <Clock className="h-3.5 w-3.5 text-[#7c3ee9]" />
                   {copy.startTimeLabel}: {activeService.averageTime}
                 </span>
                 {activeService.refill && (
-                  <span className="inline-flex items-center gap-1.5 font-mono text-[#F4F5F6]">
-                    <RefreshCw className="h-3.5 w-3.5 text-[#C8FF2E]" />
+                  <span className="inline-flex items-center gap-1.5 font-mono font-semibold text-[#111015]">
+                    <RefreshCw className="h-3.5 w-3.5 text-[#7c3ee9]" />
                     {activeService.refillDays} {copy.refillLabel}
                   </span>
                 )}
@@ -371,7 +376,7 @@ export function PackageSelector({
                 </Link>
                 <Link
                   href="/servicos"
-                  className="btn-outline inline-flex h-12 items-center justify-center px-5 text-sm font-medium whitespace-nowrap"
+                  className="btn-outline inline-flex h-12 items-center justify-center px-5 text-sm font-semibold whitespace-nowrap"
                 >
                   {copy.allServicesLink}
                 </Link>
@@ -379,7 +384,7 @@ export function PackageSelector({
             </div>
           </div>
         ) : (
-          <div className="py-10 text-center text-sm text-[#98A0AD]">
+          <div className="py-10 text-center text-sm text-[#66616d]">
             {copy.emptyState}
           </div>
         )}

@@ -29,7 +29,7 @@ export default async function FaqPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090A0C]">
+    <div className="min-h-screen flex flex-col fn-hero-canvas text-[#111015]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -43,33 +43,36 @@ export default async function FaqPage() {
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-14 sm:px-6 lg:px-8 space-y-10">
         <div>
-          <span className="font-mono text-xs uppercase tracking-widest text-[#C8FF2E]">
+          <span className="fn-eyebrow-pill inline-flex items-center gap-2 px-3.5 py-1 text-xs font-extrabold uppercase tracking-wider text-[#18141d]">
+            <span className="h-2 w-2 rounded-full bg-[#8c42ed]" />
             {isPt ? "Central de Ajuda" : "Help Center"}
           </span>
-          <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold tracking-tight">
+          <h1 className="mt-4 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-black tracking-[-0.045em] text-[#111015]">
             {copy.faq.heading}
           </h1>
-          <p className="mt-2 text-sm sm:text-base text-[#98A0AD]">
+          <p className="mt-2 text-sm sm:text-base font-medium text-[#66616d]">
             {copy.faq.subtext}
           </p>
         </div>
 
-        <FaqAccordion items={copy.faq.items} />
+        <div className="rounded-[24px] border border-[#ece5f2] bg-white p-6 sm:p-9 shadow-[0_14px_38px_rgba(52,27,76,0.06)]">
+          <FaqAccordion items={copy.faq.items} />
+        </div>
 
-        <div className="surface-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="surface-card p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold">
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-extrabold text-[#111015]">
               {isPt ? "Ainda ficou com alguma dúvida?" : "Still have a question?"}
             </h2>
-            <p className="text-sm text-[#98A0AD]">
+            <p className="text-sm text-[#66616d]">
               {isPt
-                ? "Nossa equipe atende diretamente via Ticket interno dentro do painel."
-                : "Our team responds directly through your account Support Tickets."}
+                ? "Nossa equipe atende diretamente via Ticket interno dentro do painel ou pelo e-mail de suporte."
+                : "Our team responds directly through your account Support Tickets or support email."}
             </p>
           </div>
           <Link
             href={user ? "/painel/tickets" : "/login"}
-            className="btn-lime inline-flex h-11 items-center px-5 font-mono text-xs uppercase tracking-wider shrink-0"
+            className="btn-lime inline-flex h-11 items-center px-5 text-xs font-bold uppercase tracking-wider shrink-0"
           >
             {isPt ? "Abrir Ticket de Suporte" : "Open Support Ticket"}
           </Link>

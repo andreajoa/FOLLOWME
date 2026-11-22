@@ -1,24 +1,53 @@
 @import "tailwindcss";
 
 :root {
-  --bg-obsidian: #090a0c;
-  --bg-surface: #111317;
-  --bg-elevated: #171a20;
-  --border-subtle: #232730;
-  --border-strong: #323845;
-  --ink-primary: #f4f5f6;
-  --ink-secondary: #98a0ad;
-  --ink-muted: #68707e;
-  --accent-lime: #c8ff2e;
-  --accent-lime-hover: #d7ff63;
-  --accent-orange: #ff6b2c;
+  /* FlowNexa Light + Violet + Pop-Brutalist Palette */
+  --fn-canvas: #faf8fd;
+  --fn-canvas-alt: #fcfafc;
+  --fn-surface: #ffffff;
+  --fn-elevated: #f5f1fc;
+  --fn-border: #ece5f2;
+  --fn-border-strong: #d8cee8;
+  --fn-ink: #111015;
+  --fn-ink-soft: #18141d;
+  --fn-ink-secondary: #66616d;
+  --fn-ink-muted: #796b89;
+
+  --fn-violet: #7c3ee9;
+  --fn-violet-hover: #6730cf;
+  --fn-violet-deep: #56249f;
+  --fn-violet-bright: #8c42ed;
+  --fn-violet-logo: #813be9;
+  --fn-violet-band: #7b48e5;
+  --fn-pink: #fc8ad4;
+  --fn-pink-deep: #dd6bb4;
+  --fn-lavender: #e9d9fa;
+  --fn-blush: #fbe0ee;
+
+  --fn-mint: #64d893;
+  --fn-gold: #f8d449;
+  --fn-aqua: #68d4cf;
+  --fn-footer: #130d26;
+
+  /* Compatibility aliases */
+  --bg-obsidian: #faf8fd;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f5f1fc;
+  --border-subtle: #ece5f2;
+  --border-strong: #d8cee8;
+  --ink-primary: #111015;
+  --ink-secondary: #66616d;
+  --ink-muted: #796b89;
+  --accent-lime: #7c3ee9;
+  --accent-lime-hover: #6730cf;
+  --accent-orange: #dd6bb4;
   --accent-emerald: #10b981;
   --accent-danger: #ef4444;
 }
 
 @theme inline {
-  --font-display: var(--font-space-grotesk), system-ui, sans-serif;
-  --font-sans: var(--font-jakarta), system-ui, sans-serif;
+  --font-display: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
@@ -27,34 +56,126 @@
 }
 
 html {
-  background-color: var(--bg-obsidian);
-  color: var(--ink-primary);
+  background-color: var(--fn-canvas);
+  color: var(--fn-ink);
   scroll-behavior: smooth;
 }
 
 body {
-  background-color: var(--bg-obsidian);
-  color: var(--ink-primary);
+  background-color: var(--fn-canvas);
+  color: var(--fn-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
-.bg-tech-grid {
+/* FlowNexa signature hero & page diagonal lilac grid + radial halos */
+.fn-hero-canvas {
+  background-color: #faf8fd;
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: 48px 48px;
+    radial-gradient(640px 540px at 8% 18%, rgba(233, 217, 250, 0.85), transparent 68%),
+    radial-gradient(620px 520px at 92% 24%, rgba(251, 224, 238, 0.85), transparent 68%),
+    repeating-linear-gradient(
+      45deg,
+      transparent 0 53px,
+      rgba(112, 72, 150, 0.026) 53px 107px
+    );
 }
 
+.bg-tech-grid {
+  background-color: #faf8fd;
+  background-image:
+    radial-gradient(540px 440px at 10% 15%, rgba(233, 217, 250, 0.65), transparent 70%),
+    radial-gradient(520px 420px at 90% 18%, rgba(251, 224, 238, 0.6), transparent 70%),
+    repeating-linear-gradient(
+      45deg,
+      transparent 0 53px,
+      rgba(112, 72, 150, 0.024) 53px 107px
+    );
+}
+
+/* FlowNexa evidence / pop-brutalist striped white canvas */
+.fn-evidence-bg {
+  background-image: repeating-linear-gradient(
+    45deg,
+    #ffffff 0,
+    #ffffff 51px,
+    #faf8fc 51px,
+    #faf8fc 102px
+  );
+}
+
+/* FlowNexa dotted violet showcase band */
+.fn-violet-band {
+  background-color: #7b48e5;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.16) 0.9px, transparent 1.5px),
+    linear-gradient(135deg, #713cd9 0%, #8957ec 51%, #7541da 100%);
+  background-size: 6px 6px, 100% 100%;
+  color: #ffffff;
+}
+
+/* FlowNexa tilted violet neo-brutalist headline sticker */
+.fn-sticker {
+  display: inline-block;
+  background-color: #8c42ed;
+  color: #ffffff;
+  border: 3.5px solid #111015;
+  box-shadow: 7px 8px 0 #161019;
+  transform: rotate(-1.3deg);
+  border-radius: 8px;
+  padding: 0.06em 0.28em 0.1em;
+}
+
+/* FlowNexa neo-brutalist eyebrow pill */
+.fn-eyebrow-pill {
+  background-color: #ffffff;
+  border: 2px solid #18141d;
+  box-shadow: 5px 5px 0 #08080b;
+  border-radius: 9999px;
+}
+
+/* FlowNexa pop-brutalist evidence cards */
+.fn-evidence-card {
+  background-color: #ffffff;
+  border: 4px solid #111016;
+  border-radius: 20px;
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fn-evidence-card:hover {
+  transform: translateY(-4px);
+}
+
+.fn-evidence-mint {
+  box-shadow: 9px 9px 0 #64d893;
+}
+
+.fn-evidence-gold {
+  box-shadow: 9px 9px 0 #f8d449;
+}
+
+.fn-evidence-aqua {
+  box-shadow: 9px 9px 0 #68d4cf;
+}
+
+.fn-evidence-num {
+  text-shadow: 3px 4px 0 #121018;
+  -webkit-text-stroke: 2px #121018;
+}
+
+/* Crisp light surface cards (public pages) */
 .surface-card {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  background-color: var(--fn-surface);
+  border: 1.5px solid var(--fn-border);
+  border-radius: 18px;
+  box-shadow: 0 12px 32px rgba(52, 27, 76, 0.06);
 }
 
 .surface-elevated {
-  background-color: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
+  background-color: var(--fn-elevated);
+  border: 1.5px solid var(--fn-border);
+  border-radius: 16px;
 }
 
 .spotlight-surface {
@@ -74,7 +195,7 @@ body {
   transition: opacity 280ms ease;
   background: radial-gradient(
     520px circle at var(--mx) var(--my),
-    rgba(200, 255, 46, 0.085),
+    rgba(124, 62, 233, 0.08),
     transparent 65%
   );
 }
@@ -98,22 +219,28 @@ body {
   transform: translateY(0);
 }
 
+/* FlowNexa 3D Violet Primary CTA (.btn-lime kept as class name across app for consistency) */
 .btn-lime {
-  background-color: var(--accent-lime);
-  color: #090a0c;
+  background-color: var(--fn-violet);
+  color: #ffffff;
   font-weight: 700;
+  border-radius: 11px;
+  box-shadow: 0 5px 0 var(--fn-violet-deep);
   transition:
     transform 150ms cubic-bezier(0.22, 1, 0.36, 1),
-    background-color 150ms ease;
+    background-color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .btn-lime:hover:not(:disabled) {
-  background-color: var(--accent-lime-hover);
-  transform: translateY(-1px);
+  background-color: var(--fn-violet-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 var(--fn-violet-deep);
 }
 
 .btn-lime:active:not(:disabled) {
-  transform: translateY(0) scale(0.985);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--fn-violet-deep);
 }
 
 .btn-lime:disabled {
@@ -121,35 +248,93 @@ body {
   cursor: not-allowed;
 }
 
+/* FlowNexa Crisp Outline Button */
 .btn-outline {
-  background-color: transparent;
-  color: var(--ink-primary);
-  border: 1px solid var(--border-strong);
+  background-color: #ffffff;
+  color: #1b1720;
+  border: 2px solid #1b1720;
+  border-radius: 11px;
+  font-weight: 600;
   transition:
     border-color 150ms ease,
     background-color 150ms ease,
+    color 150ms ease,
     transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .btn-outline:hover:not(:disabled) {
-  border-color: var(--accent-lime);
-  background-color: rgba(200, 255, 46, 0.06);
+  border-color: var(--fn-violet);
+  color: var(--fn-violet);
+  background-color: #f7f2fe;
 }
 
 .btn-outline:active:not(:disabled) {
   transform: scale(0.985);
 }
 
+/* Light crisp inputs */
 .input-terminal {
-  background-color: #0c0e12;
-  border: 1px solid var(--border-strong);
-  color: var(--ink-primary);
-  transition: border-color 140ms ease;
+  background-color: #ffffff;
+  border: 1.5px solid #dce2ee;
+  border-radius: 10px;
+  color: #111015;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
 }
 
 .input-terminal:focus {
   outline: none;
-  border-color: var(--accent-lime);
+  border-color: var(--fn-violet);
+  box-shadow: 0 0 0 3px rgba(124, 62, 233, 0.14);
+}
+
+/* Dark theme scope for logged-in /painel and /admin (harmonized with FlowNexa midnight violet) */
+.panel-dark {
+  --bg-obsidian: #110c21;
+  --bg-surface: #18122d;
+  --bg-elevated: #21193b;
+  --border-subtle: #2e244d;
+  --border-strong: #403369;
+  --ink-primary: #f7f3ff;
+  --ink-secondary: #b7afc9;
+  --ink-muted: #8b80a6;
+}
+
+.panel-dark .surface-card {
+  background-color: #18122d;
+  border: 1px solid #2e244d;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.panel-dark .surface-elevated {
+  background-color: #21193b;
+  border: 1px solid #2e244d;
+  border-radius: 12px;
+}
+
+.panel-dark .input-terminal {
+  background-color: #120d23;
+  border: 1px solid #3c2f63;
+  border-radius: 10px;
+  color: #f7f3ff;
+}
+
+.panel-dark .input-terminal:focus {
+  border-color: #a978ff;
+  box-shadow: 0 0 0 3px rgba(169, 120, 255, 0.18);
+}
+
+.panel-dark .btn-outline {
+  background-color: transparent;
+  color: #f7f3ff;
+  border: 1px solid #403369;
+  border-radius: 10px;
+}
+
+.panel-dark .btn-outline:hover:not(:disabled) {
+  border-color: #a978ff;
+  color: #e4d4ff;
+  background-color: rgba(124, 62, 233, 0.16);
 }
 
 @keyframes marquee {
@@ -164,7 +349,7 @@ body {
 .animate-marquee {
   display: flex;
   width: max-content;
-  animation: marquee 34s linear infinite;
+  animation: marquee 32s linear infinite;
 }
 
 @keyframes fadeSlideUp {

@@ -49,6 +49,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const alreadySent = Boolean(parsed.data.skipWhatsApp);
+
   const record = await prisma.supportEmail.create({
     data: {
       fromEmail: parsed.data.fromEmail.toLowerCase(),
@@ -57,11 +59,12 @@ export async function POST(req: NextRequest) {
       subject: parsed.data.subject || "(Sem assunto)",
       bodyText: parsed.data.bodyText || "(Sem conteúdo em texto)",
       status: "OPEN",
+      whatsappSent: alreadySent,
     },
   });
 
-  let waResult: WhatsAppDeliveryResult = { ok: false, error: "Skipped" };
-  if (!parsed.data.skipWhatsApp) {
+  let waResult: WhatsAppDeliveryResult = { ok: alreadySent };
+  if (!alreadySent) {
     waResult = await sendWhatsAppSupportAlert({
       kind: "EMAIL",
       referenceId: record.id,
