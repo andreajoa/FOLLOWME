@@ -1,0 +1,237 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String             @id @default(cuid())
+  name             String
+  username         String             @unique
+  email            String             @unique
+  passwordHash     String
+  role             String             @default("USER")
+  status           String             @default("ACTIVE")
+  balance          Float              @default(0)
+  totalSpent       Float              @default(0)
+  apiKey           String             @unique
+  referralCode     String             @unique
+  referredById     String?
+  referredBy       User?              @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals        User[]             @relation("UserReferrals")
+  affiliateBalance Float              @default(0)
+  affiliateClicks  Int                @default(0)
+  whatsapp         String?
+  orders           Order[]
+  deposits         Deposit[]
+  tickets          Ticket[]
+  ticketMessages   TicketMessage[]
+  favorites        FavoriteService[]
+  earnings         AffiliateEarning[] @relation("ReferrerEarnings")
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([referredById])
+  @@index([role])
+}
+
+model Provider {
+  id             String    @id @default(cuid())
+  name           String
+  apiUrl         String
+  apiKey         String
+  mode           String    @default("LIVE")
+  markupPercent  Float     @default(40)
+  currencyRate   Float     @default(1)
+  cachedBalance  Float     @default(0)
+  cachedCurrency String    @default("BRL")
+  isActive       Boolean   @default(true)
+  lastSyncedAt   DateTime?
+  services       Service[]
+  orders         Order[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  network   String
+  sortOrder Int       @default(0)
+  isActive  Boolean   @default(true)
+  services  Service[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([network, sortOrder])
+}
+
+model Service {
+  id                Int               @id @default(autoincrement())
+  categoryId        String
+  category          Category          @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  providerId        String?
+  provider          Provider?         @relation(fields: [providerId], references: [id], onDelete: SetNull)
+  providerServiceId String?
+  name              String
+  type              String            @default("DEFAULT")
+  description       String
+  rate              Float
+  providerRate      Float             @default(0)
+  min               Int               @default(10)
+  max               Int               @default(100000)
+  averageTime       String            @default("15 minutos")
+  refill            Boolean           @default(false)
+  refillDays        Int               @default(30)
+  cancel            Boolean           @default(false)
+  dripfeed          Boolean           @default(false)
+  isFeatured        Boolean           @default(false)
+  isActive          Boolean           @default(true)
+  orders            Order[]
+  favoritedBy       FavoriteService[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([categoryId, isActive])
+  @@index([providerId, providerServiceId])
+}
+
+model FavoriteService {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceId Int
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, serviceId])
+}
+
+model Order {
+  id                Int       @id @default(autoincrement())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceId         Int
+  service           Service   @relation(fields: [serviceId], references: [id])
+  providerId        String?
+  provider          Provider? @relation(fields: [providerId], references: [id], onDelete: SetNull)
+  providerOrderId   String?
+  link              String
+  quantity          Int
+  charge            Float
+  cost              Float     @default(0)
+  profit            Float     @default(0)
+  startCount        Int       @default(0)
+  remains           Int       @default(0)
+  status            String    @default("PENDING")
+  dripfeed          Boolean   @default(false)
+  runs              Int?
+  interval          Int?
+  comments          String?
+  refillStatus      String?
+  refillRequestedAt DateTime?
+  source            String    @default("WEB")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([providerId, providerOrderId])
+}
+
+model Deposit {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount     Float
+  method     String    @default("PIX")
+  gateway    String    @default("SANDBOX")
+  externalId String?
+  txid       String    @unique
+  pixCode    String?
+  status     String    @default("PENDING")
+  paidAt     DateTime?
+  expiresAt  DateTime?
+  note       String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
+model AffiliateEarning {
+  id             String   @id @default(cuid())
+  referrerId     String
+  referrer       User     @relation("ReferrerEarnings", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredUserId String
+  depositId      String?
+  depositAmount  Float
+  commissionRate Float
+  amount         Float
+  status         String   @default("AVAILABLE")
+  createdAt      DateTime @default(now())
+
+  @@index([referrerId, createdAt])
+}
+
+model Ticket {
+  id        Int             @id @default(autoincrement())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject   String
+  orderId   Int?
+  status    String          @default("OPEN")
+  priority  String          @default("NORMAL")
+  messages  TicketMessage[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([userId, status])
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  Int
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  isAdmin   Boolean  @default(false)
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([ticketId, createdAt])
+}
+
+model ServiceUpdate {
+  id          String   @id @default(cuid())
+  serviceId   Int?
+  serviceName String
+  type        String
+  details     String
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model SiteSetting {
+  id                 String   @id @default("default")
+  brandName          String   @default("VeloSMM")
+  brandTagline       String   @default("Infraestrutura SMM de alta velocidade para agências, criadores e revendedores.")
+  announcement       String   @default("PIX automático 24/7 sem taxas • Reposição 30 dias ativa nos serviços Brasileiros • API v2 pronta para revenda.")
+  supportWhatsapp    String   @default("5511999999999")
+  supportEmail       String   @default("suporte@velosmm.com.br")
+  pixGateway         String   @default("SANDBOX")
+  pixKey             String   @default("pix@velosmm.com.br")
+  pixMerchantName    String   @default("VELOSMM DIGITAL")
+  pixMerchantCity    String   @default("SAO PAULO")
+  minDeposit         Float    @default(5)
+  affiliateRate      Float    @default(5)
+  affiliateMinPayout Float    @default(20)
+  defaultMarkup      Float    @default(40)
+  updatedAt          DateTime @updatedAt
+}
