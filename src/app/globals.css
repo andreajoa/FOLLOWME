@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  --font-inter: "Inter", system-ui, -apple-system, sans-serif;
+  --font-jetbrains: "JetBrains Mono", ui-monospace, monospace;
   /* FlowNexa Light + Violet + Pop-Brutalist Palette */
   --fn-canvas: #faf8fd;
   --fn-canvas-alt: #fcfafc;

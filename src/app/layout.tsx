@@ -1,21 +1,8 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
 import { getLandingCopy } from "@/lib/landing-copy";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  weight: ["400", "500", "600", "700", "800", "900"],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains",
-  weight: ["400", "500", "600", "700"],
-});
 
 export async function generateMetadata(): Promise<Metadata> {
   const [settings, prefs] = await Promise.all([
@@ -110,10 +97,16 @@ export default async function RootLayout({
     prefs.locale === "pt" ? "pt-BR" : prefs.locale === "es" ? "es" : "en-US";
 
   return (
-    <html
-      lang={htmlLang}
-      className={`${inter.variable} ${jetbrainsMono.variable}`}
-    >
+    <html lang={htmlLang}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        />
+      </head>
       <body className="min-h-screen bg-[#faf8fd] text-[#111015] antialiased">
         {children}
       </body>
