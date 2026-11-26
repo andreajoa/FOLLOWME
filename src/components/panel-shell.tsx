@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Activity,
   Bell,
   Code2,
   CreditCard,
@@ -145,7 +146,18 @@ export function PanelShell({
           })}
 
           {user.role === "ADMIN" && (
-            <div className="pt-3 mt-3 border-t border-[#2e244d]">
+            <div className="pt-3 mt-3 border-t border-[#2e244d] space-y-1.5">
+              <Link
+                href="/dashboard"
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-mono uppercase tracking-wider border ${
+                  pathname.startsWith("/dashboard")
+                    ? "border-[#f8d449] bg-[#f8d449]/15 text-[#f8d449]"
+                    : "border-[#f8d449]/40 text-[#f8d449] hover:bg-[#f8d449]/10"
+                }`}
+              >
+                <Activity className="h-4 w-4 shrink-0" />
+                Dashboard Dono
+              </Link>
               <Link
                 href="/admin"
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-mono uppercase tracking-wider border ${
@@ -220,14 +232,24 @@ export function PanelShell({
                 );
               })}
               {user.role === "ADMIN" && (
-                <Link
-                  href="/admin"
-                  onClick={() => setMobileOpen(false)}
-                  className="mt-3 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-mono uppercase border border-[#fc8ad4]/40 text-[#fc8ad4]"
-                >
-                  <ShieldCheck className="h-4 w-4" />
-                  {t.sidebar.adminPanel}
-                </Link>
+                <>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileOpen(false)}
+                    className="mt-3 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-mono uppercase border border-[#f8d449]/40 text-[#f8d449]"
+                  >
+                    <Activity className="h-4 w-4" />
+                    Dashboard Dono
+                  </Link>
+                  <Link
+                    href="/admin"
+                    onClick={() => setMobileOpen(false)}
+                    className="mt-1.5 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-mono uppercase border border-[#fc8ad4]/40 text-[#fc8ad4]"
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    {t.sidebar.adminPanel}
+                  </Link>
+                </>
               )}
             </nav>
             <div className="p-4 border-t border-[#2e244d] space-y-3">

@@ -34,6 +34,7 @@ export const ORDER_STATUS_META: Record<
   COMPLETED: { label: "Concluído", tone: "emerald" },
   PARTIAL: { label: "Parcial", tone: "orange" },
   CANCELED: { label: "Cancelado", tone: "red" },
+  FAILED: { label: "Falha no Envio", tone: "red" },
 };
 
 export const DEPOSIT_STATUS_META: Record<

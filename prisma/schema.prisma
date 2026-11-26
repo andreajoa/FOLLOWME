@@ -46,22 +46,24 @@ model User {
 }
 
 model Provider {
-  id             String         @id @default(cuid())
+  id             String            @id @default(cuid())
   name           String
   apiUrl         String
   apiKey         String
-  mode           String         @default("LIVE")
-  markupPercent  Float          @default(40)
-  currencyRate   Float          @default(1)
-  cachedBalance  Float          @default(0)
-  cachedCurrency String         @default("BRL")
-  isActive       Boolean        @default(true)
+  mode           String            @default("LIVE")
+  priority       Int               @default(10)
+  markupPercent  Float             @default(40)
+  currencyRate   Float             @default(1)
+  cachedBalance  Float             @default(0)
+  cachedCurrency String            @default("BRL")
+  isActive       Boolean           @default(true)
   lastSyncedAt   DateTime?
   services       Service[]
+  fallbacks      ServiceFallback[]
   orders         Order[]
   subscriptions  Subscription[]
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 }
 
 model Category {
@@ -107,11 +109,28 @@ model Service {
   orders            Order[]
   subscriptions     Subscription[]
   favoritedBy       FavoriteService[]
+  fallbacks         ServiceFallback[]
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
   @@index([categoryId, isActive])
   @@index([providerId, providerServiceId])
+}
+
+model ServiceFallback {
+  id                String   @id @default(cuid())
+  serviceId         Int
+  service           Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  providerId        String
+  provider          Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  providerServiceId String
+  priority          Int      @default(1)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([serviceId, providerId])
+  @@index([serviceId, priority, isActive])
 }
 
 model FavoriteService {
@@ -152,6 +171,9 @@ model Order {
   answerNumber      String?
   refillStatus      String?
   refillRequestedAt DateTime?
+  dispatchAttempts  String?
+  lastError         String?
+  failoverUsed      Boolean       @default(false)
   source            String        @default("WEB")
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
@@ -359,4 +381,48 @@ model SiteSetting {
   atenzaConversationId   String?
   supportWebhookSecret   String?
   updatedAt              DateTime  @updatedAt
+}
+
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  eventType   String   // PAGE_VIEW | CLICK
+  visitorId   String
+  sessionId   String?
+  path        String
+  targetLabel String?
+  targetHref  String?
+  targetArea  String?
+  elementTag  String?
+  referrer    String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  deviceType  String   @default("desktop")
+  locale      String?
+  country     String?
+  isBot       Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([eventType, createdAt])
+  @@index([visitorId, createdAt])
+  @@index([path, createdAt])
+  @@index([targetArea, createdAt])
+}
+
+model OwnerNotificationLog {
+  id               String   @id @default(cuid())
+  kind             String   // PAYMENT | ORDER | PROVIDER_FAILOVER | PROVIDER_FAILED | TEST
+  referenceId      String?
+  recipientEmail   String?
+  recipientPhone   String?
+  emailOk          Boolean  @default(false)
+  emailError       String?
+  whatsappOk       Boolean  @default(false)
+  whatsappProvider String?
+  whatsappError    String?
+  summary          String
+  createdAt        DateTime @default(now())
+
+  @@index([kind, createdAt])
+  @@index([createdAt])
 }

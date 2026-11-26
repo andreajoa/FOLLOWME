@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Activity,
   CheckCircle2,
@@ -678,15 +679,24 @@ export function AdminDashboard() {
             Gestão Central da Plataforma
           </h1>
         </div>
-        <button
-          type="button"
-          disabled={busyKey === "sync-all-orders"}
-          onClick={handleSyncAllOrders}
-          className="btn-outline h-10 px-4 inline-flex items-center gap-2 font-mono text-xs uppercase cursor-pointer"
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          {busyKey === "sync-all-orders" ? "Sincronizando..." : "Sincronizar Pedidos"}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/dashboard"
+            className="h-10 px-4 inline-flex items-center gap-2 rounded-lg border border-[#f8d449]/50 bg-[#f8d449]/15 text-[#f8d449] font-mono text-xs font-bold uppercase hover:bg-[#f8d449]/25 transition-colors"
+          >
+            <Activity className="h-3.5 w-3.5" />
+            Abrir /dashboard
+          </Link>
+          <button
+            type="button"
+            disabled={busyKey === "sync-all-orders"}
+            onClick={handleSyncAllOrders}
+            className="btn-outline h-10 px-4 inline-flex items-center gap-2 font-mono text-xs uppercase cursor-pointer"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            {busyKey === "sync-all-orders" ? "Sincronizando..." : "Sincronizar Pedidos"}
+          </button>
+        </div>
       </div>
 
       {/* Navegação por abas */}

@@ -32,6 +32,18 @@ import {
   getEffectiveBrlRate,
   isBrazilBlackFridayActive,
 } from "../src/lib/black-friday";
+import {
+  buildDispatchCandidates,
+  executeDispatchWithFailover,
+} from "../src/lib/failover";
+import {
+  buildEmptyBrtBuckets,
+  detectDeviceType,
+  getBrtBucketKey,
+  getBrtWindowBoundaries,
+  isLikelyBotUserAgent,
+} from "../src/lib/analytics";
+import { extractProfileHandle } from "../src/lib/owner-alerts";
 
 describe("FollowMe Core Engine", () => {
   it("calculates normal and drip-feed order totals accurately", () => {
@@ -258,5 +270,115 @@ describe("FollowMe Core Engine", () => {
         pricing.providerRate * 1.2
       );
     }
+  });
+
+  it("executes multi-provider failover in priority order and records full trace", async () => {
+    const primary = {
+      id: "prov_a",
+      name: "Provedor A",
+      apiUrl: "https://a.example/api/v2",
+      apiKey: "key_a",
+      mode: "LIVE",
+    };
+    const backup1 = {
+      id: "prov_b",
+      name: "Provedor B",
+      apiUrl: "https://b.example/api/v2",
+      apiKey: "key_b",
+      mode: "LIVE",
+    };
+    const backup2 = {
+      id: "prov_c",
+      name: "Provedor C",
+      apiUrl: "https://c.example/api/v2",
+      apiKey: "key_c",
+      mode: "LIVE",
+    };
+
+    const candidates = buildDispatchCandidates({
+      primary: { provider: primary, providerServiceId: "101" },
+      explicitFallbacks: [
+        { provider: backup2, providerServiceId: "303", priority: 2, isActive: true },
+        { provider: backup1, providerServiceId: "202", priority: 1, isActive: true },
+        // Duplicate should be deduplicated
+        { provider: primary, providerServiceId: "101", priority: 3, isActive: true },
+      ],
+    });
+
+    expect(candidates.map((c) => c.provider.id)).toEqual(["prov_a", "prov_b", "prov_c"]);
+
+    // Primary fails -> Backup 1 succeeds with failoverUsed=true
+    const saved = await executeDispatchWithFailover(
+      candidates,
+      { link: "https://instagram.com/cliente_teste", quantity: 1000 },
+      async (provider, params) => {
+        if (provider.id === "prov_a") {
+          throw new Error("Insufficient balance on Provedor A");
+        }
+        return { providerOrderId: `OK-${provider.id}-${params.providerServiceId}` };
+      }
+    );
+
+    expect(saved.ok).toBe(true);
+    expect(saved.failoverUsed).toBe(true);
+    expect(saved.providerId).toBe("prov_b");
+    expect(saved.providerOrderId).toBe("OK-prov_b-202");
+    expect(saved.attempts).toHaveLength(2);
+    expect(saved.attempts[0].ok).toBe(false);
+    expect(saved.attempts[1].ok).toBe(true);
+
+    // All providers fail -> returns ok=false with complete trace
+    const allFailed = await executeDispatchWithFailover(
+      candidates,
+      { link: "https://instagram.com/cliente_teste", quantity: 1000 },
+      async (provider) => {
+        throw new Error(`Timeout ${provider.name}`);
+      }
+    );
+    expect(allFailed.ok).toBe(false);
+    expect(allFailed.attempts).toHaveLength(3);
+    expect(allFailed.lastError).toContain("Provedor C");
+  });
+
+  it("computes BRT analytics windows, buckets, bot filtering, and profile handles", () => {
+    const sampleDate = new Date("2026-11-26T18:30:00.000Z"); // 15:30 BRT
+    const bounds = getBrtWindowBoundaries(sampleDate);
+    expect(bounds.dayStart.toISOString()).toBe("2026-11-26T03:00:00.000Z");
+    expect(bounds.monthStart.toISOString()).toBe("2026-11-01T03:00:00.000Z");
+    expect(bounds.yearStart.toISOString()).toBe("2026-01-01T03:00:00.000Z");
+
+    expect(getBrtBucketKey(sampleDate, "day")).toBe("15h");
+    expect(getBrtBucketKey(sampleDate, "month")).toBe("26/11");
+    expect(getBrtBucketKey(sampleDate, "year")).toBe("Nov");
+    expect(buildEmptyBrtBuckets("day", sampleDate)).toHaveLength(24);
+    expect(buildEmptyBrtBuckets("month", sampleDate)).toHaveLength(30);
+    expect(buildEmptyBrtBuckets("year", sampleDate)).toHaveLength(12);
+
+    expect(isLikelyBotUserAgent("Googlebot/2.1")).toBe(true);
+    expect(isLikelyBotUserAgent("curl/8.4.0")).toBe(true);
+    expect(
+      isLikelyBotUserAgent(
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148"
+      )
+    ).toBe(false);
+    expect(
+      detectDeviceType(
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148"
+      )
+    ).toBe("mobile");
+    expect(detectDeviceType("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)")).toBe(
+      "desktop"
+    );
+
+    expect(extractProfileHandle("https://instagram.com/andrealmeida.br/")).toBe(
+      "@andrealmeida.br"
+    );
+    expect(extractProfileHandle("https://www.instagram.com/stories/loja_vip/12345/")).toBe(
+      "@loja_vip"
+    );
+    expect(extractProfileHandle("https://www.tiktok.com/@criador_top/video/999")).toBe(
+      "@criador_top"
+    );
+    expect(extractProfileHandle("@perfil_direto")).toBe("@perfil_direto");
   });
 });

@@ -8,6 +8,15 @@ import {
 import { getSiteSettings } from "./settings";
 import { AppCurrency, getServiceMarketRate } from "./i18n";
 import { getEffectiveBrlRate, toBlackFridayConfig } from "./black-friday";
+import {
+  buildDispatchCandidates,
+  DispatchAttemptRecord,
+  executeDispatchWithFailover,
+} from "./failover";
+import {
+  notifyOwnerOrderPlaced,
+  notifyOwnerPaymentConfirmed,
+} from "./owner-alerts";
 
 export interface PlaceOrderParams {
   userId: string;
@@ -27,7 +36,15 @@ export interface PlaceOrderParams {
 export async function placeSingleOrder(params: PlaceOrderParams) {
   const service = await prisma.service.findUnique({
     where: { id: params.serviceId },
-    include: { provider: true },
+    include: {
+      provider: true,
+      category: { select: { network: true } },
+      fallbacks: {
+        where: { isActive: true },
+        include: { provider: true },
+        orderBy: { priority: "asc" },
+      },
+    },
   });
 
   if (!service || !service.isActive) {
@@ -108,7 +125,7 @@ export async function placeSingleOrder(params: PlaceOrderParams) {
 
   const actor = await prisma.user.findUnique({
     where: { id: params.userId },
-    select: { id: true, role: true, status: true },
+    select: { id: true, name: true, email: true, role: true, status: true },
   });
 
   if (!actor || actor.status !== "ACTIVE") {
@@ -169,61 +186,259 @@ export async function placeSingleOrder(params: PlaceOrderParams) {
     });
   });
 
-  if (service.provider && service.provider.isActive && service.providerServiceId) {
-    try {
-      const dispatch = await submitProviderOrder(service.provider, {
-        providerServiceId: service.providerServiceId,
-        link: createdOrder.link,
-        quantity: service.type === "PACKAGE" ? undefined : effectiveQuantity,
-        runs,
-        interval,
-        comments: cleanComments,
-        username: cleanUsername,
-        answerNumber: cleanAnswer,
-      });
+  // Discover compatible backup services on OTHER active LIVE providers (auto-failover pool)
+  const autoCompatibleRows = await prisma.service.findMany({
+    where: {
+      isActive: true,
+      id: { not: service.id },
+      metricType: service.metricType,
+      type: service.type,
+      providerServiceId: { not: null },
+      provider: {
+        isActive: true,
+        mode: "LIVE",
+        ...(service.providerId ? { id: { not: service.providerId } } : {}),
+      },
+      category: { network: service.category.network },
+      ...(service.type !== "PACKAGE"
+        ? { min: { lte: effectiveQuantity }, max: { gte: effectiveQuantity } }
+        : {}),
+    },
+    include: { provider: true },
+    orderBy: [{ provider: { priority: "asc" } }, { providerRate: "asc" }],
+    take: 4,
+  });
 
-      return prisma.order.update({
+  const candidates = buildDispatchCandidates({
+    primary:
+      service.provider && service.provider.isActive && service.providerServiceId
+        ? { provider: service.provider, providerServiceId: service.providerServiceId }
+        : undefined,
+    explicitFallbacks: service.fallbacks
+      .filter((fb) => fb.provider && fb.provider.isActive)
+      .map((fb) => ({
+        provider: fb.provider,
+        providerServiceId: fb.providerServiceId,
+        priority: fb.priority,
+        isActive: fb.isActive,
+      })),
+    autoCompatible: autoCompatibleRows
+      .filter((row) => row.provider && row.providerServiceId)
+      .map((row) => ({
+        provider: row.provider!,
+        providerServiceId: row.providerServiceId!,
+        priority: row.provider!.priority,
+      })),
+  });
+
+  if (candidates.length > 0) {
+    const dispatch = await executeDispatchWithFailover(candidates, {
+      link: createdOrder.link,
+      quantity: service.type === "PACKAGE" ? undefined : effectiveQuantity,
+      runs,
+      interval,
+      comments: cleanComments,
+      username: cleanUsername,
+      answerNumber: cleanAnswer,
+    });
+
+    if (dispatch.ok) {
+      const nextStatus =
+        dispatch.providerMode === "SIMULATED" ? "IN_PROGRESS" : "PROCESSING";
+      const updatedOrder = await prisma.order.update({
         where: { id: createdOrder.id },
         data: {
+          providerId: dispatch.providerId,
           providerOrderId: dispatch.providerOrderId,
-          status:
-            service.provider.mode === "SIMULATED" ? "IN_PROGRESS" : "PROCESSING",
+          status: nextStatus,
+          failoverUsed: dispatch.failoverUsed,
+          dispatchAttempts: JSON.stringify(dispatch.attempts),
+          lastError: null,
         },
         include: {
           service: { select: { id: true, name: true } },
         },
       });
-    } catch (providerErr) {
-      await prisma.$transaction([
-        prisma.order.update({
-          where: { id: createdOrder.id },
-          data: { status: "CANCELED", remains: createdOrder.quantity },
-        }),
-        ...(charge > 0
-          ? [
-              prisma.user.update({
-                where: { id: params.userId },
-                data: {
-                  balance: { increment: charge },
-                  totalSpent: { decrement: charge },
-                },
-              }),
-            ]
-          : []),
-      ]);
-      const msg =
-        providerErr instanceof Error
-          ? providerErr.message
-          : "Falha ao enviar pedido ao fornecedor.";
-      throw new Error(
-        charge > 0
-          ? `${msg} Seu saldo foi estornado automaticamente.`
-          : msg
-      );
+
+      void notifyOwnerOrderPlaced({
+        orderId: updatedOrder.id,
+        userName: actor.name,
+        userEmail: actor.email,
+        serviceName: updatedOrder.service.name,
+        link: updatedOrder.link,
+        quantity: updatedOrder.quantity,
+        chargeBrl: updatedOrder.charge,
+        createdAt: updatedOrder.createdAt,
+        providerName: dispatch.providerName,
+        status: updatedOrder.status,
+        failoverUsed: dispatch.failoverUsed,
+        supportEmail: settings.supportEmail,
+      }).catch(() => null);
+
+      return updatedOrder;
+    }
+
+    // All configured & backup providers failed: keep order visible as FAILED for 1-click failover in /dashboard
+    const failedOrder = await prisma.order.update({
+      where: { id: createdOrder.id },
+      data: {
+        status: "FAILED",
+        failoverUsed: dispatch.attempts.length > 1,
+        dispatchAttempts: JSON.stringify(dispatch.attempts),
+        lastError: dispatch.lastError,
+      },
+      include: {
+        service: { select: { id: true, name: true } },
+      },
+    });
+
+    void notifyOwnerOrderPlaced({
+      orderId: failedOrder.id,
+      userName: actor.name,
+      userEmail: actor.email,
+      serviceName: failedOrder.service.name,
+      link: failedOrder.link,
+      quantity: failedOrder.quantity,
+      chargeBrl: failedOrder.charge,
+      createdAt: failedOrder.createdAt,
+      providerName: dispatch.providerName,
+      status: "FAILED",
+      failoverUsed: false,
+      lastError: dispatch.lastError,
+      supportEmail: settings.supportEmail,
+    }).catch(() => null);
+
+    return failedOrder;
+  }
+
+  void notifyOwnerOrderPlaced({
+    orderId: createdOrder.id,
+    userName: actor.name,
+    userEmail: actor.email,
+    serviceName: createdOrder.service.name,
+    link: createdOrder.link,
+    quantity: createdOrder.quantity,
+    chargeBrl: createdOrder.charge,
+    createdAt: createdOrder.createdAt,
+    providerName: null,
+    status: createdOrder.status,
+    supportEmail: settings.supportEmail,
+  }).catch(() => null);
+
+  return createdOrder;
+}
+
+export async function redispatchOrderToProvider(params: {
+  orderId: number;
+  providerId: string;
+  providerServiceId?: string;
+}) {
+  const [order, targetProvider] = await Promise.all([
+    prisma.order.findUnique({
+      where: { id: params.orderId },
+      include: {
+        service: { include: { fallbacks: true } },
+        user: { select: { name: true, email: true } },
+      },
+    }),
+    prisma.provider.findUnique({ where: { id: params.providerId } }),
+  ]);
+
+  if (!order) throw new Error("Pedido não encontrado.");
+  if (!targetProvider || !targetProvider.isActive) {
+    throw new Error("Provedor de destino inativo ou não encontrado.");
+  }
+
+  const fallbackMatch = order.service.fallbacks.find(
+    (fb) => fb.providerId === targetProvider.id
+  );
+  const resolvedProviderServiceId =
+    params.providerServiceId?.trim() ||
+    fallbackMatch?.providerServiceId ||
+    order.service.providerServiceId ||
+    "";
+
+  if (!resolvedProviderServiceId) {
+    throw new Error(
+      "Informe o ID do serviço no provedor escolhido para reenviar este pedido."
+    );
+  }
+
+  let existingAttempts: DispatchAttemptRecord[] = [];
+  if (order.dispatchAttempts) {
+    try {
+      existingAttempts = JSON.parse(order.dispatchAttempts) as DispatchAttemptRecord[];
+    } catch {
+      existingAttempts = [];
     }
   }
 
-  return createdOrder;
+  const started = Date.now();
+  try {
+    const dispatch = await submitProviderOrder(targetProvider, {
+      providerServiceId: resolvedProviderServiceId,
+      link: order.link,
+      quantity: order.service.type === "PACKAGE" ? undefined : order.quantity,
+      runs: order.runs ?? undefined,
+      interval: order.interval ?? undefined,
+      comments: order.comments ?? undefined,
+      username: order.username ?? undefined,
+      answerNumber: order.answerNumber ?? undefined,
+    });
+
+    const newAttempt: DispatchAttemptRecord = {
+      providerId: targetProvider.id,
+      providerName: targetProvider.name,
+      providerServiceId: resolvedProviderServiceId,
+      source: "explicit_fallback",
+      ok: true,
+      providerOrderId: dispatch.providerOrderId,
+      durationMs: Date.now() - started,
+      triedAt: new Date().toISOString(),
+    };
+
+    const nextStatus =
+      targetProvider.mode === "SIMULATED" ? "IN_PROGRESS" : "PROCESSING";
+
+    return prisma.order.update({
+      where: { id: order.id },
+      data: {
+        providerId: targetProvider.id,
+        providerOrderId: dispatch.providerOrderId,
+        status: nextStatus,
+        failoverUsed: true,
+        lastError: null,
+        dispatchAttempts: JSON.stringify([...existingAttempts, newAttempt]),
+      },
+      include: {
+        provider: { select: { id: true, name: true } },
+        service: { select: { id: true, name: true } },
+      },
+    });
+  } catch (err) {
+    const msg =
+      err instanceof Error ? err.message : "Falha ao reenviar pedido ao provedor.";
+    const failedAttempt: DispatchAttemptRecord = {
+      providerId: targetProvider.id,
+      providerName: targetProvider.name,
+      providerServiceId: resolvedProviderServiceId,
+      source: "explicit_fallback",
+      ok: false,
+      error: msg,
+      durationMs: Date.now() - started,
+      triedAt: new Date().toISOString(),
+    };
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: "FAILED",
+        lastError: `${targetProvider.name}: ${msg}`,
+        dispatchAttempts: JSON.stringify([...existingAttempts, failedAttempt]),
+      },
+    });
+    throw new Error(`${targetProvider.name}: ${msg}`);
+  }
 }
 
 export interface CreateSubscriptionParams {
@@ -267,7 +482,7 @@ export async function createSubscriptionOrder(params: CreateSubscriptionParams) 
 
   const actor = await prisma.user.findUnique({
     where: { id: params.userId },
-    select: { id: true, role: true, status: true },
+    select: { id: true, name: true, email: true, role: true, status: true },
   });
   if (!actor || actor.status !== "ACTIVE") {
     throw new Error("Conta inativa ou não encontrada.");
@@ -381,11 +596,11 @@ export async function confirmDepositAndCredit(
 ) {
   const settings = await getSiteSettings();
 
-  return prisma.$transaction(async (tx) => {
+  const txResult = await prisma.$transaction(async (tx) => {
     const deposit = await tx.deposit.findUnique({
       where: { id: depositId },
       include: {
-        user: { select: { id: true, referredById: true } },
+        user: { select: { id: true, name: true, email: true, referredById: true } },
       },
     });
 
@@ -394,7 +609,7 @@ export async function confirmDepositAndCredit(
     }
 
     if (deposit.status === "PAID") {
-      return { deposit, alreadyPaid: true };
+      return { deposit, user: deposit.user, alreadyPaid: true };
     }
 
     const updated = await tx.deposit.updateMany({
@@ -449,8 +664,34 @@ export async function confirmDepositAndCredit(
     }
 
     const paidDeposit = await tx.deposit.findUnique({ where: { id: depositId } });
-    return { deposit: paidDeposit, alreadyPaid: false };
+    return { deposit: paidDeposit, user: deposit.user, alreadyPaid: false };
   });
+
+  if (!txResult.alreadyPaid && txResult.deposit) {
+    const latestOrder = await prisma.order
+      .findFirst({
+        where: { userId: txResult.deposit.userId },
+        include: { service: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+      })
+      .catch(() => null);
+
+    void notifyOwnerPaymentConfirmed({
+      depositId: txResult.deposit.id,
+      userName: txResult.user.name,
+      userEmail: txResult.user.email,
+      amount: txResult.deposit.amount,
+      currency: txResult.deposit.currency,
+      method: txResult.deposit.method,
+      paidAt: txResult.deposit.paidAt ?? new Date(),
+      latestOrderSummary: latestOrder
+        ? `#${latestOrder.id} · ${latestOrder.quantity.toLocaleString("pt-BR")}x ${latestOrder.service.name} (${latestOrder.link})`
+        : null,
+      supportEmail: settings.supportEmail,
+    }).catch(() => null);
+  }
+
+  return { deposit: txResult.deposit, alreadyPaid: txResult.alreadyPaid };
 }
 
 export async function cancelAndRefundOrder(
