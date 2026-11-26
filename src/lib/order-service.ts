@@ -7,6 +7,7 @@ import {
 } from "./smm-provider";
 import { getSiteSettings } from "./settings";
 import { AppCurrency, getServiceMarketRate } from "./i18n";
+import { getEffectiveBrlRate, toBlackFridayConfig } from "./black-friday";
 
 export interface PlaceOrderParams {
   userId: string;
@@ -75,6 +76,8 @@ export async function placeSingleOrder(params: PlaceOrderParams) {
     : undefined;
 
   const settings = await getSiteSettings();
+  const bfConfig = toBlackFridayConfig(settings);
+  const effectiveServiceRateBrl = getEffectiveBrlRate(service.rate, bfConfig);
   const billingCurrency: AppCurrency = params.billingCurrency || "BRL";
   const effectiveMarketRateBrl =
     billingCurrency === "USD"
@@ -85,7 +88,7 @@ export async function placeSingleOrder(params: PlaceOrderParams) {
         ? round4(
             getServiceMarketRate(service, "EUR") * Math.max(0.1, settings.eurRate || 6.0)
           )
-        : service.rate;
+        : effectiveServiceRateBrl;
 
   const totals =
     service.type === "PACKAGE"
@@ -271,11 +274,14 @@ export async function createSubscriptionOrder(params: CreateSubscriptionParams) 
   }
 
   // Cobra a reserva proporcional do primeiro lote (grátis para ADMIN)
+  const settings = await getSiteSettings();
+  const bfConfig = toBlackFridayConfig(settings);
+  const effectiveSubRateBrl = getEffectiveBrlRate(service.rate, bfConfig);
   const isAdminFree = actor.role === "ADMIN";
   const estimatedUnits = max * Math.min(postsCount ?? 1, 5);
   const estimatedCharge = isAdminFree
     ? 0
-    : round4((estimatedUnits / 1000) * service.rate);
+    : round4((estimatedUnits / 1000) * effectiveSubRateBrl);
 
   const sub = await prisma.$transaction(async (tx) => {
     if (estimatedCharge > 0) {

@@ -24,6 +24,14 @@ import {
   normalizeCurrency,
   normalizeLocale,
 } from "../src/lib/i18n";
+import {
+  BLACK_FRIDAY_ENDS_AT_ISO,
+  DEFAULT_BLACK_FRIDAY_CONFIG,
+  PROFITABLE_BLACK_FRIDAY_BRL_RATES,
+  getBlackFridayPricePair,
+  getEffectiveBrlRate,
+  isBrazilBlackFridayActive,
+} from "../src/lib/black-friday";
 
 describe("FollowMe Core Engine", () => {
   it("calculates normal and drip-feed order totals accurately", () => {
@@ -201,5 +209,54 @@ describe("FollowMe Core Engine", () => {
     const sampleService = { rate: 19.9, rateUsd: 14.99, network: "instagram", metricType: "followers" };
     expect(getServiceMarketRate(sampleService, "BRL")).toBe(19.9);
     expect(getServiceMarketRate(sampleService, "USD")).toBe(14.99);
+  });
+
+  it("enforces Brazil-only Black Friday pricing with automatic 2x switch on Dec 15 00:00 BRT", () => {
+    const duringBf = new Date("2026-12-14T23:59:59-03:00");
+    const exactCutoff = new Date("2026-12-15T00:00:00-03:00");
+    expect(exactCutoff.toISOString()).toBe(BLACK_FRIDAY_ENDS_AT_ISO);
+
+    // Strictly Brazil-only (PT + BRL) while active
+    expect(isBrazilBlackFridayActive(DEFAULT_BLACK_FRIDAY_CONFIG, "pt", "BRL", duringBf)).toBe(true);
+    expect(isBrazilBlackFridayActive(DEFAULT_BLACK_FRIDAY_CONFIG, "en", "USD", duringBf)).toBe(false);
+    expect(isBrazilBlackFridayActive(DEFAULT_BLACK_FRIDAY_CONFIG, "es", "EUR", duringBf)).toBe(false);
+    expect(isBrazilBlackFridayActive(DEFAULT_BLACK_FRIDAY_CONFIG, "pt", "USD", duringBf)).toBe(false);
+    expect(isBrazilBlackFridayActive(DEFAULT_BLACK_FRIDAY_CONFIG, "en", "BRL", duringBf)).toBe(false);
+
+    // Automatically turns off at Dec 15 00:00 BRT
+    expect(isBrazilBlackFridayActive(DEFAULT_BLACK_FRIDAY_CONFIG, "pt", "BRL", exactCutoff)).toBe(false);
+
+    // Strikethrough compare-at price is exact 2x during Black Friday, null when inactive
+    expect(getBlackFridayPricePair(24.9, true)).toEqual({
+      currentPrice: 24.9,
+      compareAtPrice: 49.8,
+      isBlackFriday: true,
+    });
+    expect(getBlackFridayPricePair(49.8, false)).toEqual({
+      currentPrice: 49.8,
+      compareAtPrice: null,
+      isBlackFriday: false,
+    });
+
+    // Fail-safe BRL pricing: before Dec 15 = BF rate; at Dec 15 before cron = 2x; after cron finalized = stored rate (no double-doubling!)
+    expect(getEffectiveBrlRate(24.9, DEFAULT_BLACK_FRIDAY_CONFIG, duringBf)).toBe(24.9);
+    expect(getEffectiveBrlRate(24.9, DEFAULT_BLACK_FRIDAY_CONFIG, exactCutoff)).toBe(49.8);
+    const finalizedConfig = {
+      enabled: false,
+      endsAt: BLACK_FRIDAY_ENDS_AT_ISO,
+      finalizedAt: exactCutoff.toISOString(),
+    };
+    expect(getEffectiveBrlRate(49.8, finalizedConfig, exactCutoff)).toBe(49.8);
+    expect(isBrazilBlackFridayActive(finalizedConfig, "pt", "BRL", duringBf)).toBe(false);
+  });
+
+  it("keeps every Brazil Black Friday BRL rate strictly above wholesale cost", () => {
+    const entries = Object.entries(PROFITABLE_BLACK_FRIDAY_BRL_RATES);
+    expect(entries.length).toBe(29);
+    for (const [id, pricing] of entries) {
+      expect(pricing.rate, `Service ${id} must be priced above wholesale`).toBeGreaterThan(
+        pricing.providerRate * 1.2
+      );
+    }
   });
 });

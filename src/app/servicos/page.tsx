@@ -6,6 +6,8 @@ import { PublicHeader } from "@/components/public-header";
 import { PublicFooter } from "@/components/public-footer";
 import { ServiceCatalogTable } from "@/components/service-catalog-table";
 import { getLocalizedServiceName, getServiceMarketRate } from "@/lib/i18n";
+import { isBrazilBlackFridayActive, toBlackFridayConfig } from "@/lib/black-friday";
+import { applyEffectiveBrlPricing } from "@/lib/black-friday-server";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PublicServicesPage() {
-  const [user, settings, prefs, services] = await Promise.all([
+  const [user, settings, prefs, rawServices] = await Promise.all([
     getCurrentUser(),
     getSiteSettings(),
     getRequestPreferences(),
@@ -37,6 +39,14 @@ export default async function PublicServicesPage() {
       orderBy: [{ category: { sortOrder: "asc" } }, { id: "asc" }],
     }),
   ]);
+
+  const bfConfig = toBlackFridayConfig(settings);
+  const blackFridayActive = isBrazilBlackFridayActive(
+    bfConfig,
+    prefs.locale,
+    prefs.currency
+  );
+  const services = applyEffectiveBrlPricing(rawServices, bfConfig);
 
   let favoriteIds: number[] = [];
   if (user) {
@@ -79,6 +89,7 @@ export default async function PublicServicesPage() {
           user={user ? { username: user.username, role: user.role } : null}
           locale={prefs.locale}
           currency={prefs.currency}
+          blackFridayActive={blackFridayActive}
         />
 
         <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -134,6 +145,7 @@ export default async function PublicServicesPage() {
           isLoggedIn={Boolean(user)}
           locale={prefs.locale}
           currency={prefs.currency}
+          blackFridayActive={blackFridayActive}
         />
       </main>
 

@@ -1,14 +1,24 @@
 import { prisma } from "@/lib/prisma";
+import { getSiteSettings } from "@/lib/settings";
+import { toBlackFridayConfig } from "@/lib/black-friday";
+import { applyEffectiveBrlPricing } from "@/lib/black-friday-server";
 import { MassOrderClient } from "@/components/mass-order-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function MassOrderPage() {
-  const services = await prisma.service.findMany({
-    where: { isActive: true },
-    select: { id: true, name: true, rate: true },
-    orderBy: { id: "asc" },
-  });
+  const [settings, rawServices] = await Promise.all([
+    getSiteSettings(),
+    prisma.service.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, rate: true },
+      orderBy: { id: "asc" },
+    }),
+  ]);
+  const services = applyEffectiveBrlPricing(
+    rawServices,
+    toBlackFridayConfig(settings)
+  );
 
   const serviceRates: Record<number, { name: string; rate: number }> = {};
   for (const s of services) {

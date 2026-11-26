@@ -11,6 +11,13 @@ import {
   inferMetricType,
 } from "@/lib/i18n";
 import type { GeoKeywordPageConfig } from "@/lib/seo-guides";
+import {
+  getBlackFridayPricePair,
+  isBrazilBlackFridayActive,
+  toBlackFridayConfig,
+} from "@/lib/black-friday";
+import { applyEffectiveBrlPricing } from "@/lib/black-friday-server";
+import { BlackFridayTag } from "./black-friday-ui";
 import { PublicHeader } from "./public-header";
 import { PublicFooter } from "./public-footer";
 import { PackageSelector, StorefrontService } from "./package-selector";
@@ -53,7 +60,7 @@ export function buildGeoKeywordMetadata(config: GeoKeywordPageConfig): Metadata 
 }
 
 export async function GeoKeywordPage({ config }: { config: GeoKeywordPageConfig }) {
-  const [user, settings, services] = await Promise.all([
+  const [user, settings, rawServices] = await Promise.all([
     getCurrentUser(),
     getSiteSettings(),
     prisma.service.findMany({
@@ -62,6 +69,14 @@ export async function GeoKeywordPage({ config }: { config: GeoKeywordPageConfig 
       orderBy: [{ isFeatured: "desc" }, { id: "asc" }],
     }),
   ]);
+
+  const bfConfig = toBlackFridayConfig(settings);
+  const blackFridayActive = isBrazilBlackFridayActive(
+    bfConfig,
+    config.locale,
+    config.currency
+  );
+  const services = applyEffectiveBrlPricing(rawServices, bfConfig);
 
   const isPt = config.locale === "pt";
   const routePrefix = isPt ? "/pt" : "/en";
@@ -201,6 +216,7 @@ export async function GeoKeywordPage({ config }: { config: GeoKeywordPageConfig 
           locale={config.locale}
           currency={config.currency}
           routePrefix={routePrefix}
+          blackFridayActive={blackFridayActive}
         />
 
         <section className="mx-auto max-w-7xl px-4 py-12 sm:py-16 sm:px-6 lg:px-8">
@@ -238,6 +254,7 @@ export async function GeoKeywordPage({ config }: { config: GeoKeywordPageConfig 
               isLoggedIn={Boolean(user)}
               initialNetwork={config.platform}
               initialMetric={config.metric}
+              blackFridayActive={blackFridayActive}
             />
           </div>
         </section>
@@ -363,8 +380,19 @@ export async function GeoKeywordPage({ config }: { config: GeoKeywordPageConfig 
 
                       <div className="flex items-end justify-between border-t border-[#ece5f2] pt-4">
                         <div>
-                          <div className="font-mono text-2xl font-extrabold text-[#7c3ee9]">
-                            {formatCurrencyAmount(rate, config.currency)}
+                          {blackFridayActive && (
+                            <div className="font-mono text-xs font-semibold text-[#8c829b] line-through tabular-nums">
+                              {formatCurrencyAmount(
+                                getBlackFridayPricePair(rate, true).compareAtPrice ?? 0,
+                                config.currency
+                              )}
+                            </div>
+                          )}
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="font-mono text-2xl font-extrabold text-[#7c3ee9] tabular-nums">
+                              {formatCurrencyAmount(rate, config.currency)}
+                            </span>
+                            {blackFridayActive && <BlackFridayTag compact />}
                           </div>
                           <div className="font-mono text-[11px] text-[#796b89]">
                             {isPt ? "por 1.000" : "per 1,000"}

@@ -350,10 +350,13 @@ model SiteSetting {
   childPanelPrice    Float    @default(99.9)
   usdRate            Float    @default(5.5)
   eurRate            Float    @default(6.0)
-  stripeEnabled        Boolean  @default(true)
-  stripePixEnabled     Boolean  @default(true)
-  atenzaMcpToken       String?
-  atenzaConversationId String?
-  supportWebhookSecret String?
-  updatedAt            DateTime @updatedAt
+  stripeEnabled          Boolean   @default(true)
+  stripePixEnabled       Boolean   @default(true)
+  blackFridayEnabled     Boolean   @default(true)
+  blackFridayEndsAt      DateTime  @default("2026-12-15T03:00:00.000Z")
+  blackFridayFinalizedAt DateTime?
+  atenzaMcpToken         String?
+  atenzaConversationId   String?
+  supportWebhookSecret   String?
+  updatedAt              DateTime  @updatedAt
 }

@@ -20,6 +20,8 @@ import {
   getLocalizedServiceName,
   getServiceMarketRate,
 } from "@/lib/i18n";
+import { getBlackFridayPricePair } from "@/lib/black-friday";
+import { BlackFridayNoticeStrip, BlackFridayTag } from "./black-friday-ui";
 
 export interface CatalogService {
   id: number;
@@ -50,6 +52,7 @@ interface ServiceCatalogTableProps {
   inPanel?: boolean;
   locale?: AppLocale;
   currency?: AppCurrency;
+  blackFridayActive?: boolean;
 }
 
 export function ServiceCatalogTable({
@@ -59,6 +62,7 @@ export function ServiceCatalogTable({
   inPanel = false,
   locale = "en",
   currency = "USD",
+  blackFridayActive = false,
 }: ServiceCatalogTableProps) {
   const isPt = locale === "pt";
   const NETWORK_TABS = [
@@ -119,6 +123,9 @@ export function ServiceCatalogTable({
 
   return (
     <div className="space-y-5">
+      {blackFridayActive && (
+        <BlackFridayNoticeStrip tone={dark ? "dark" : "light"} />
+      )}
       {/* Barra de filtros */}
       <div className="surface-card p-4 sm:p-5 space-y-4">
         <div className="flex flex-wrap gap-2">
@@ -330,7 +337,22 @@ export function ServiceCatalogTable({
                               dark ? "text-[#b889ff]" : "text-[#7c3ee9]"
                             }`}
                           >
-                            {formatCurrencyAmount(marketRate, currency)}
+                            {blackFridayActive && (
+                              <div className="text-[11px] font-semibold text-[#8c829b] line-through tabular-nums">
+                                {formatCurrencyAmount(
+                                  getBlackFridayPricePair(marketRate, true).compareAtPrice ?? 0,
+                                  currency
+                                )}
+                              </div>
+                            )}
+                            <div className="inline-flex items-center justify-end gap-1.5">
+                              <span className="tabular-nums">
+                                {formatCurrencyAmount(marketRate, currency)}
+                              </span>
+                              {blackFridayActive && (
+                                <BlackFridayTag tone={dark ? "dark" : "light"} compact />
+                              )}
+                            </div>
                           </td>
                           <td className="px-3 py-3 text-right font-mono text-xs text-[#796b89] whitespace-nowrap">
                             {formatInt(s.min)} / {formatInt(s.max)}
@@ -408,11 +430,25 @@ export function ServiceCatalogTable({
             <div className="grid grid-cols-3 gap-2 font-mono text-xs">
               <div className="rounded-xl bg-[#faf8fd] border border-[#ece5f2] p-3">
                 <div className="text-[#796b89]">{isPt ? "PREÇO / 1.000" : "RATE / 1,000"}</div>
-                <div className="mt-1 text-base font-extrabold text-[#7c3ee9]">
-                  {formatCurrencyAmount(
-                    getServiceMarketRate(inspectService, currency),
-                    currency
-                  )}
+                {blackFridayActive && (
+                  <div className="mt-1 text-[11px] font-semibold text-[#8c829b] line-through tabular-nums">
+                    {formatCurrencyAmount(
+                      getBlackFridayPricePair(
+                        getServiceMarketRate(inspectService, currency),
+                        true
+                      ).compareAtPrice ?? 0,
+                      currency
+                    )}
+                  </div>
+                )}
+                <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-base font-extrabold text-[#7c3ee9]">
+                  <span className="tabular-nums">
+                    {formatCurrencyAmount(
+                      getServiceMarketRate(inspectService, currency),
+                      currency
+                    )}
+                  </span>
+                  {blackFridayActive && <BlackFridayTag compact />}
                 </div>
               </div>
               <div className="rounded-xl bg-[#faf8fd] border border-[#ece5f2] p-3">

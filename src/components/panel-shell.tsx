@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { BrandLogo } from "./brand-logo";
 import { LocaleSwitcher } from "./locale-switcher";
+import { BlackFridayTopBanner } from "./black-friday-ui";
 import {
   AppCurrency,
   AppLocale,
@@ -50,6 +51,7 @@ interface PanelShellProps {
   currency?: AppCurrency;
   usdRate?: number;
   eurRate?: number;
+  blackFridayActive?: boolean;
   children: React.ReactNode;
 }
 
@@ -61,6 +63,7 @@ export function PanelShell({
   currency = "BRL",
   usdRate = 5.5,
   eurRate = 6.0,
+  blackFridayActive = false,
   children,
 }: PanelShellProps) {
   const pathname = usePathname();
@@ -284,6 +287,8 @@ export function PanelShell({
             </Link>
           </div>
         </header>
+
+        {blackFridayActive && <BlackFridayTopBanner />}
 
         {showBanner && announcement && (
           <div className="border-b border-[#8c42ed]/35 bg-[#7c3ee9]/15 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">

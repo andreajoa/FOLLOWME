@@ -2,13 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { getSiteSettings } from "@/lib/settings";
+import { toBlackFridayConfig } from "@/lib/black-friday";
+import { applyEffectiveBrlPricing } from "@/lib/black-friday-server";
 
 export async function GET(req: NextRequest) {
   const search = req.nextUrl.searchParams.get("q")?.trim().toLowerCase() ?? "";
   const network = req.nextUrl.searchParams.get("network")?.trim().toLowerCase() ?? "";
 
-  const [user, categories, services] = await Promise.all([
+  const [user, settings, categories, rawServices] = await Promise.all([
     getCurrentUser(),
+    getSiteSettings(),
     prisma.category.findMany({
       where: { isActive: true },
       orderBy: { sortOrder: "asc" },
@@ -21,6 +25,11 @@ export async function GET(req: NextRequest) {
       orderBy: [{ category: { sortOrder: "asc" } }, { id: "asc" }],
     }),
   ]);
+
+  const services = applyEffectiveBrlPricing(
+    rawServices,
+    toBlackFridayConfig(settings)
+  );
 
   const filtered = services.filter((s) => {
     if (network && network !== "all" && s.category.network !== network) {

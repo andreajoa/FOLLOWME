@@ -23,6 +23,8 @@ import {
   getLocalizedServiceName,
   getServiceMarketRate,
 } from "@/lib/i18n";
+import { getBlackFridayPricePair } from "@/lib/black-friday";
+import { BlackFridayTag } from "./black-friday-ui";
 
 export interface PanelCategory {
   id: string;
@@ -63,6 +65,7 @@ interface NewOrderClientProps {
   isAdmin?: boolean;
   locale?: AppLocale;
   currency?: AppCurrency;
+  blackFridayActive?: boolean;
   rates?: { usdRate: number; eurRate: number };
   stats: {
     totalOrders: number;
@@ -81,6 +84,7 @@ export function NewOrderClient({
   isAdmin = false,
   locale = "en",
   currency = "USD",
+  blackFridayActive = false,
   rates = { usdRate: 5.5, eurRate: 6.0 },
   stats,
 }: NewOrderClientProps) {
@@ -422,7 +426,8 @@ export function NewOrderClient({
               {visibleServices.map((s) => (
                 <option key={s.id} value={s.id}>
                   #{s.id} - {getLocalizedServiceName(s, locale)} (
-                  {formatCurrencyAmount(getServiceMarketRate(s, currency), currency)}/1k)
+                  {formatCurrencyAmount(getServiceMarketRate(s, currency), currency)}/1k
+                  {blackFridayActive ? " · BLACK FRIDAY" : ""})
                 </option>
               ))}
             </select>
@@ -462,12 +467,26 @@ export function NewOrderClient({
               </Link>
             </div>
           ) : activeService?.type === "PACKAGE" ? (
-            <div className="border border-[#232730] bg-[#0C0E12] p-3.5 font-mono text-xs text-[#98A0AD]">
-              {isPt ? "Pacote fechado (preço fixo de " : "Flat package ("}
+            <div className="border border-[#232730] bg-[#0C0E12] p-3.5 font-mono text-xs text-[#98A0AD] flex flex-wrap items-center gap-2">
+              <span>{isPt ? "Pacote fechado (preço fixo de" : "Flat package ("}</span>
+              {blackFridayActive && (
+                <span className="line-through text-[#68707E]">
+                  {formatCurrencyAmount(
+                    getBlackFridayPricePair(
+                      getServiceMarketRate(activeService, currency),
+                      true
+                    ).compareAtPrice ?? 0,
+                    currency
+                  )}
+                </span>
+              )}
               <strong className="text-[#C8FF2E]">
                 {formatCurrencyAmount(getServiceMarketRate(activeService, currency), currency)}
               </strong>
-              {isPt ? "). Basta informar o link acima." : "). Paste your public link above."}
+              {blackFridayActive && <BlackFridayTag tone="dark" compact />}
+              <span>
+                {isPt ? "). Basta informar o link acima." : "). Paste your public link above."}
+              </span>
             </div>
           ) : activeService?.type === "CUSTOM_COMMENTS" ? (
             <div>
@@ -609,10 +628,22 @@ export function NewOrderClient({
               <div className="font-mono text-[10px] uppercase tracking-widest text-[#98A0AD]">
                 {isAdmin ? "Modo Admin • Custo na Plataforma" : "Valor Total a Debitar"}
               </div>
-              <div className="font-mono text-2xl font-bold text-[#C8FF2E] flex items-baseline gap-2.5">
-                {isAdmin
-                  ? formatCurrencyAmount(0, currency)
-                  : formatCurrencyAmount(totals.displayCharge, currency, true)}
+              <div className="font-mono text-2xl font-bold text-[#C8FF2E] flex flex-wrap items-center gap-2">
+                {!isAdmin && blackFridayActive && totals.displayCharge > 0 && (
+                  <span className="text-xs font-normal text-[#98A0AD] line-through tabular-nums">
+                    {formatCurrencyAmount(
+                      getBlackFridayPricePair(totals.displayCharge, true).compareAtPrice ?? 0,
+                      currency,
+                      true
+                    )}
+                  </span>
+                )}
+                <span>
+                  {isAdmin
+                    ? formatCurrencyAmount(0, currency)
+                    : formatCurrencyAmount(totals.displayCharge, currency, true)}
+                </span>
+                {blackFridayActive && <BlackFridayTag tone="dark" compact />}
                 {isAdmin && (
                   <span className="text-xs font-normal text-[#98A0AD] line-through">
                     {formatCurrencyAmount(totals.displayCharge, currency, true)}
@@ -690,8 +721,22 @@ export function NewOrderClient({
                 <div className="text-[#68707E]">
                   {isPt ? "PREÇO POR 1.000" : "RATE PER 1,000"}
                 </div>
-                <div className="mt-1 text-base font-bold text-[#C8FF2E]">
-                  {formatCurrencyAmount(getServiceMarketRate(activeService, currency), currency)}
+                {blackFridayActive && (
+                  <div className="mt-1 text-[11px] text-[#98A0AD] line-through tabular-nums">
+                    {formatCurrencyAmount(
+                      getBlackFridayPricePair(
+                        getServiceMarketRate(activeService, currency),
+                        true
+                      ).compareAtPrice ?? 0,
+                      currency
+                    )}
+                  </div>
+                )}
+                <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-base font-bold text-[#C8FF2E]">
+                  <span className="tabular-nums">
+                    {formatCurrencyAmount(getServiceMarketRate(activeService, currency), currency)}
+                  </span>
+                  {blackFridayActive && <BlackFridayTag tone="dark" compact />}
                 </div>
               </div>
               <div className="bg-[#0C0E12] border border-[#232730] p-3">

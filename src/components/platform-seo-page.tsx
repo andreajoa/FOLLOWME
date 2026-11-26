@@ -4,6 +4,8 @@ import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
+import { isBrazilBlackFridayActive, toBlackFridayConfig } from "@/lib/black-friday";
+import { applyEffectiveBrlPricing } from "@/lib/black-friday-server";
 import {
   AppCurrency,
   AppLocale,
@@ -237,7 +239,7 @@ export async function PlatformSeoPage({
   currency: AppCurrency;
   routePrefix?: "" | "/en" | "/pt";
 }) {
-  const [user, settings, services] = await Promise.all([
+  const [user, settings, rawServices] = await Promise.all([
     getCurrentUser(),
     getSiteSettings(),
     prisma.service.findMany({
@@ -246,6 +248,10 @@ export async function PlatformSeoPage({
       orderBy: [{ isFeatured: "desc" }, { id: "asc" }],
     }),
   ]);
+
+  const bfConfig = toBlackFridayConfig(settings);
+  const blackFridayActive = isBrazilBlackFridayActive(bfConfig, locale, currency);
+  const services = applyEffectiveBrlPricing(rawServices, bfConfig);
 
   const langKey = locale === "pt" ? "pt" : "en";
   const bundle = PLATFORM_COPY[platform][langKey];
@@ -348,6 +354,7 @@ export async function PlatformSeoPage({
           locale={locale}
           currency={currency}
           routePrefix={routePrefix}
+          blackFridayActive={blackFridayActive}
         />
 
         <section>
@@ -382,6 +389,7 @@ export async function PlatformSeoPage({
                 currency={currency}
                 isLoggedIn={Boolean(user)}
                 initialNetwork={platform}
+                blackFridayActive={blackFridayActive}
               />
             </div>
           </div>

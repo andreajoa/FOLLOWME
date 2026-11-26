@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, LayoutDashboard, ShieldCheck } from "lucide-react";
 import { BrandLogo } from "./brand-logo";
 import { LocaleSwitcher } from "./locale-switcher";
+import { BlackFridayTopBanner } from "./black-friday-ui";
 import { AppCurrency, AppLocale, getDictionary } from "@/lib/i18n";
 
 interface PublicHeaderProps {
@@ -10,6 +11,7 @@ interface PublicHeaderProps {
   locale?: AppLocale;
   currency?: AppCurrency;
   routePrefix?: "" | "/en" | "/pt";
+  blackFridayActive?: boolean;
 }
 
 export function PublicHeader({
@@ -18,6 +20,7 @@ export function PublicHeader({
   locale = "en",
   currency = "USD",
   routePrefix = "",
+  blackFridayActive = false,
 }: PublicHeaderProps) {
   const t = getDictionary(locale);
 
@@ -30,7 +33,9 @@ export function PublicHeader({
   ];
 
   return (
-    <header className="sticky top-0 z-40 px-3 pt-3 sm:px-6">
+    <>
+      {blackFridayActive && <BlackFridayTopBanner />}
+      <header className="sticky top-0 z-40 px-3 pt-3 sm:px-6">
       <div className="mx-auto max-w-[1120px] rounded-[17px] border border-[#ece5f2] bg-white/92 backdrop-blur-md shadow-[0_12px_32px_rgba(52,27,76,0.07)]">
         <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
           <BrandLogo name={brandName} />
@@ -115,5 +120,6 @@ export function PublicHeader({
         </nav>
       </div>
     </header>
+    </>
   );
 }

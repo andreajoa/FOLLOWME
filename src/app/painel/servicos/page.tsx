@@ -1,15 +1,19 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
+import { getSiteSettings } from "@/lib/settings";
+import { isBrazilBlackFridayActive, toBlackFridayConfig } from "@/lib/black-friday";
+import { applyEffectiveBrlPricing } from "@/lib/black-friday-server";
 import { ServiceCatalogTable } from "@/components/service-catalog-table";
 
 export const dynamic = "force-dynamic";
 
 export default async function PanelServicesPage() {
-  const [user, prefs] = await Promise.all([
+  const [user, prefs, settings] = await Promise.all([
     getCurrentUser(),
     getRequestPreferences(),
+    getSiteSettings(),
   ]);
-  const [services, favs] = await Promise.all([
+  const [rawServices, favs] = await Promise.all([
     prisma.service.findMany({
       where: { isActive: true, category: { isActive: true } },
       include: { category: { select: { name: true, nameEn: true, network: true } } },
@@ -20,6 +24,14 @@ export default async function PanelServicesPage() {
       select: { serviceId: true },
     }),
   ]);
+
+  const bfConfig = toBlackFridayConfig(settings);
+  const blackFridayActive = isBrazilBlackFridayActive(
+    bfConfig,
+    prefs.locale,
+    prefs.currency
+  );
+  const services = applyEffectiveBrlPricing(rawServices, bfConfig);
 
   const isPt = prefs.locale === "pt";
 
@@ -66,6 +78,7 @@ export default async function PanelServicesPage() {
         inPanel={true}
         locale={prefs.locale}
         currency={prefs.currency}
+        blackFridayActive={blackFridayActive}
       />
     </div>
   );

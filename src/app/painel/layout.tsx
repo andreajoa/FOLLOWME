@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
+import { isBrazilBlackFridayActive, toBlackFridayConfig } from "@/lib/black-friday";
 import { PanelShell } from "@/components/panel-shell";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +21,12 @@ export default async function PanelLayout({
     redirect("/login");
   }
 
+  const blackFridayActive = isBrazilBlackFridayActive(
+    toBlackFridayConfig(settings),
+    prefs.locale,
+    prefs.currency
+  );
+
   return (
     <PanelShell
       brandName={settings.brandName}
@@ -28,6 +35,7 @@ export default async function PanelLayout({
       currency={prefs.currency}
       usdRate={settings.usdRate}
       eurRate={settings.eurRate}
+      blackFridayActive={blackFridayActive}
       user={{
         id: user.id,
         name: user.name,

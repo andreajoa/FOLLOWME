@@ -24,6 +24,8 @@ import {
   ServiceMetricType,
 } from "@/lib/i18n";
 import { getLandingCopy } from "@/lib/landing-copy";
+import { getBlackFridayPricePair } from "@/lib/black-friday";
+import { BlackFridayNoticeStrip, BlackFridayTag } from "./black-friday-ui";
 import { SpotlightSurface } from "./motion-primitives";
 
 export interface StorefrontService {
@@ -51,6 +53,7 @@ interface PackageSelectorProps {
   isLoggedIn: boolean;
   initialNetwork?: "instagram" | "tiktok" | "youtube";
   initialMetric?: ServiceMetricType;
+  blackFridayActive?: boolean;
 }
 
 const NETWORKS: Array<{ id: "instagram" | "tiktok" | "youtube"; label: string }> = [
@@ -80,6 +83,7 @@ export function PackageSelector({
   isLoggedIn,
   initialNetwork = "instagram",
   initialMetric = "followers",
+  blackFridayActive = false,
 }: PackageSelectorProps) {
   const copy = getLandingCopy(locale).selector;
   const [network, setNetwork] = useState<"instagram" | "tiktok" | "youtube">(initialNetwork);
@@ -190,6 +194,7 @@ export function PackageSelector({
   return (
     <SpotlightSurface className="rounded-[24px] border-2 border-[#e5ddf3] bg-white p-6 sm:p-8 lg:p-10 shadow-[0_20px_54px_rgba(61,27,108,0.09)]">
       <div className="space-y-8">
+        {blackFridayActive && <BlackFridayNoticeStrip tone="light" />}
         {/* Step 1 + Step 2 Row */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end border-b border-[#ece5f2] pb-7">
           <div className="lg:col-span-5">
@@ -275,10 +280,21 @@ export function PackageSelector({
                         </span>
                       )}
                     </div>
-                    <div className="mt-3 flex items-center justify-between font-mono text-xs">
-                      <span className="text-[#7c3ee9] font-extrabold">
-                        {formatCurrencyAmount(srv.marketRate, currency)} {copy.per1kLabel}
-                      </span>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {blackFridayActive && (
+                          <span className="text-[11px] font-semibold text-[#8c829b] line-through tabular-nums">
+                            {formatCurrencyAmount(
+                              getBlackFridayPricePair(srv.marketRate, true).compareAtPrice ?? 0,
+                              currency
+                            )}
+                          </span>
+                        )}
+                        <span className="text-[#7c3ee9] font-extrabold tabular-nums">
+                          {formatCurrencyAmount(srv.marketRate, currency)} {copy.per1kLabel}
+                        </span>
+                        {blackFridayActive && <BlackFridayTag compact />}
+                      </div>
                       {srv.refill && (
                         <span className="rounded-full bg-[#eafbf1] px-2 py-0.5 text-[11px] font-semibold text-[#137a43]">
                           {srv.refillDays}d {copy.refillLabel}
@@ -338,10 +354,21 @@ export function PackageSelector({
                         {metricLabel(activeMetric)}
                       </div>
                     </div>
-                    <div className="mt-5 pt-3 border-t border-[#e5ddf2] flex items-baseline justify-between">
-                      <span className="font-mono text-lg sm:text-xl font-extrabold text-[#7c3ee9] tabular-nums">
-                        {formatCurrencyAmount(price, currency)}
-                      </span>
+                    <div className="mt-5 pt-3 border-t border-[#e5ddf2] space-y-1.5">
+                      {blackFridayActive && (
+                        <div className="font-mono text-xs font-semibold text-[#8c829b] line-through tabular-nums">
+                          {formatCurrencyAmount(
+                            getBlackFridayPricePair(price, true).compareAtPrice ?? 0,
+                            currency
+                          )}
+                        </div>
+                      )}
+                      <div className="flex flex-wrap items-center justify-between gap-1.5">
+                        <span className="font-mono text-lg sm:text-xl font-extrabold text-[#7c3ee9] tabular-nums">
+                          {formatCurrencyAmount(price, currency)}
+                        </span>
+                        {blackFridayActive && <BlackFridayTag compact />}
+                      </div>
                     </div>
                   </button>
                 );
@@ -373,7 +400,8 @@ export function PackageSelector({
                   className="btn-lime inline-flex h-12 items-center justify-center gap-2 px-6 text-sm font-bold whitespace-nowrap"
                 >
                   {copy.orderBtnPrefix} {formatNumberForLocale(effectiveQty, locale)}{" "}
-                  {metricLabel(activeMetric)} ({formatCurrencyAmount(finalPrice, currency)})
+                  {metricLabel(activeMetric)} ({formatCurrencyAmount(finalPrice, currency)}
+                  {blackFridayActive ? " · BLACK FRIDAY" : ""})
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link

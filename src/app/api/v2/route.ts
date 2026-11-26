@@ -7,6 +7,9 @@ import {
   placeSingleOrder,
 } from "@/lib/order-service";
 import { requestProviderRefill, toExternalSmmStatus } from "@/lib/smm-provider";
+import { getSiteSettings } from "@/lib/settings";
+import { toBlackFridayConfig } from "@/lib/black-friday";
+import { applyEffectiveBrlPricing } from "@/lib/black-friday-server";
 
 function mapExternalServiceType(type: string): string {
   switch (type) {
@@ -104,11 +107,18 @@ async function handleApiV2(req: NextRequest) {
   }
 
   if (action === "services") {
-    const services = await prisma.service.findMany({
-      where: { isActive: true, category: { isActive: true } },
-      include: { category: { select: { name: true } } },
-      orderBy: { id: "asc" },
-    });
+    const [settings, rawServices] = await Promise.all([
+      getSiteSettings(),
+      prisma.service.findMany({
+        where: { isActive: true, category: { isActive: true } },
+        include: { category: { select: { name: true } } },
+        orderBy: { id: "asc" },
+      }),
+    ]);
+    const services = applyEffectiveBrlPricing(
+      rawServices,
+      toBlackFridayConfig(settings)
+    );
 
     return NextResponse.json(
       services.map((s) => ({

@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
+import { isBrazilBlackFridayActive, toBlackFridayConfig } from "@/lib/black-friday";
+import { applyEffectiveBrlPricing } from "@/lib/black-friday-server";
 import { NewOrderClient } from "@/components/new-order-client";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +22,7 @@ export default async function PanelHomePage({
   const initialQuantity = sp.qty ? Number.parseInt(sp.qty, 10) : undefined;
   const isPt = prefs.locale === "pt";
 
-  const [categories, services, favorites, totalOrders, activeOrders] =
+  const [categories, rawServices, favorites, totalOrders, activeOrders] =
     await Promise.all([
       prisma.category.findMany({
         where: { isActive: true },
@@ -43,6 +45,14 @@ export default async function PanelHomePage({
         },
       }),
     ]);
+
+  const bfConfig = toBlackFridayConfig(settings);
+  const blackFridayActive = isBrazilBlackFridayActive(
+    bfConfig,
+    prefs.locale,
+    prefs.currency
+  );
+  const services = applyEffectiveBrlPricing(rawServices, bfConfig);
 
   return (
     <NewOrderClient
@@ -88,6 +98,7 @@ export default async function PanelHomePage({
       isAdmin={user!.role === "ADMIN"}
       locale={prefs.locale}
       currency={prefs.currency}
+      blackFridayActive={blackFridayActive}
       rates={{ usdRate: settings.usdRate, eurRate: settings.eurRate }}
       stats={{
         totalOrders,

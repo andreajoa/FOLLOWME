@@ -23,6 +23,13 @@ import {
   ServiceMetricType,
 } from "@/lib/i18n";
 import { getLandingCopy } from "@/lib/landing-copy";
+import {
+  getBlackFridayPricePair,
+  isBrazilBlackFridayActive,
+  toBlackFridayConfig,
+} from "@/lib/black-friday";
+import { applyEffectiveBrlPricing } from "@/lib/black-friday-server";
+import { BlackFridayTag } from "./black-friday-ui";
 import { PublicHeader } from "./public-header";
 import { PublicFooter } from "./public-footer";
 import { PackageSelector, StorefrontService } from "./package-selector";
@@ -53,7 +60,7 @@ export async function LandingPageView({
   currency,
   routePrefix = "",
 }: LandingPageViewProps) {
-  const [user, settings, services] = await Promise.all([
+  const [user, settings, rawServices] = await Promise.all([
     getCurrentUser(),
     getSiteSettings(),
     prisma.service.findMany({
@@ -62,6 +69,10 @@ export async function LandingPageView({
       orderBy: [{ isFeatured: "desc" }, { id: "asc" }],
     }),
   ]);
+
+  const bfConfig = toBlackFridayConfig(settings);
+  const blackFridayActive = isBrazilBlackFridayActive(bfConfig, locale, currency);
+  const services = applyEffectiveBrlPricing(rawServices, bfConfig);
 
   const copy = getLandingCopy(locale);
   const isPt = locale === "pt";
@@ -290,6 +301,7 @@ export async function LandingPageView({
           locale={locale}
           currency={currency}
           routePrefix={routePrefix}
+          blackFridayActive={blackFridayActive}
         />
 
         {/* SECTION 1: FLOWNEXA ASYMMETRIC 53/47 HERO WITH STICKER H1 & REAL FLOW VIDEO DEVICE */}
@@ -298,9 +310,16 @@ export async function LandingPageView({
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center">
               {/* Left 53% (7 cols on lg) */}
               <div className="lg:col-span-6 xl:col-span-7 reveal-up">
-                <div className="fn-eyebrow-pill inline-flex items-center gap-2 px-4 py-1.5 text-xs font-bold text-[#18141d]">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#8c42ed]" />
-                  <span>{copy.hero.eyebrow}</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="fn-eyebrow-pill inline-flex items-center gap-2 px-4 py-1.5 text-xs font-bold text-[#18141d]">
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#8c42ed]" />
+                    <span>{copy.hero.eyebrow}</span>
+                  </div>
+                  {blackFridayActive && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#111015] px-3.5 py-1.5 font-mono text-[11px] font-black uppercase tracking-wider text-[#f8d449] shadow-sm">
+                      PREÇOS DE BLACK FRIDAY · 50% OFF ATÉ 14/12
+                    </span>
+                  )}
                 </div>
 
                 <h1 className="mt-6 font-[family-name:var(--font-display)] text-[2.45rem] sm:text-[3.25rem] lg:text-[3.75rem] font-black tracking-[-0.055em] leading-[1.04] text-[#111015]">
@@ -495,6 +514,7 @@ export async function LandingPageView({
                 locale={locale}
                 currency={currency}
                 isLoggedIn={Boolean(user)}
+                blackFridayActive={blackFridayActive}
               />
             </ScrollReveal>
           </div>
@@ -622,7 +642,11 @@ export async function LandingPageView({
               <ScrollReveal>
                 <div className="mx-auto max-w-3xl text-center mb-12">
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white">
-                    {isPt ? "Tabela Transparente por Rede" : "Transparent Platform Rates"}
+                    {blackFridayActive
+                      ? "Preços de Black Friday · 50% OFF até 14/12"
+                      : isPt
+                        ? "Tabela Transparente por Rede"
+                        : "Transparent Platform Rates"}
                   </span>
                   <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl sm:text-4xl lg:text-5xl font-black tracking-[-0.05em] leading-[1.06] text-white">
                     {copy.directory.heading}
@@ -660,13 +684,25 @@ export async function LandingPageView({
                               <div className="text-xs font-bold text-[#796b89]">
                                 {group.label} · {row.label}
                               </div>
-                              <div className="mt-3 flex items-baseline gap-1.5">
-                                <span className="font-mono text-2xl font-extrabold text-[#7c3ee9] tabular-nums">
-                                  {formatCurrencyAmount(row.rate, currency)}
-                                </span>
-                                <span className="font-mono text-xs text-[#796b89]">
-                                  {copy.directory.per1k}
-                                </span>
+                              <div className="mt-3 space-y-1">
+                                {blackFridayActive && (
+                                  <div className="font-mono text-xs font-semibold text-[#8c829b] line-through tabular-nums">
+                                    {formatCurrencyAmount(
+                                      getBlackFridayPricePair(row.rate, true).compareAtPrice ?? 0,
+                                      currency
+                                    )}{" "}
+                                    {copy.directory.per1k}
+                                  </div>
+                                )}
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <span className="font-mono text-2xl font-extrabold text-[#7c3ee9] tabular-nums">
+                                    {formatCurrencyAmount(row.rate, currency)}
+                                  </span>
+                                  <span className="font-mono text-xs text-[#796b89]">
+                                    {copy.directory.per1k}
+                                  </span>
+                                  {blackFridayActive && <BlackFridayTag compact />}
+                                </div>
                               </div>
                               <p className="mt-2 text-xs font-medium text-[#5e5868] leading-relaxed line-clamp-2">
                                 {row.serviceName}

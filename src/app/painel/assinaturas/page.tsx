@@ -1,13 +1,19 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { getSiteSettings } from "@/lib/settings";
+import { toBlackFridayConfig } from "@/lib/black-friday";
+import { applyEffectiveBrlPricing } from "@/lib/black-friday-server";
 import { SubscriptionsClient } from "@/components/subscriptions-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function PanelSubscriptionsPage() {
-  const user = await getCurrentUser();
+  const [user, settings] = await Promise.all([
+    getCurrentUser(),
+    getSiteSettings(),
+  ]);
 
-  const [services, subscriptions] = await Promise.all([
+  const [rawServices, subscriptions] = await Promise.all([
     prisma.service.findMany({
       where: { isActive: true },
       orderBy: [{ type: "desc" }, { id: "asc" }],
@@ -22,6 +28,10 @@ export default async function PanelSubscriptionsPage() {
       take: 50,
     }),
   ]);
+  const services = applyEffectiveBrlPricing(
+    rawServices,
+    toBlackFridayConfig(settings)
+  );
 
   const prioritized = [
     ...services.filter((s) => s.type === "SUBSCRIPTIONS"),
