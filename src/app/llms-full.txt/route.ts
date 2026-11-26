@@ -6,7 +6,7 @@ import { getLandingCopy } from "@/lib/landing-copy";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const base = (process.env.APP_URL || "https://followme.nexaclouds.online").replace(/\/+$/, "");
+  const base = (process.env.APP_URL || "https://followm.click").replace(/\/+$/, "");
   const [settings, services] = await Promise.all([
     getSiteSettings().catch(() => null),
     prisma.service
@@ -41,7 +41,15 @@ Support Email: ${supportEmail}
 API v2 Endpoint: ${base}/api/v2 (HTTP POST, JSON UTF-8, SMM Panel v2 standard)
 
 ## Entity Summary
-${brand} is an international social media growth platform built for creators, brands, e-commerce stores, and agencies in the United States (English, USD native market pricing) and Brazil (Portuguese, BRL with instant Stripe Pix 24/7). All orders require only a public @username or public post URL — passwords are never requested.
+${brand} (${base}) is an international automated social media growth platform built for creators, brands, e-commerce stores, and agencies in the United States, United Kingdom, Canada, Australia, New Zealand, Ireland, Europe (English, USD native pricing via Stripe Cards/Apple Pay/Google Pay), and Brazil (Portuguese, BRL with instant 24/7 Stripe Pix). All orders require only a public @username or public post URL — passwords are never requested.
+
+## Dedicated Country & Regional URLs
+- USA: ${base}/en/buy-followers-usa
+- United Kingdom & Ireland: ${base}/en/buy-followers-uk
+- Canada: ${base}/en/buy-followers-canada
+- Australia & New Zealand: ${base}/en/buy-followers-australia
+- Global SMM Panel: ${base}/en/best-smm-panel-global
+- Brasil (Painel SMM Pix 24/7): ${base}/pt/painel-smm-brasil
 
 ## Complete Active Service Pricing Table (per 1,000 units)
 

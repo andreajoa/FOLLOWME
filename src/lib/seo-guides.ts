@@ -16,6 +16,10 @@ export interface GeoKeywordPageConfig {
   pairedSlug: string;
   platform: SeoPlatform;
   metric: ServiceMetricType;
+  regionCluster?: "country-hub";
+  ogLocale?: string;
+  inLanguage?: string;
+  areaServed?: string[];
   metaTitle: string;
   metaDescription: string;
   keywords: string[];
@@ -32,6 +36,49 @@ export interface GeoKeywordPageConfig {
   steps: Array<{ title: string; detail: string }>;
   faqHeading: string;
   faq: Array<{ q: string; a: string }>;
+}
+
+export const GLOBAL_SERVED_COUNTRIES = [
+  "US",
+  "BR",
+  "CA",
+  "GB",
+  "AU",
+  "NZ",
+  "IE",
+  "PT",
+  "DE",
+  "FR",
+  "ES",
+  "MX",
+] as const;
+
+export const COUNTRY_HUB_HREFLANG: Record<string, string> = {
+  "en-US": "/en/buy-followers-usa",
+  "en-GB": "/en/buy-followers-uk",
+  "en-IE": "/en/buy-followers-uk",
+  "en-CA": "/en/buy-followers-canada",
+  "en-AU": "/en/buy-followers-australia",
+  "en-NZ": "/en/buy-followers-australia",
+  en: "/en/best-smm-panel-global",
+  "pt-BR": "/pt/painel-smm-brasil",
+  "pt-PT": "/pt/painel-smm-brasil",
+  "x-default": "/en/best-smm-panel-global",
+};
+
+export function buildInternationalAlternates(enPath: string, ptPath: string): Record<string, string> {
+  return {
+    "en-US": enPath,
+    "en-CA": enPath,
+    "en-GB": enPath,
+    "en-AU": enPath,
+    "en-NZ": enPath,
+    "en-IE": enPath,
+    en: enPath,
+    "pt-BR": ptPath,
+    "pt-PT": ptPath,
+    "x-default": enPath,
+  };
 }
 
 export const GEO_KEYWORD_PAGES: GeoKeywordPageConfig[] = [
@@ -719,6 +766,606 @@ export const GEO_KEYWORD_PAGES: GeoKeywordPageConfig[] = [
       {
         q: "Preciso dar acesso ao meu YouTube Studio?",
         a: "Nunca. Basta informar o link público do seu canal ou vídeo.",
+      },
+    ],
+  },
+
+  // 9. EN-US — Dedicated United States Social Growth Hub
+  {
+    id: "country-usa",
+    locale: "en",
+    currency: "USD",
+    slug: "buy-followers-usa",
+    pairedSlug: "painel-smm-brasil",
+    platform: "instagram",
+    metric: "followers",
+    regionCluster: "country-hub",
+    ogLocale: "en_US",
+    inLanguage: "en-US",
+    areaServed: ["US"],
+    metaTitle: "Buy Instagram, TikTok & YouTube Followers USA — Instant & 365D Refill | FollowMe",
+    metaDescription:
+      "Trusted US social growth platform for Instagram followers, TikTok LIVE unlocks, and YouTube subscribers. Stripe USD checkout (Cards, Apple Pay, Google Pay), zero password, 30–365 day refill.",
+    keywords: [
+      "buy followers usa",
+      "buy instagram followers usa",
+      "buy tiktok followers usa",
+      "buy youtube subscribers usa",
+      "best smm panel usa stripe",
+      "high retention social media growth united states",
+    ],
+    eyebrow: "UNITED STATES (USD) · STRIPE APPLE PAY & CARDS",
+    h1Start: "Grow Instagram, TikTok & YouTube in the USA ",
+    h1Sticker: "without sharing your password.",
+    intro:
+      "Built for US creators, DTC e-commerce brands, local businesses, and agencies from New York to Los Angeles. Order exact follower, like, and view packages in USD with transparent Stripe checkout and up to 365-day refill.",
+    tldrLabel: "Quick Summary (USA Market)",
+    tldrDefinition:
+      "FollowMe is a password-free automated social growth platform serving the United States in native USD pricing, supporting Instagram, TikTok, and YouTube with Stripe checkout, Drip-Feed pacing, and 30–365 day refill protection.",
+    facts: [
+      "Native US pricing in USD starting at $1.99/1k Reels views, $5.99/1k likes, and $11.99/1k high-retention followers (plus dedicated USA-targeted tiers).",
+      "Checkout processed securely by Stripe with US Credit/Debit Cards, Apple Pay, and Google Pay — zero recurring traps.",
+      "Zero passwords or account logins requested: enter only your public @handle or video URL.",
+      "Automated dispatch starts in 2–15 minutes with Drip-Feed pacing and 30–365 day refill inside your dashboard.",
+    ],
+    comparisonHeading: "FollowMe USA vs. Traditional US Social Agencies",
+    comparisonRows: [
+      {
+        criterion: "Upfront cost",
+        followMe: "One-time packages from $1.99 USD",
+        traditional: "$1,000–$3,500/mo agency retainers",
+      },
+      {
+        criterion: "Account security",
+        followMe: "Public @handle only (zero password)",
+        traditional: "Requires account login or Business Manager access",
+      },
+      {
+        criterion: "Delivery speed",
+        followMe: "Starts in 2–15 minutes + optional Drip-Feed",
+        traditional: "Weeks of onboarding before launch",
+      },
+      {
+        criterion: "Retention warranty",
+        followMe: "Up to 365-day one-click refill",
+        traditional: "No follower retention guarantees",
+      },
+    ],
+    stepsHeading: "How to boost your social proof in the United States in 3 steps",
+    steps: [
+      {
+        title: "Pick Instagram, TikTok, or YouTube and your exact count",
+        detail:
+          "Compare global 90-day, HQ 365-day, and USA-targeted tiers in USD with clear per-1,000 rates.",
+      },
+      {
+        title: "Paste your public @username or post URL",
+        detail:
+          "Keep your profile Public during delivery. FollowMe never asks for passwords or 2FA codes.",
+      },
+      {
+        title: "Pay once via Stripe USD and track live",
+        detail:
+          "Complete checkout with Card, Apple Pay, or Google Pay and monitor real-time order progress and refill status.",
+      },
+    ],
+    faqHeading: "FollowMe USA — Frequently Asked Questions",
+    faq: [
+      {
+        q: "Does FollowMe offer USA-targeted followers and likes?",
+        a: "Yes. FollowMe includes dedicated USA-targeted Instagram and engagement tiers alongside high-retention global 90-day and 365-day refill options, all priced transparently in USD.",
+      },
+      {
+        q: "Which payment methods work for US customers?",
+        a: "US customers pay securely via Stripe Checkout using Visa, Mastercard, American Express, Discover, Apple Pay, and Google Pay with instant wallet crediting.",
+      },
+      {
+        q: "Is FollowMe safe for US creators and brand accounts?",
+        a: "Yes. FollowMe never requests your password, OAuth token, or admin access — only your public @username or link — and supports gradual Drip-Feed pacing for natural velocity.",
+      },
+      {
+        q: "Can US marketing agencies connect via API v2?",
+        a: "Yes. FollowMe exposes a full SMM Panel API v2 endpoint (/api/v2) plus white-label Child Panels for agencies managing multiple client accounts.",
+      },
+    ],
+  },
+
+  // 10. EN-GB — Dedicated United Kingdom Social Growth Hub
+  {
+    id: "country-uk",
+    locale: "en",
+    currency: "USD",
+    slug: "buy-followers-uk",
+    pairedSlug: "comprar-seguidores-instagram",
+    platform: "instagram",
+    metric: "followers",
+    regionCluster: "country-hub",
+    ogLocale: "en_GB",
+    inLanguage: "en-GB",
+    areaServed: ["GB", "IE"],
+    metaTitle: "Buy Instagram, TikTok & YouTube Followers UK — Safe & Fast | FollowMe",
+    metaDescription:
+      "Grow your Instagram, TikTok, and YouTube presence across the UK & Ireland without sharing your password. Fast delivery, 30–365 day refill, and Stripe checkout with UK Cards & Apple Pay.",
+    keywords: [
+      "buy instagram followers uk",
+      "buy tiktok followers uk",
+      "buy youtube subscribers uk",
+      "buy followers united kingdom",
+      "best smm panel uk",
+      "buy instagram likes uk safe",
+    ],
+    eyebrow: "UNITED KINGDOM & IRELAND · STRIPE CARDS & APPLE PAY",
+    h1Start: "Buy Instagram, TikTok & YouTube followers in the UK ",
+    h1Sticker: "with 365-day refill.",
+    intro:
+      "Designed for UK creators, independent brands, musicians, and London or Manchester agencies who need instant credibility without handing over login access. Pay securely with UK Visa/Mastercard, Apple Pay, or Google Pay via Stripe.",
+    tldrLabel: "Quick Summary (UK & Ireland)",
+    tldrDefinition:
+      "FollowMe is a password-free automated social growth platform available across the United Kingdom and Ireland for Instagram, TikTok, and YouTube, featuring Stripe checkout, Drip-Feed delivery, and 30–365 day refill protection.",
+    facts: [
+      "Serves creators and businesses across London, Manchester, Birmingham, Edinburgh, Glasgow, Bristol, and Dublin.",
+      "Instant Stripe checkout accepts UK Visa, Mastercard, Monzo, Revolut, Starling, Apple Pay, and Google Pay (transparent USD billing converted automatically by your bank/card).",
+      "Zero passwords or login sharing — submit only your public @handle or video URL.",
+      "High-retention followers, Reels views, TikTok LIVE 1,000-follower packages, and YouTube subscribers with 30–365 day refill.",
+    ],
+    comparisonHeading: "FollowMe UK vs. Traditional Growth Methods",
+    comparisonRows: [
+      {
+        criterion: "Setup & password safety",
+        followMe: "Public @handle only — zero login needed",
+        traditional: "Risky bots & agencies ask for Instagram passwords",
+      },
+      {
+        criterion: "Time to first results",
+        followMe: "Automated start in 2–15 minutes (24/7 GMT/BST)",
+        traditional: "Months of low-reach organic posts",
+      },
+      {
+        criterion: "UK payment compatibility",
+        followMe: "Stripe UK Cards, Apple Pay, Google Pay, Revolut/Monzo",
+        traditional: "Unverified offshore gateways or wire transfers",
+      },
+      {
+        criterion: "Drop protection",
+        followMe: "30 to 365-day dashboard Refill button",
+        traditional: "No refill guarantee",
+      },
+    ],
+    stepsHeading: "How UK creators order safely on FollowMe in 3 steps",
+    steps: [
+      {
+        title: "Choose your network and package",
+        detail:
+          "Select Instagram, TikTok, or YouTube followers, likes, views, or watch hours with full refill terms shown upfront.",
+      },
+      {
+        title: "Enter your public @username or link",
+        detail:
+          "Ensure the profile or video is public. FollowMe never asks for passwords or email access.",
+      },
+      {
+        title: "Checkout with Stripe UK Card or Apple Pay",
+        detail:
+          "Orders dispatch automatically 24/7 across GMT/BST with live tracking and one-click refill.",
+      },
+    ],
+    faqHeading: "Buy Followers UK — Frequently Asked Questions",
+    faq: [
+      {
+        q: "Can I pay with a UK debit card, Monzo, Revolut, or Apple Pay?",
+        a: "Yes. FollowMe uses official Stripe Checkout, supporting all UK Visa, Mastercard, Amex, Monzo, Revolut, Starling cards, Apple Pay, and Google Pay with instant order activation.",
+      },
+      {
+        q: "Will FollowMe ever ask for my Instagram or TikTok password?",
+        a: "Never. Every order only requires your public @username or public post URL, keeping your account completely safe.",
+      },
+      {
+        q: "How fast does delivery start for UK orders?",
+        a: "Our automated system runs 24/7 regardless of timezone; most Instagram, TikTok, and YouTube orders begin within 2 to 15 minutes.",
+      },
+      {
+        q: "Do UK orders include refill protection?",
+        a: "Yes. Eligible follower, subscriber, and engagement packages include 30, 60, 90, or 365-day refill directly inside your Orders panel.",
+      },
+    ],
+  },
+
+  // 11. EN-CA — Dedicated Canada Social Growth Hub
+  {
+    id: "country-canada",
+    locale: "en",
+    currency: "USD",
+    slug: "buy-followers-canada",
+    pairedSlug: "comprar-seguidores-instagram",
+    platform: "instagram",
+    metric: "followers",
+    regionCluster: "country-hub",
+    ogLocale: "en_CA",
+    inLanguage: "en-CA",
+    areaServed: ["CA"],
+    metaTitle: "Buy Instagram, TikTok & YouTube Followers Canada — Fast & Safe | FollowMe",
+    metaDescription:
+      "Automated Instagram, TikTok, and YouTube growth for Canadian creators, shops, and agencies. Zero password required, Stripe checkout with Canadian Cards & Apple Pay, 30–365 day refill.",
+    keywords: [
+      "buy instagram followers canada",
+      "buy tiktok followers canada",
+      "buy youtube subscribers canada",
+      "buy followers canada safe",
+      "best smm panel canada",
+      "canadian instagram growth service",
+    ],
+    eyebrow: "CANADA · TORONTO · VANCOUVER · MONTREAL",
+    h1Start: "Buy Instagram, TikTok & YouTube followers in Canada ",
+    h1Sticker: "with instant start.",
+    intro:
+      "Built for Canadian creators, local storefronts, realtors, and digital agencies from Toronto and Vancouver to Montreal and Calgary. Build instant social proof with Stripe-verified checkout, zero password requests, and up to 365-day refill.",
+    tldrLabel: "Quick Summary (Canada Market)",
+    tldrDefinition:
+      "FollowMe is a password-free social growth platform serving Canada across Instagram, TikTok, and YouTube, offering transparent packages, Stripe checkout with Canadian cards & Apple Pay, Drip-Feed pacing, and 30–365 day refill protection.",
+    facts: [
+      "Trusted by creators, e-commerce brands, and agencies across Toronto, Vancouver, Montreal, Calgary, Ottawa, and Edmonton.",
+      "Official Stripe Checkout accepts Canadian Visa, Mastercard, Amex, Apple Pay, and Google Pay with instant balance confirmation.",
+      "No passwords or OAuth logins ever requested — only your public @handle or video URL.",
+      "North American & global high-retention tiers, TikTok LIVE 1,000-follower packages, and API v2 automation for Canadian resellers.",
+    ],
+    comparisonHeading: "FollowMe Canada vs. Slow Cold Organic Launch",
+    comparisonRows: [
+      {
+        criterion: "Credibility speed",
+        followMe: "Starts in 2–15 minutes across EST/PST",
+        traditional: "Months posting to low-engagement feeds",
+      },
+      {
+        criterion: "Password risk",
+        followMe: "0% — public @username only",
+        traditional: "Manual growth bots request login credentials",
+      },
+      {
+        criterion: "Gradual pacing",
+        followMe: "Built-in Drip-Feed scheduler included",
+        traditional: "Sudden unnatural spikes on cheap sites",
+      },
+      {
+        criterion: "Refill warranty",
+        followMe: "30 to 365-day refill button in dashboard",
+        traditional: "No retention warranty",
+      },
+    ],
+    stepsHeading: "How to grow your social profiles in Canada in 3 steps",
+    steps: [
+      {
+        title: "Choose Instagram, TikTok, or YouTube tier",
+        detail:
+          "Review minimum counts, start speed, and 30–365 day refill badges before ordering.",
+      },
+      {
+        title: "Enter only your public @handle or URL",
+        detail:
+          "Set your profile to Public before checkout. Zero passwords or private access needed.",
+      },
+      {
+        title: "Pay via Stripe (Canadian Cards / Apple Pay)",
+        detail:
+          "Your campaign begins automatically in minutes with live progress tracking and API v2 support.",
+      },
+    ],
+    faqHeading: "Buy Followers Canada — Frequently Asked Questions",
+    faq: [
+      {
+        q: "Can Canadian customers pay with Canadian credit or debit cards?",
+        a: "Yes. Stripe Checkout accepts Canadian Visa, Mastercard, Visa Debit, Amex, Apple Pay, and Google Pay seamlessly, converting from transparent USD package rates automatically.",
+      },
+      {
+        q: "Do you support North American targeted Instagram followers?",
+        a: "Yes. Alongside global 90-day and 365-day high-retention packages, FollowMe offers North American / USA-targeted tiers ideal for Canadian and US audiences.",
+      },
+      {
+        q: "Is it safe for Canadian business and creator accounts?",
+        a: "Yes. FollowMe never asks for your password or account login and lets you enable Drip-Feed delivery for gradual, natural growth.",
+      },
+      {
+        q: "Can I unlock TikTok LIVE in Canada with 1,000 followers?",
+        a: "Yes. Ordering 1,000 TikTok followers helps Canadian creators meet TikTok's follower threshold to unlock LIVE streaming and clickable bio links faster.",
+      },
+    ],
+  },
+
+  // 12. EN-AU — Dedicated Australia & New Zealand Social Growth Hub
+  {
+    id: "country-australia",
+    locale: "en",
+    currency: "USD",
+    slug: "buy-followers-australia",
+    pairedSlug: "comprar-seguidores-instagram",
+    platform: "instagram",
+    metric: "followers",
+    regionCluster: "country-hub",
+    ogLocale: "en_AU",
+    inLanguage: "en-AU",
+    areaServed: ["AU", "NZ"],
+    metaTitle: "Buy Instagram, TikTok & YouTube Followers Australia — Fast & Safe | FollowMe",
+    metaDescription:
+      "Automated Instagram, TikTok, and YouTube growth for Australia & New Zealand. Zero password required, 24/7 dispatch across AEST/AEDT, Stripe checkout with AU Cards & Apple Pay, 30–365d refill.",
+    keywords: [
+      "buy instagram followers australia",
+      "buy tiktok followers australia",
+      "buy youtube subscribers australia",
+      "buy followers australia safe",
+      "best smm panel australia",
+      "buy instagram likes australia",
+    ],
+    eyebrow: "AUSTRALIA & NEW ZEALAND · 24/7 AEST DISPATCH",
+    h1Start: "Buy Instagram, TikTok & YouTube followers in Australia ",
+    h1Sticker: "with 24/7 dispatch.",
+    intro:
+      "Built for Australian and New Zealand creators, hospitality venues, fitness brands, and online stores from Sydney and Melbourne to Brisbane, Perth, and Auckland. Zero passwords, instant Stripe checkout, and 30–365 day refill protection.",
+    tldrLabel: "Quick Summary (Australia & NZ)",
+    tldrDefinition:
+      "FollowMe is a password-free automated social growth platform serving Australia and New Zealand across Instagram, TikTok, and YouTube, with 24/7 dispatch across AEST/AEDT/NZDT, Stripe card & Apple Pay checkout, and up to 365-day refill.",
+    facts: [
+      "24/7 automated dispatch tailored for Sydney, Melbourne, Brisbane, Perth, Adelaide, and Auckland timezones.",
+      "Official Stripe Checkout supports Australian Visa, Mastercard, Amex, Apple Pay, and Google Pay with instant balance crediting.",
+      "Zero password or login sharing — only your public @username or post link is needed.",
+      "High-retention followers, Reels views, TikTok LIVE packs, and YouTube watch hours with 30–365 day refill.",
+    ],
+    comparisonHeading: "FollowMe Australia vs. Slow Cold-Start Social Feeds",
+    comparisonRows: [
+      {
+        criterion: "Timezone availability",
+        followMe: "100% automated 24/7 (AEST / AEDT / AWST / NZDT)",
+        traditional: "Manual teams delayed across overseas hours",
+      },
+      {
+        criterion: "Account privacy",
+        followMe: "Zero passwords — public @handle only",
+        traditional: "Growth bots ask for Instagram login details",
+      },
+      {
+        criterion: "Checkout trust",
+        followMe: "Verified Stripe Checkout (AU Cards, Apple Pay, Google Pay)",
+        traditional: "Sketchy non-Stripe payment links",
+      },
+      {
+        criterion: "Drop protection",
+        followMe: "Up to 365-day automated Refill button",
+        traditional: "No refill coverage after drops",
+      },
+    ],
+    stepsHeading: "How Australian creators boost their profiles in 3 steps",
+    steps: [
+      {
+        title: "Choose your social network and package",
+        detail:
+          "Pick Instagram, TikTok, or YouTube followers, likes, views, or comments with exact pricing upfront.",
+      },
+      {
+        title: "Enter your public @handle or video URL",
+        detail:
+          "Keep your profile public while the order runs. Never share your password with anyone.",
+      },
+      {
+        title: "Complete one-time Stripe checkout",
+        detail:
+          "Pay with Australian Card, Apple Pay, or Google Pay and watch delivery start within minutes.",
+      },
+    ],
+    faqHeading: "Buy Followers Australia — Frequently Asked Questions",
+    faq: [
+      {
+        q: "Does FollowMe work with Australian bank cards and Apple Pay?",
+        a: "Yes. Stripe Checkout accepts Australian Visa, Mastercard, Amex, Apple Pay, and Google Pay from CommBank, NAB, ANZ, Westpac, Up, and Wise with automatic conversion from USD.",
+      },
+      {
+        q: "How fast do orders start in Australian timezones?",
+        a: "Delivery is fully automated 24/7, so orders placed in Sydney, Melbourne, Brisbane, Perth, or Auckland typically start within 2 to 15 minutes.",
+      },
+      {
+        q: "Do I need to give my Instagram, TikTok, or YouTube password?",
+        a: "Never. FollowMe only asks for your public @username or public link.",
+      },
+      {
+        q: "Are Australian agencies eligible for API v2 and Child Panels?",
+        a: "Yes. Agencies across Australia and New Zealand can automate bulk orders via our SMM Panel API v2 (/api/v2) or launch a white-label Child Panel.",
+      },
+    ],
+  },
+
+  // 13. EN Global — Worldwide Best SMM Panel Hub (x-default for country cluster)
+  {
+    id: "country-global",
+    locale: "en",
+    currency: "USD",
+    slug: "best-smm-panel-global",
+    pairedSlug: "painel-smm-brasil",
+    platform: "instagram",
+    metric: "followers",
+    regionCluster: "country-hub",
+    ogLocale: "en_US",
+    inLanguage: "en",
+    areaServed: ["US", "CA", "GB", "AU", "NZ", "IE", "BR", "PT", "DE", "FR", "ES", "MX"],
+    metaTitle: "Best Global SMM Panel (USA, UK, Canada, Australia & Brazil) — Stripe & API v2 | FollowMe",
+    metaDescription:
+      "Automated worldwide SMM panel for Instagram, TikTok, YouTube, X, Facebook, Telegram, and Spotify. Dual-market USD & BRL Pix Stripe checkout, API v2, Child Panels, and 30–365d refill.",
+    keywords: [
+      "best smm panel",
+      "global smm panel stripe",
+      "smm panel api v2",
+      "buy social media followers worldwide",
+      "smm panel usa uk canada australia",
+      "cheapest high retention smm panel",
+    ],
+    eyebrow: "GLOBAL SMM PLATFORM · USA · UK · CA · AU · BR",
+    h1Start: "The automated global SMM panel ",
+    h1Sticker: "built for creators & agencies.",
+    intro:
+      "Serving creators, e-commerce brands, and resellers in the United States, United Kingdom, Canada, Australia, Europe, and Brazil. Transparent USD & BRL pricing, official Stripe checkout (Cards, Apple Pay, Google Pay & Brazil Pix 24/7), zero passwords, and full API v2.",
+    tldrLabel: "Global Platform Overview",
+    tldrDefinition:
+      "FollowMe (followm.click) is a multi-region automated SMM panel serving the USA, UK, Canada, Australia, New Zealand, Europe, and Brazil with Instagram, TikTok, and YouTube growth, Stripe Checkout, API v2, Drip-Feed, and 30–365 day refill warranties.",
+    facts: [
+      "Automatic language & currency localization: English/USD for USA, UK, Canada, Australia & global visitors; Portuguese/BRL with instant 24/7 Pix for Brazil.",
+      "Official Stripe payment rails (Visa, Mastercard, Amex, Apple Pay, Google Pay, and Brazil Pix).",
+      "Zero passwords required on every order — public @username or URL only.",
+      "Enterprise-ready tools: Mass Orders, Auto-Likes Subscriptions, Drip-Feed, Affiliate Program, White-Label Child Panels, and standard SMM Panel API v2 (/api/v2).",
+    ],
+    comparisonHeading: "FollowMe Global vs. Legacy Offshore SMM Panels",
+    comparisonRows: [
+      {
+        criterion: "Payment trust & speed",
+        followMe: "Official Stripe (Cards, Apple Pay, Google Pay & Pix 24/7)",
+        traditional: "Crypto-only or unreliable third-party processors",
+      },
+      {
+        criterion: "Regional localization",
+        followMe: "Native EN/USD (US, UK, CA, AU) + PT-BR/BRL (Brazil)",
+        traditional: "Single clunky currency with hidden FX markups",
+      },
+      {
+        criterion: "Refill transparency",
+        followMe: "Clear 30/60/90/365-day refill badges + dashboard button",
+        traditional: "Hidden drop rates with manual ticket friction",
+      },
+      {
+        criterion: "Agency automation",
+        followMe: "Full API v2 + Mass Orders + White-Label Child Panel",
+        traditional: "Manual ordering only",
+      },
+    ],
+    stepsHeading: "How to start using FollowMe globally in 3 steps",
+    steps: [
+      {
+        title: "Browse live packages or connect via API v2",
+        detail:
+          "Use the instant package builder on the storefront or plug your API key into /api/v2.",
+      },
+      {
+        title: "Submit your public @handle or content URL",
+        detail:
+          "Zero logins or passwords required across Instagram, TikTok, YouTube, and other networks.",
+      },
+      {
+        title: "Fund via Stripe and scale automatically",
+        detail:
+          "Top up instantly in USD or BRL Pix and monitor delivery, Drip-Feed, and refills 24/7.",
+      },
+    ],
+    faqHeading: "Global SMM Panel — Frequently Asked Questions",
+    faq: [
+      {
+        q: "Which countries does FollowMe support?",
+        a: "FollowMe serves customers worldwide, with optimized checkout and regional landing pages for the United States, United Kingdom, Canada, Australia, New Zealand, Ireland, Brazil, and Europe.",
+      },
+      {
+        q: "Does FollowMe offer a standard SMM Panel API v2?",
+        a: "Yes. Developers and agencies can automate services, balance checks, orders, multi-status checks, and refills via HTTP POST at https://followm.click/api/v2.",
+      },
+      {
+        q: "Are passwords ever needed to grow an account?",
+        a: "Never. Every service works strictly with public usernames or public content URLs.",
+      },
+      {
+        q: "What refill guarantees are available?",
+        a: "Depending on the selected tier, services include 30, 60, 90, or 365-day refill protection triggered directly from your dashboard or API.",
+      },
+    ],
+  },
+
+  // 14. PT-BR — Dedicated Brazil SMM Panel Hub
+  {
+    id: "country-brazil",
+    locale: "pt",
+    currency: "BRL",
+    slug: "painel-smm-brasil",
+    pairedSlug: "best-smm-panel-global",
+    platform: "instagram",
+    metric: "followers",
+    regionCluster: "country-hub",
+    ogLocale: "pt_BR",
+    inLanguage: "pt-BR",
+    areaServed: ["BR", "PT"],
+    metaTitle: "Melhor Painel SMM do Brasil com Pix 24/7 e Reposição — Instagram, TikTok e YouTube | FollowMe",
+    metaDescription:
+      "Painel SMM brasileiro automatizado com Pix 24/7 via Stripe, preços transparentes em Reais, seguidores brasileiros e mundiais, API v2 para revendedores e garantia de reposição até 365 dias.",
+    keywords: [
+      "painel smm brasil",
+      "melhor painel smm brasileiro pix",
+      "comprar seguidores instagram pix 24h",
+      "painel smm barato confiavel",
+      "revender seguidores api v2 brasil",
+      "comprar views reels tiktok youtube brasil",
+    ],
+    eyebrow: "PAINEL SMM BRASIL (BRL) · PIX AUTOMÁTICO 24/7",
+    h1Start: "O melhor painel SMM do Brasil ",
+    h1Sticker: "com Pix 24/7 e garantia.",
+    intro:
+      "Criado para criadores, negócios locais, e-commerces, artistas e agências de todo o Brasil. Compre seguidores brasileiros ou mundiais, curtidas, views em Reels, TikTok e YouTube em Reais, com Pix automático via Stripe e zero pedido de senha.",
+    tldrLabel: "Resumo Direto (Brasil · BRL)",
+    tldrDefinition:
+      "A FollowMe (followm.click) é um painel SMM automatizado no Brasil que entrega seguidores, curtidas, visualizações e inscritos para Instagram, TikTok e YouTube em Reais, com recarga instantânea via Pix Stripe 24/7, API v2 e reposição de 30 a 365 dias.",
+    facts: [
+      "Recarga instantânea 24 horas via Checkout oficial da Stripe no Pix ou Cartão de Crédito em Reais (BRL).",
+      "Seguidores brasileiros e mundiais para Instagram, pacotes para liberar Live no TikTok e inscritos/views no YouTube.",
+      "Zero senha: basta informar seu @usuário público ou link do vídeo/post.",
+      "Ferramentas profissionais: Pedido em Massa, Drip-Feed (entrega gradual), Assinaturas de Auto-Likes, Painel Filho White-Label e API Pública v2.",
+    ],
+    comparisonHeading: "FollowMe Brasil vs. Sites Genéricos de Seguidores",
+    comparisonRows: [
+      {
+        criterion: "Pagamento no Brasil",
+        followMe: "Pix automático 24/7 e Cartão via Stripe oficial",
+        traditional: "Aprovação manual ou boletos lentos",
+      },
+      {
+        criterion: "Segurança da conta",
+        followMe: "Nunca pede senha — apenas @público",
+        traditional: "Apps pedem login e colocam a conta em risco",
+      },
+      {
+        criterion: "Garantia de reposição",
+        followMe: "Botão de Reposição 30 a 365 dias no painel",
+        traditional: "Sem suporte quando há queda",
+      },
+      {
+        criterion: "Escala para agências",
+        followMe: "API v2 + Pedido em Massa + Painel Filho",
+        traditional: "Apenas pedidos avulsos sem automação",
+      },
+    ],
+    stepsHeading: "Como usar o Painel SMM FollowMe no Brasil em 3 passos",
+    steps: [
+      {
+        title: "Escolha a rede social e o pacote em Reais",
+        detail:
+          "Compare seguidores brasileiros, mundiais 90D/365D, curtidas, Reels views, TikTok e YouTube.",
+      },
+      {
+        title: "Cole apenas seu @usuário ou link público",
+        detail:
+          "Mantenha o perfil em modo Público durante a entrega. Jamais pedimos sua senha.",
+      },
+      {
+        title: "Pague no Pix 24/7 ou Cartão via Stripe",
+        detail:
+          "O saldo libera em segundos e o pedido inicia em minutos com acompanhamento ao vivo no painel.",
+      },
+    ],
+    faqHeading: "Painel SMM Brasil — Dúvidas Frequentes",
+    faq: [
+      {
+        q: "O Pix na FollowMe cai na hora mesmo de madrugada ou fim de semana?",
+        a: "Sim. O Pix é processado automaticamente pelo Checkout oficial da Stripe 24 horas por dia, 7 dias por semana, liberando o saldo em segundos.",
+      },
+      {
+        q: "Vocês têm seguidores brasileiros reais e garantia de reposição?",
+        a: "Sim. Oferecemos categorias dedicadas de seguidores brasileiros e curtidas brasileiras, além de pacotes mundiais HQ com garantia de reposição de 30, 60, 90 ou 365 dias.",
+      },
+      {
+        q: "Agências e revendedores podem integrar via API v2?",
+        a: "Sim. Nossa API v2 padrão SMM (https://followm.click/api/v2) e o módulo de Painel Filho White-Label permitem revender serviços automaticamente.",
+      },
+      {
+        q: "Preciso informar a senha do Instagram, TikTok ou YouTube?",
+        a: "Nunca. Apenas o @usuário público ou o link da publicação/vídeo é necessário.",
       },
     ],
   },

@@ -23,6 +23,7 @@ import {
   ServiceMetricType,
 } from "@/lib/i18n";
 import { getLandingCopy } from "@/lib/landing-copy";
+import { GLOBAL_SERVED_COUNTRIES } from "@/lib/seo-guides";
 import {
   getBlackFridayPricePair,
   isBrazilBlackFridayActive,
@@ -76,7 +77,7 @@ export async function LandingPageView({
 
   const copy = getLandingCopy(locale);
   const isPt = locale === "pt";
-  const appUrl = (process.env.APP_URL || "https://followme.nexaclouds.online").replace(/\/+$/, "");
+  const appUrl = (process.env.APP_URL || "https://followm.click").replace(/\/+$/, "");
 
   const storefrontServices: StorefrontService[] = services.map((s) => ({
     id: s.id,
@@ -208,7 +209,7 @@ export async function LandingPageView({
         url: appUrl,
         email: settings.supportEmail,
         description: copy.metaDescription,
-        areaServed: ["US", "BR", "CA", "GB", "AU"],
+        areaServed: [...GLOBAL_SERVED_COUNTRIES],
         contactPoint: {
           "@type": "ContactPoint",
           contactType: "customer support",
@@ -222,14 +223,14 @@ export async function LandingPageView({
         name: settings.brandName,
         url: appUrl,
         publisher: { "@id": `${appUrl}/#organization` },
-        inLanguage: locale === "pt" ? "pt-BR" : locale === "es" ? "es" : "en-US",
+        inLanguage: ["en-US", "en-CA", "en-GB", "en-AU", "pt-BR"],
       },
       {
         "@type": "Service",
         name: copy.metaTitle,
         description: copy.metaDescription,
         provider: { "@id": `${appUrl}/#organization` },
-        areaServed: locale === "pt" ? ["BR"] : ["US", "CA", "GB", "AU"],
+        areaServed: locale === "pt" ? ["BR", "PT"] : [...GLOBAL_SERVED_COUNTRIES],
         hasOfferCatalog: {
           "@type": "OfferCatalog",
           name: `${settings.brandName} Social Growth Catalog (${currency})`,

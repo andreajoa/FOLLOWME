@@ -3,6 +3,8 @@ import "./globals.css";
 import { getRequestPreferences } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
 import { getLandingCopy } from "@/lib/landing-copy";
+import { buildInternationalAlternates } from "@/lib/seo-guides";
+import { AnalyticsTracker } from "@/components/analytics-tracker";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [settings, prefs] = await Promise.all([
@@ -12,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const brand = settings?.brandName || "FollowMe";
   const copy = getLandingCopy(prefs.locale);
-  const appUrl = (process.env.APP_URL || "https://followme.nexaclouds.online").replace(/\/+$/, "");
+  const appUrl = (process.env.APP_URL || "https://followm.click").replace(/\/+$/, "");
 
   return {
     metadataBase: new URL(appUrl),
@@ -22,17 +24,18 @@ export async function generateMetadata(): Promise<Metadata> {
       prefs.locale === "pt"
         ? [
             "comprar seguidores instagram",
+            "comprar seguidores brasileiros instagram pix",
             "comprar curtidas instagram pix",
             "comprar seguidores tiktok liberar live",
             "comprar inscritos youtube",
-            "painel smm brasil stripe pix",
+            "melhor painel smm brasil stripe pix",
           ]
         : [
-            "buy instagram followers usa",
+            "buy instagram followers usa uk canada australia",
             "buy instagram likes and reels views",
             "buy tiktok followers live",
             "buy youtube subscribers watch time",
-            "smm panel api v2 stripe usd",
+            "best global smm panel stripe api v2",
           ],
     authors: [{ name: `${brand} Growth Editorial Team`, url: appUrl }],
     creator: brand,
@@ -50,11 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     alternates: {
       canonical: "/",
-      languages: {
-        "en-US": "/en",
-        "pt-BR": "/pt",
-        "x-default": "/en",
-      },
+      languages: buildInternationalAlternates("/en", "/pt"),
       types: {
         "text/plain": "/llms.txt",
       },
@@ -65,6 +64,7 @@ export async function generateMetadata(): Promise<Metadata> {
       url: appUrl,
       siteName: brand,
       locale: prefs.locale === "pt" ? "pt_BR" : prefs.locale === "es" ? "es_ES" : "en_US",
+      alternateLocale: ["en_US", "en_CA", "en_GB", "en_AU", "pt_BR"],
       type: "website",
       images: [
         {
@@ -108,6 +108,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-[#faf8fd] text-[#111015] antialiased">
+        <AnalyticsTracker />
         {children}
       </body>
     </html>

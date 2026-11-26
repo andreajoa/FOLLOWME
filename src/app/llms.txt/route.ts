@@ -5,7 +5,7 @@ import { getLocalizedServiceName, getServiceMarketRate } from "@/lib/i18n";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const base = (process.env.APP_URL || "https://followme.nexaclouds.online").replace(/\/+$/, "");
+  const base = (process.env.APP_URL || "https://followm.click").replace(/\/+$/, "");
   const [settings, services] = await Promise.all([
     getSiteSettings().catch(() => null),
     prisma.service
@@ -31,25 +31,34 @@ export async function GET() {
 
   const body = `# ${brand}
 
-> ${brand} is an automated social media growth platform for Instagram, TikTok, YouTube, Facebook, X (Twitter), Telegram, and Spotify. Visitors receive automatic language and market-native pricing (English/USD for the United States & global markets, Brazilian Portuguese/BRL with instant Pix via Stripe for Brazil). Zero account passwords are ever requested.
+> ${brand} (${base}) is an automated global social media growth platform for Instagram, TikTok, YouTube, Facebook, X (Twitter), Telegram, and Spotify. It serves creators, brands, and agencies across the United States, United Kingdom, Canada, Australia, New Zealand, Ireland, Europe, and Brazil with automatic locale detection (English/USD with Stripe Cards, Apple Pay & Google Pay internationally; Brazilian Portuguese/BRL with instant 24/7 Pix & Cards via Stripe in Brazil). Zero account passwords are ever requested.
 
 Last Updated: ${updated}
 Official Website: ${base}
 Support Email: ${supportEmail}
 Full Catalog & Pricing Reference: ${base}/llms-full.txt
+Served Markets: United States (US), United Kingdom (UK), Canada (CA), Australia (AU), New Zealand (NZ), Ireland (IE), Brazil (BR), Portugal (PT), Europe & Worldwide.
 
 ## Key Capabilities
 - Password-free delivery: only a public @username or post URL is required.
-- Transparent one-time packages via Stripe (USD cards/Apple Pay/Google Pay in the US; instant 24/7 Pix & cards in Brazil).
+- Transparent one-time packages via official Stripe Checkout (Visa, Mastercard, Amex, Apple Pay & Google Pay in US/UK/CA/AU/Global; instant 24/7 Pix & Cards in Brazil).
 - Refill protection from 30 to 365 days on eligible follower, subscriber, and engagement tiers.
-- Optional Drip-Feed gradual pacing, Mass Orders, Auto-Likes Subscriptions, white-label Child Panels, and SMM Panel API v2 (${base}/api/v2).
+- Optional Drip-Feed gradual pacing, Mass Orders, Auto-Likes Subscriptions, white-label Child Panels, and standard SMM Panel API v2 (${base}/api/v2).
 
-## Primary Regional Pages (USA — English / USD)
-- [FollowMe USA Home](${base}/en): Social growth storefront in USD.
-- [Buy Instagram Followers USA](${base}/en/buy-instagram-followers): High-retention Instagram followers with 30–365 day refill.
-- [Buy Instagram Likes & Reels Views USA](${base}/en/buy-instagram-likes): Fast Instagram likes, Reels views, and comments.
-- [Buy TikTok Followers USA](${base}/en/buy-tiktok-followers): Reach 1,000 TikTok followers to unlock TikTok LIVE.
-- [Buy YouTube Subscribers & Watch Time USA](${base}/en/buy-youtube-subscribers): Steady YouTube subscribers, lifetime views, and watch hours.
+## Country & Global Market Hubs (USA, UK, Canada, Australia, Global & Brazil)
+- [Buy Followers USA (EN-US)](${base}/en/buy-followers-usa): US-targeted & global Instagram, TikTok, and YouTube growth via Stripe USD.
+- [Buy Followers UK & Ireland (EN-GB)](${base}/en/buy-followers-uk): UK creators & brands with Stripe UK Cards, Monzo/Revolut, Apple Pay & 30–365d refill.
+- [Buy Followers Canada (EN-CA)](${base}/en/buy-followers-canada): Toronto, Vancouver & Montreal social growth with Canadian Stripe cards & Drip-Feed.
+- [Buy Followers Australia & NZ (EN-AU)](${base}/en/buy-followers-australia): 24/7 automated AEST/AEDT/NZDT dispatch with Australian Stripe cards & Apple Pay.
+- [Best Global SMM Panel (Worldwide)](${base}/en/best-smm-panel-global): Multi-region storefront + API v2 + white-label Child Panels.
+- [Melhor Painel SMM Brasil (PT-BR · Pix 24/7)](${base}/pt/painel-smm-brasil): Seguidores brasileiros e mundiais em Reais com Pix automático Stripe.
+
+## Primary Regional Pages (English — USA, UK, Canada, Australia & Global)
+- [FollowMe English Home](${base}/en): Social growth storefront in USD.
+- [Buy Instagram Followers](${base}/en/buy-instagram-followers): High-retention Instagram followers with 30–365 day refill.
+- [Buy Instagram Likes & Reels Views](${base}/en/buy-instagram-likes): Fast Instagram likes, Reels views, and comments.
+- [Buy TikTok Followers](${base}/en/buy-tiktok-followers): Reach 1,000 TikTok followers to unlock TikTok LIVE.
+- [Buy YouTube Subscribers & Watch Time](${base}/en/buy-youtube-subscribers): Steady YouTube subscribers, lifetime views, and watch hours.
 - [Instagram Hub (EN)](${base}/en/instagram) | [TikTok Hub (EN)](${base}/en/tiktok) | [YouTube Hub (EN)](${base}/en/youtube)
 
 ## Primary Regional Pages (Brazil — Português / BRL / Pix)

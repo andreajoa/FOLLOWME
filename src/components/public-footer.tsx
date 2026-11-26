@@ -33,7 +33,7 @@ export function PublicFooter({
 
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-12">
-          <div className="md:col-span-5 space-y-4">
+          <div className="md:col-span-4 space-y-4">
             <BrandLogo name={brandName} inverted />
             <p className="text-sm text-[#b7afc9] max-w-sm leading-relaxed">
               {f.tagline}
@@ -89,12 +89,50 @@ export function PublicFooter({
               </li>
               <li>
                 <Link href="/en" className="hover:text-white transition-colors">
-                  English (USA · USD)
+                  English (USA · UK · CA · AU)
                 </Link>
               </li>
               <li>
                 <Link href="/pt" className="hover:text-white transition-colors">
                   Português (Brasil · BRL)
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="md:col-span-2 space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-[#b889ff]">
+              {locale === "pt" ? "Mercados Globais" : "Global Markets"}
+            </h3>
+            <ul className="space-y-2.5 text-sm text-[#b7afc9]">
+              <li>
+                <Link href="/en/buy-followers-usa" className="hover:text-white transition-colors">
+                  United States (USD)
+                </Link>
+              </li>
+              <li>
+                <Link href="/en/buy-followers-uk" className="hover:text-white transition-colors">
+                  United Kingdom (UK)
+                </Link>
+              </li>
+              <li>
+                <Link href="/en/buy-followers-canada" className="hover:text-white transition-colors">
+                  Canada (CA)
+                </Link>
+              </li>
+              <li>
+                <Link href="/en/buy-followers-australia" className="hover:text-white transition-colors">
+                  Australia &amp; NZ
+                </Link>
+              </li>
+              <li>
+                <Link href="/pt/painel-smm-brasil" className="hover:text-white transition-colors">
+                  Brasil (Pix 24/7)
+                </Link>
+              </li>
+              <li>
+                <Link href="/en/best-smm-panel-global" className="hover:text-white transition-colors">
+                  Global SMM Panel
                 </Link>
               </li>
             </ul>
@@ -133,7 +171,7 @@ export function PublicFooter({
             </ul>
           </div>
 
-          <div className="md:col-span-3 space-y-3">
+          <div className="md:col-span-2 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-widest text-[#b889ff]">
               {f.helpTitle}
             </h3>

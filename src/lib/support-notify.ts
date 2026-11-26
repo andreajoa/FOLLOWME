@@ -26,7 +26,7 @@ const DEFAULT_ATENZA_CONVERSATION_ID = "bbefd13e-2ed3-4953-a8d0-67d1b6449796";
 
 function formatSupportWhatsAppText(payload: SupportAlertPayload): string {
   const appUrl = (
-    process.env.APP_URL || "https://followme.nexaclouds.online"
+    process.env.APP_URL || "https://followm.click"
   ).replace(/\/+$/, "");
 
   const headerMap: Record<SupportAlertPayload["kind"], string> = {
@@ -260,7 +260,7 @@ export async function sendSupportEmailReply(params: {
     <div style="margin-top:24px;font-size:13px;color:#98A0AD;">
       Atenciosamente,<br/>
       <strong style="color:#F4F5F6;">Equipe FollowMe</strong><br/>
-      <a href="https://followme.nexaclouds.online" style="color:#C8FF2E;text-decoration:none;">followme.nexaclouds.online</a>
+      <a href="https://followm.click" style="color:#C8FF2E;text-decoration:none;">followm.click</a>
     </div>
     ${quotedHtml}
   </div>
@@ -278,7 +278,7 @@ export async function sendSupportEmailReply(params: {
       to: [params.toEmail.trim()],
       reply_to: replyTo,
       subject: cleanSubject,
-      text: `${params.replyBody.trim()}\n\n--\nEquipe FollowMe\nhttps://followme.nexaclouds.online`,
+      text: `${params.replyBody.trim()}\n\n--\nEquipe FollowMe\nhttps://followm.click`,
       html,
     }),
   });

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getLandingCopy } from "@/lib/landing-copy";
+import { buildInternationalAlternates } from "@/lib/seo-guides";
 import { LandingPageView } from "@/components/landing-page-view";
 
 export const dynamic = "force-dynamic";
@@ -11,16 +12,13 @@ export const metadata: Metadata = {
   description: copy.metaDescription,
   alternates: {
     canonical: "/en",
-    languages: {
-      "en-US": "/en",
-      "pt-BR": "/pt",
-      "x-default": "/en",
-    },
+    languages: buildInternationalAlternates("/en", "/pt"),
   },
   openGraph: {
     title: copy.metaTitle,
     description: copy.metaDescription,
     locale: "en_US",
+    alternateLocale: ["en_CA", "en_GB", "en_AU", "pt_BR"],
     type: "website",
     images: ["/media/hero-creator.jpg"],
   },

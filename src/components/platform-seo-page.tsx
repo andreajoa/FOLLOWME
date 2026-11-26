@@ -4,6 +4,7 @@ import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/settings";
+import { buildInternationalAlternates, GLOBAL_SERVED_COUNTRIES } from "@/lib/seo-guides";
 import { isBrazilBlackFridayActive, toBlackFridayConfig } from "@/lib/black-friday";
 import { applyEffectiveBrlPricing } from "@/lib/black-friday-server";
 import {
@@ -212,16 +213,13 @@ export function buildPlatformMetadata(
     description: bundle.description,
     alternates: {
       canonical: `${routePrefix}/${platform}`,
-      languages: {
-        "en-US": `/en/${platform}`,
-        "pt-BR": `/pt/${platform}`,
-        "x-default": `/en/${platform}`,
-      },
+      languages: buildInternationalAlternates(`/en/${platform}`, `/pt/${platform}`),
     },
     openGraph: {
       title: bundle.title,
       description: bundle.description,
       locale: locale === "pt" ? "pt_BR" : "en_US",
+      alternateLocale: ["en_US", "en_CA", "en_GB", "en_AU", "pt_BR"],
       type: "website",
       images: ["/media/hero-creator.jpg"],
     },
@@ -255,7 +253,7 @@ export async function PlatformSeoPage({
 
   const langKey = locale === "pt" ? "pt" : "en";
   const bundle = PLATFORM_COPY[platform][langKey];
-  const appUrl = (process.env.APP_URL || "https://followme.nexaclouds.online").replace(/\/+$/, "");
+  const appUrl = (process.env.APP_URL || "https://followm.click").replace(/\/+$/, "");
 
   const storefrontServices: StorefrontService[] = services.map((s) => ({
     id: s.id,
@@ -300,7 +298,7 @@ export async function PlatformSeoPage({
         "@type": "Service",
         name: bundle.title,
         provider: { "@id": `${appUrl}/#organization` },
-        areaServed: locale === "pt" ? ["BR"] : ["US", "CA", "GB", "AU"],
+        areaServed: locale === "pt" ? ["BR", "PT"] : [...GLOBAL_SERVED_COUNTRIES],
         description: bundle.description,
         hasOfferCatalog: {
           "@type": "OfferCatalog",

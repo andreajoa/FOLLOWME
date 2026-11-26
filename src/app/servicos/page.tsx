@@ -58,7 +58,7 @@ export default async function PublicServicesPage() {
   }
 
   const isPt = prefs.locale === "pt";
-  const appUrl = (process.env.APP_URL || "https://followme.nexaclouds.online").replace(/\/+$/, "");
+  const appUrl = (process.env.APP_URL || "https://followm.click").replace(/\/+$/, "");
 
   const catalogJsonLd = {
     "@context": "https://schema.org",

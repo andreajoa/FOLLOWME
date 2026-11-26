@@ -1,8 +1,23 @@
 import type { MetadataRoute } from "next";
-import { getGeoKeywordPagesByLocale } from "@/lib/seo-guides";
+import {
+  buildInternationalAlternates,
+  COUNTRY_HUB_HREFLANG,
+  GEO_KEYWORD_PAGES,
+} from "@/lib/seo-guides";
+
+function absolutizeAlternates(
+  base: string,
+  map: Record<string, string>
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [lang, path] of Object.entries(map)) {
+    out[lang] = `${base}${path}`;
+  }
+  return out;
+}
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = (process.env.APP_URL || "https://followme.nexaclouds.online").replace(/\/+$/, "");
+  const base = (process.env.APP_URL || "https://followm.click").replace(/\/+$/, "");
   const now = new Date();
 
   const localizedPairs: Array<{ path: string; priority: number }> = [
@@ -15,79 +30,59 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const entries: MetadataRoute.Sitemap = [];
 
   for (const item of localizedPairs) {
+    const languages = absolutizeAlternates(
+      base,
+      buildInternationalAlternates(`/en${item.path}`, `/pt${item.path}`)
+    );
     entries.push(
       {
         url: `${base}${item.path || "/"}`,
         lastModified: now,
         changeFrequency: "daily",
         priority: item.priority,
-        alternates: {
-          languages: {
-            "en-US": `${base}/en${item.path}`,
-            "pt-BR": `${base}/pt${item.path}`,
-          },
-        },
+        alternates: { languages },
       },
       {
         url: `${base}/en${item.path}`,
         lastModified: now,
         changeFrequency: "daily",
         priority: item.priority,
-        alternates: {
-          languages: {
-            "en-US": `${base}/en${item.path}`,
-            "pt-BR": `${base}/pt${item.path}`,
-          },
-        },
+        alternates: { languages },
       },
       {
         url: `${base}/pt${item.path}`,
         lastModified: now,
         changeFrequency: "daily",
         priority: item.priority,
-        alternates: {
-          languages: {
-            "pt-BR": `${base}/pt${item.path}`,
-            "en-US": `${base}/en${item.path}`,
-          },
-        },
+        alternates: { languages },
       }
     );
   }
 
-  // High-intent regional commercial SEO + GEO buyer pages (USA EN-US <-> Brazil PT-BR)
-  for (const enPage of getGeoKeywordPagesByLocale("en")) {
-    const enUrl = `${base}/en/${enPage.slug}`;
-    const ptUrl = `${base}/pt/${enPage.pairedSlug}`;
-    entries.push(
-      {
-        url: enUrl,
-        lastModified: now,
-        changeFrequency: "daily",
-        priority: 0.95,
-        alternates: {
-          languages: {
-            "en-US": enUrl,
-            "pt-BR": ptUrl,
-          },
-        },
-      },
-      {
-        url: ptUrl,
-        lastModified: now,
-        changeFrequency: "daily",
-        priority: 0.95,
-        alternates: {
-          languages: {
-            "pt-BR": ptUrl,
-            "en-US": enUrl,
-          },
-        },
-      }
-    );
+  // Regional & country-specific high-intent SEO + GEO buyer pages (USA, UK, Canada, Australia, Global & Brazil)
+  const countryHubLanguages = absolutizeAlternates(base, COUNTRY_HUB_HREFLANG);
+  for (const page of GEO_KEYWORD_PAGES) {
+    const url = `${base}/${page.locale}/${page.slug}`;
+    const languages =
+      page.regionCluster === "country-hub"
+        ? countryHubLanguages
+        : absolutizeAlternates(
+            base,
+            buildInternationalAlternates(
+              page.locale === "en" ? `/en/${page.slug}` : `/en/${page.pairedSlug}`,
+              page.locale === "pt" ? `/pt/${page.slug}` : `/pt/${page.pairedSlug}`
+            )
+          );
+    entries.push({
+      url,
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 0.95,
+      alternates: { languages },
+    });
   }
 
-  for (const extra of ["/servicos", "/api-docs", "/parcerias", "/faq", "/termos", "/llms.txt"]) {
+  for (const extra of ["/servicos", "/api-docs", "/parcerias", "/faq", "/termos", "/llms.txt", "/llms-full.txt"]) {
     entries.push({
       url: `${base}${extra}`,
       lastModified: now,

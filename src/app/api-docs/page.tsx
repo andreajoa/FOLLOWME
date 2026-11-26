@@ -148,7 +148,7 @@ export default async function ApiDocsPage() {
     getRequestPreferences(),
   ]);
 
-  const baseUrl = (process.env.APP_URL || "https://followme.nexaclouds.online").replace(
+  const baseUrl = (process.env.APP_URL || "https://followm.click").replace(
     /\/+$/,
     ""
   );

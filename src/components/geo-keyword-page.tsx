@@ -10,7 +10,12 @@ import {
   getServiceMarketRate,
   inferMetricType,
 } from "@/lib/i18n";
-import type { GeoKeywordPageConfig } from "@/lib/seo-guides";
+import {
+  buildInternationalAlternates,
+  COUNTRY_HUB_HREFLANG,
+  GLOBAL_SERVED_COUNTRIES,
+  type GeoKeywordPageConfig,
+} from "@/lib/seo-guides";
 import {
   getBlackFridayPricePair,
   isBrazilBlackFridayActive,
@@ -30,6 +35,10 @@ export function buildGeoKeywordMetadata(config: GeoKeywordPageConfig): Metadata 
   const ptPath =
     config.locale === "pt" ? `/pt/${config.slug}` : `/pt/${config.pairedSlug}`;
   const canonical = config.locale === "pt" ? ptPath : enPath;
+  const languages =
+    config.regionCluster === "country-hub"
+      ? COUNTRY_HUB_HREFLANG
+      : buildInternationalAlternates(enPath, ptPath);
 
   return {
     title: config.metaTitle,
@@ -37,16 +46,13 @@ export function buildGeoKeywordMetadata(config: GeoKeywordPageConfig): Metadata 
     keywords: config.keywords,
     alternates: {
       canonical,
-      languages: {
-        "en-US": enPath,
-        "pt-BR": ptPath,
-        "x-default": enPath,
-      },
+      languages,
     },
     openGraph: {
       title: config.metaTitle,
       description: config.metaDescription,
-      locale: config.locale === "pt" ? "pt_BR" : "en_US",
+      locale: config.ogLocale || (config.locale === "pt" ? "pt_BR" : "en_US"),
+      alternateLocale: ["en_US", "en_CA", "en_GB", "en_AU", "pt_BR"],
       type: "website",
       images: ["/media/hero-creator.jpg"],
     },
@@ -80,7 +86,7 @@ export async function GeoKeywordPage({ config }: { config: GeoKeywordPageConfig 
 
   const isPt = config.locale === "pt";
   const routePrefix = isPt ? "/pt" : "/en";
-  const appUrl = (process.env.APP_URL || "https://followme.nexaclouds.online").replace(
+  const appUrl = (process.env.APP_URL || "https://followm.click").replace(
     /\/+$/,
     ""
   );
@@ -153,7 +159,7 @@ export async function GeoKeywordPage({ config }: { config: GeoKeywordPageConfig 
         name: config.metaTitle,
         description: config.metaDescription,
         provider: { "@id": `${appUrl}/#organization` },
-        areaServed: isPt ? ["BR"] : ["US", "CA", "GB", "AU"],
+        areaServed: config.areaServed || (isPt ? ["BR", "PT"] : [...GLOBAL_SERVED_COUNTRIES]),
         hasOfferCatalog: {
           "@type": "OfferCatalog",
           name: `${settings.brandName} ${config.platform} packages`,
@@ -189,7 +195,11 @@ export async function GeoKeywordPage({ config }: { config: GeoKeywordPageConfig 
           url: appUrl,
         },
         publisher: { "@id": `${appUrl}/#organization` },
-        inLanguage: isPt ? "pt-BR" : "en-US",
+        inLanguage: config.inLanguage || (isPt ? "pt-BR" : "en-US"),
+        speakable: {
+          "@type": "SpeakableSpecification",
+          cssSelector: ["h1", ".geo-tldr"],
+        },
       },
       {
         "@type": "FAQPage",
