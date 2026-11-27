@@ -10,6 +10,7 @@ interface AuthFormProps {
   initialRef?: string;
   redirectService?: string;
   redirectQty?: string;
+  adminNext?: string;
   locale?: "pt" | "en" | "es";
 }
 
@@ -18,6 +19,7 @@ export function AuthForm({
   initialRef = "",
   redirectService = "",
   redirectQty = "",
+  adminNext = "",
   locale = "en",
 }: AuthFormProps) {
   const isPt = locale === "pt";
@@ -61,7 +63,8 @@ export function AuthForm({
         setError(data.error || "Falha ao entrar.");
         return;
       }
-      router.push(data.user?.role === "ADMIN" ? "/admin" : destination);
+      const adminDest = adminNext === "/admin" || adminNext === "/dashboard" ? adminNext : "/dashboard";
+      router.push(data.user?.role === "ADMIN" ? adminDest : destination);
       router.refresh();
     } catch {
       setError("Erro de rede ao conectar.");
@@ -92,7 +95,7 @@ export function AuthForm({
         setError(data.error || "Não foi possível cadastrar.");
         return;
       }
-      router.push(destination);
+      router.push(data.user?.role === "ADMIN" ? "/dashboard" : destination);
       router.refresh();
     } catch {
       setError("Erro de rede ao cadastrar.");
@@ -192,7 +195,7 @@ export function AuthForm({
                   : "Signing in..."
                 : isPt
                   ? "Acessar Painel"
-                  : "Open Dashboard"}
+                  : "Open My Panel"}
               <ArrowRight className="h-4 w-4" />
             </button>
           </form>

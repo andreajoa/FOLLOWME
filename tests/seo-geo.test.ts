@@ -74,6 +74,13 @@ describe("FollowMe Global SEO & GEO (Brazil, USA, Canada, UK, Australia & Worldw
       const rob = robots();
       expect(rob.sitemap).toBe("https://followm.click/sitemap.xml");
       expect(rob.host).toBe("https://followm.click");
+      const firstRule = Array.isArray(rob.rules) ? rob.rules[0] : rob.rules;
+      const disallow = Array.isArray(firstRule.disallow) ? firstRule.disallow : [firstRule.disallow];
+      expect(disallow).toContain("/admin");
+      expect(disallow).toContain("/dashboard");
+      expect(disallow).toContain("/painel");
+      expect(disallow).toContain("/api/admin");
+      expect(disallow).toContain("/api/dashboard");
     } finally {
       if (prev === undefined) delete process.env.APP_URL;
       else process.env.APP_URL = prev;

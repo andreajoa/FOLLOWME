@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; ref?: string; service?: string; qty?: string }>;
+  searchParams: Promise<{ tab?: string; ref?: string; service?: string; qty?: string; next?: string }>;
 }) {
   const [user, settings, prefs, sp] = await Promise.all([
     getCurrentUser(),
@@ -19,7 +19,12 @@ export default async function LoginPage({
     searchParams,
   ]);
 
+  const adminNext = sp.next === "/admin" || sp.next === "/dashboard" ? sp.next : "";
+
   if (user) {
+    if (user.role === "ADMIN" && !sp.service) {
+      redirect(adminNext || "/dashboard");
+    }
     const query = new URLSearchParams();
     if (sp.service) query.set("service", sp.service);
     if (sp.qty) query.set("qty", sp.qty);
@@ -60,6 +65,7 @@ export default async function LoginPage({
             initialRef={sp.ref || ""}
             redirectService={sp.service || ""}
             redirectQty={sp.qty || ""}
+            adminNext={adminNext}
             locale={prefs.locale}
           />
         </div>

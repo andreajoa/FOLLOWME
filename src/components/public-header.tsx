@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, LayoutDashboard, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, LayoutDashboard } from "lucide-react";
 import { BrandLogo } from "./brand-logo";
 import { LocaleSwitcher } from "./locale-switcher";
 import { BlackFridayTopBanner } from "./black-friday-ui";
@@ -61,33 +61,13 @@ export function PublicHeader({
             </div>
 
             {user ? (
-              <>
-                {user.role === "ADMIN" && (
-                  <>
-                    <Link
-                      href="/dashboard"
-                      className="btn-outline inline-flex h-9 items-center gap-1.5 px-3 text-xs font-semibold whitespace-nowrap"
-                    >
-                      <LayoutDashboard className="h-3.5 w-3.5 text-[#7c3ee9]" />
-                      Dashboard
-                    </Link>
-                    <Link
-                      href="/admin"
-                      className="btn-outline inline-flex h-9 items-center gap-1.5 px-3 text-xs font-semibold whitespace-nowrap"
-                    >
-                      <ShieldCheck className="h-3.5 w-3.5 text-[#7c3ee9]" />
-                      {t.nav.admin}
-                    </Link>
-                  </>
-                )}
-                <Link
-                  href="/painel"
-                  className="btn-lime inline-flex h-9 items-center gap-1.5 px-4 text-xs font-bold whitespace-nowrap"
-                >
-                  <LayoutDashboard className="h-3.5 w-3.5" />
-                  {t.nav.panel}
-                </Link>
-              </>
+              <Link
+                href="/painel"
+                className="btn-lime inline-flex h-9 items-center gap-1.5 px-4 text-xs font-bold whitespace-nowrap"
+              >
+                <LayoutDashboard className="h-3.5 w-3.5" />
+                {t.nav.panel}
+              </Link>
             ) : (
               <>
                 <Link

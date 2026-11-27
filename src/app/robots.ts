@@ -21,7 +21,7 @@ export default function robots(): MetadataRoute.Robots {
           "CCBot",
         ],
         allow: ["/", "/en/", "/pt/", "/llms.txt", "/llms-full.txt"],
-        disallow: ["/admin", "/painel", "/api/admin", "/api/auth"],
+        disallow: ["/admin", "/dashboard", "/painel", "/api/admin", "/api/dashboard", "/api/auth"],
       },
     ],
     sitemap: `${base}/sitemap.xml`,
